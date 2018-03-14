@@ -1,0 +1,62 @@
+
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{float}
+\usepackage{amsmath}
+
+
+\usepackage[hmargin=3cm,vmargin=6.0cm]{geometry}
+%\topmargin=0cm
+\topmargin=-2cm
+\addtolength{\textheight}{6.5cm}
+\addtolength{\textwidth}{2.0cm}
+%\setlength{\leftmargin}{-5cm}
+\setlength{\oddsidemargin}{0.0cm}
+\setlength{\evensidemargin}{0.0cm}
+
+\newcommand{\HRule}{\rule{\linewidth}{1mm}}
+
+\begin{document}
+
+\section*{Student Information } 
+Full Name :  Onur Can TIRTIR\\
+Id Number :  2099380\\
+
+We first choose the number of Monte Carlo studies, $N$, so as to guarantee the condition given in the book. $N$ can be found by the formula:
+
+$$ N \geq 0.25 (\dfrac{z_\alpha / 2}{\epsilon})^2$$
+
+where $\alpha = 0.05$ and $\epsilon = 0.005$.\\
+
+Here $N$ is 38415.\\
+
+Then, for every Monte Carlo experiment, randomly get the number fish we catch according to \textit{poisson distribution} with $\lambda=3*4=12$. Then we follow the algorithm named as \textit{Rejection Method} to catch this number of fish. First choose the bounds for $X$, $a=0,\ b=3$, and $Y$, $c=0.7$ which is the maximum value for $f(x)$.
+
+\begin{enumerate}
+	\item Obtain standard uniform variables $U$ and $V$ from the function $rand$.
+	\item Obtain $X = a + (b-a)U$ and $Y = c$.
+	\item If $Y > f(X)$, reject the point $(X,Y)$ and return to \textit{step 2}, else accept the point. Accepting the point means that we succesfulyly catch the fish weight of $X$.
+\end{enumerate}
+
+When reached the number of fish to be caught, stop the algotrithm given above and save the $total\ weight$ of fish into the vector \textit{total weights}. then pass to next Monte Carlo study.
+
+After finishing all the Monte Carlo studies, calculate \textit{a), b) and c)}. \\
+
+\textbf{a)}\\
+Count in how Monte Carlo studies we get more than $25\ kg$ of fish. First get a boolean vector, \textit{True if greater than 25, else False}, and get the ratio \textit{\#1s / total number of studies}.\\
+
+Answer is approximately $0.215$.\\
+
+\textbf{b)}\\
+Take the mean of total weights to estimate the total weight.\\
+
+Answer is approximately $20.15$.\\
+
+\textbf{c)}\\
+Calculate the standard deviation of all the Monte Carlo studies.\\
+
+Answer is approximately $6.35$.
+
+The less standard deviation, the less deviation from mean. The more deviation means that you have some or lots of outliers in your data, which reduces accuracy of the study.
+
+\end{document}

@@ -1,0 +1,137 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{float}
+\usepackage{amsmath}
+
+\usepackage[hmargin=3cm,vmargin=6.0cm]{geometry}
+%\topmargin=0cm
+\topmargin=-2cm
+\addtolength{\textheight}{6.5cm}
+\addtolength{\textwidth}{2.0cm}
+%\setlength{\leftmargin}{-5cm}
+\setlength{\oddsidemargin}{0.0cm}
+\hbadness=10000
+\setlength{\evensidemargin}{0.0cm}
+
+%misc libraries goes here
+\usepackage{fitch}
+
+\begin{document}
+
+\section*{Student Information } 
+%Write your full name and id number between the colon and newline
+%Put one empty space character after colon and before newline
+Full Name :  Onur Can Tırtır\\
+Id Number :  2099380
+
+% Write your answers below the section tags
+\section*{Answer 1}
+\begin{center}
+\begin{tabular}{|ccc|c|c|c|c|c|}
+\hline
+p & q & r & p$\to$q & q$\to$r & p$\to$r & (p$\to$q)$\wedge$(q$\to$r) & ((p$\to$q)$\wedge$(q$\to$r))$\to$(p$\to$r) \\
+\hline
+T & T & T & T & T & T & T & T\\
+T & T & F & T & F & F & F & T\\
+T & F & T & F & T & T & F & T\\
+T & F & F & F & T & F & F & T\\
+F & T & T & T & T & T & T & T\\
+F & T & F & T & F & T & F & T\\
+F & F & T & T & T & T & T & T\\
+F & F & F & T & T & T & T & T\\
+\hline
+\end{tabular}
+\end{center}
+
+$\textit{Since for all possible p,q \& r truth values ((p$\to$q)$\wedge$(q$\to$r))$\to$(p$\to$r) evaluates to True;}$
+\\
+$\textit{it is a $\textbf{tautology}.$}$
+\\
+
+\begin{tabular}{|cc|c|c|c|c|c|}
+\hline
+p & q & $\neg$p & p$\vee$q & $\neg$p$\wedge$(p$\vee $q) & ($\neg $p$\wedge$(p$\vee $q))$\to$q & $\neg$(($\neg$p$\wedge$(p$\vee $q))$\to$q) \\
+\hline
+T & T & F & T & F & T & F\\
+T & F & F & T & F & T & F\\
+F & T & T & T & T & T & F\\
+F & F & T & F & F & T & F\\
+\hline
+\end{tabular}\\
+\\
+
+$\textit{Since for all possible p \& q truth values $\neg$(($\neg$p$\wedge$(p$\vee $q))$\to$q) evaluates to False;}$
+\\
+$\textit{it is a $\textbf{contradiction}$.}$
+
+\section*{Answer 2}
+\[
+\begin{nd}
+	\hypo {1} {(p\to q)\wedge (p\to r)} 
+	\hypo {2} {\equiv (\neg p\vee q)\wedge (\neg p\vee r)} \by{Equivalence 1 at Table 7}{}
+	\hypo {3} {\equiv \neg p\vee (q\wedge r)} \by{Distributive Law at Table 6}{}
+	\hypo {4} {\equiv (q\wedge r)\vee \neg p} \by{Commutative Law at Table 6}{}
+	\hypo {5} {\equiv \neg (q\wedge r)\to \neg p} \by{Equivalence 1 at Table 7}{}
+	\hypo {6} {\equiv (\neg q\vee \neg r)\to \neg p} \by{De Morgan’s Law at Table 6}{}
+\end{nd}
+\]
+
+
+$\textbf{Hence ($\neg$q$\vee$$\neg$r)$\to$$\neg$p $\equiv$ (p$\to$q)$\wedge$(p$\to$r).}$
+
+\section*{Answer 3}
+$\textbf{a)}$ $\newline$
+$\textit{a)}$ $\exists$x(F(x)$\wedge$ $\forall$yD(x,y))$\newline$
+$\textit{b)}$ $\forall$y$\exists$x(D(x,y)$\to$ F(x))$\newline$
+$\textit{c)}$ $\exists$y$\forall$x(D(x,y)$\to$ $\neg$ F(x))$\newline$
+$\textit{d)}$ $\exists$y$\exists$x$\exists$z((D(x,y)$\wedge$D(z,y)) $\to$ (x=z))$\newline$
+$\textit{e)}$ $\exists$y$\forall$x(D(x,y)$\to$ F(x))$\newline$ $\newline$
+$\textbf{b)}$ $\newline$
+$\textit{a)}$ teacher(Ahmet Metin)$\to$ $\forall$y$\neg$ teaches(Ahmet Metin,y)$\newline$
+$\textit{b)}$ $\exists$x$\forall$y((teacher(x) $\wedge$ enjoys(x,y))$\to$teaches(x,y))$\newline$
+$\textit{c)}$ $\exists$x(teacher(x)$\wedge$ $\exists$y$\neg$ teacher(x,y))$\newline$
+$\textit{d)}$ $\forall$x$\forall$y(takes(x,y)$\to$ student(x))$\newline$
+$\textit{e)}$ $\forall$x(teacher(x)$\to$ $\exists$y$\exists$z$\exists$w((teaches(x,y)$\wedge$ teaches(x,z)$\wedge$ teacher(x,w)$)\to$ ((w$\neq$y) $\wedge$ ((w=z)$\vee$ (y=z)))))
+
+\section*{Answer 4}
+
+\[
+\begin{nd}
+	\hypo {1} {p}
+	\hypo {2} {p\to (r\to q)}
+	\have {3} {r\to q}					\ie{1,2}
+	\open
+		\hypo {4} {\neg q}
+		\open
+			\hypo {5} {r}
+			\have {6} {q}					\ie{5,3}
+			\have {7} {\perp}				\ne{6,4}
+		\close
+		\have {8} {\neg r}					\ni{5-7}
+	\close
+	\have {9} {\neg q\to \neg r}		\ii{4-8}
+\end{nd}
+\]
+
+\section*{Answer 5}
+
+\[
+\begin{nd}
+	\hypo {1} {\exists x.(p(x)\to q(a))}
+	\open[d]
+		\hypo {2} {p(d)\to q(a)}				
+		\open
+			\hypo {3} {\forall y.p(y)}				
+			\have {4} {p(d)}						\Ae{3}	
+			\have {5} {q(a)}						\ie{4,2}
+		\close
+		\have {6} {\forall y.p(y)\to q(a)}		\ii{3-5}
+	\close
+	\have {7} {\forall y.p(y)\to q(a)}			\Ee{1,2-6}
+\end{nd}
+\]
+
+\end{document}
+
+​
+

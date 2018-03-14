@@ -1,0 +1,301 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{enumitem}
+
+\usepackage[hmargin=3cm,vmargin=6.0cm]{geometry}
+%\topmargin=0cm
+\topmargin=-2cm
+\addtolength{\textheight}{6.5cm}
+\addtolength{\textwidth}{2.0cm}
+%\setlength{\leftmargin}{-5cm}
+\setlength{\oddsidemargin}{0.0cm}
+\setlength{\evensidemargin}{0.0cm}
+
+%misc libraries goes here
+
+
+\begin{document}
+
+\section*{Student Information } 
+%Write your full name and id number between the colon and newline
+%Put one empty space character after colon and before newline
+Full Name :  Onur Can TIRTIR\\
+Id Number :  2099380\\
+
+% Write your answers below the section tags
+\section*{Answer 1}
+
+Take a set $A$ and a relation $R$ on the set $A$ whose relation matrix is $M_R$.\\
+$a\in A$ and $b\in A$ are to be arbitrary elements so that $(a, b)$ and $(b, a)$ are \textbf{ordered pairs}, if the opposite is not claimed.
+
+\subsection*{a.}
+Once we choose a pair $(a, b)$ such that $aRb$, we immediately choose the pair $(b, a)$ such that $bRa$, by the definition of a \textit{symmetric relation}. We can choose as many $(a, b)$ from the lower triangle of $M_R$ so that $(b, a)$ is choosen automatically from the upper triangle of $M_R$.\\ \\
+We have $n.n=n^2$ many elements in $M_R$ so that $n$ of them are in the primary diagonal and the other ones$(n^2-n)$ are either in upper triangular or lower triangular. Hence we have $\frac{n^2-n}{2}$ many elements in lower triangular. Number of all combinations of $\frac{n^2-n}{2}$ elements is equal to $2^{\frac{n^2-n}{2}}$.\\ \\
+Besides these, we can choose as many elements as we desire from the diagonal of $M_R$ because these elements do not affect the symmetry. Number of all combinations of $n$ elements is equal to $2^n$.\\ \\
+By the product rule, the answer is $2^{\frac{n^2-n}{2}}.2^n=2^{\frac{n^2+n}{2}}$.
+
+\subsection*{b.}
+For $R$ to be \textit{antisymmetrix}, whenever $aRb$ exists, $bRa$ does not exists. Similarly, whenever $bRa$ exists, $aRb$ does not exist. Besides we have another option, neither $aRb$ nor $bRa$ does not exists.\\ \\
+We can choose $(a, b)$ \textbf{unordered} pair, where $a\neq b$, in $C(n, 2)=\frac{n.n-1}{2}$ many ways. We have 3 possibilities -as explained above- for every $(a, b)$ \textbf{unordered} pair to make $R$ \textit{antisymmetric}.\\ \\
+Also we can choose as many elements as we desire from the diagonal of $M_R$ because these elements do not affect the antisymmetry. Number of all combinations of $n$ elements is equal to $2^n$.\\ \\
+By the product rule, the total number of antisymmetric relations is $2^n.3^{\frac{n.n-1}{2}}$.
+
+\subsection*{c.}
+
+Once we choose a pair $(a, b)$ such that $aRb$, we immediately choose the pair $(b, a)$ such that $bRa$, by the definition of a \textit{symmetric relation}. We can choose as many $(a, b)$ from the lower triangle of $M_R$ so that $(b, a)$ is choosen automatically from the upper triangle of $M_R$.\\ \\
+We have $n.n=n^2$ many elements in $M_R$ so that $n$ of them are in the primary diagonal and the other ones$(n^2-n)$ are either in upper triangular or lower triangular. Hence we have $\frac{n^2-n}{2}$ many elements in lower triangular. Number of all combinations of $\frac{n^2-n}{2}$ elements is equal to $2^{\frac{n^2-n}{2}}$.\\ \\
+Different from the \textbf{subsection a}, it is a must to choose all the elements in the diagonal of $M_R$ so as to make the relation $R$ reflexive. Hence we have only $1$ option.\\ \\
+Therefore the total number of \textit{reflexive and symmetric relations} is $2^{\frac{n^2-n}{2}}$.
+
+\subsection*{d.}
+
+For $R$ to be \textit{reflexive}, $\forall a\in A, (a, a)\in R$ and for $R$ to be \textit{irreflexive} $\forall a\in A, (a, a)\notin R$. First we have $2^n$ posibilities for these $n$ elements, for each of them -say $a_i$- to decide whether $(a_i a_i)$ should be included in $R$ or not. But we should exclude two of these possibilities, which are \textit{none of them is included} and \textit{all of them is included}, to make $R$ \textit{neither reflexive nor irreflexive}. Then we have $2^n-2$ many options to satisfy the contidition given in the question.\\
+
+Also we can choose as many pairs as we want from the upper and the lower triangles of the relation matrix $M_R$, where there exists $n^2-n$ many pairs in total. All the options we have for these pairs is $2^{n^2-n}$.\\
+
+Therefore the total number of neither reflexive and irreflexive relations is $2^{n^2-n}.(2^n-2)$, by the product rule.
+
+\section*{Answer 2}
+
+\subsection*{a.}
+
+Any symmetric relation -say $R$- has a symmetric relation matrix -say $M_R$-. Inverse of this relation's matrix is the transpose of $M_R$. By the definiton of symmetric matrices, $M_R=M_R^T$. Then $R=R^{-1}$.
+
+\subsection*{b.}
+
+Take a relation $R=\{(a,d),(b,d),(b,e),(c,e)\}$ on the set $A=\{a,b,c,d,e\}$.\\
+Then $R^{-1}=\{(d,b),(d,a),(e,c),(e,b)\}$.\\
+Then $R \circ R^{-1}=\{(a,b),(a,a),(b,a),(b,c),(b,b),(c,c),(c,b)\}$, where we have $(a, b)$ and $(b, c)$ but not $(a ,c)$, then $R\circ R^{-1}$ is not \textit{transitive} by the definition of \textit{transitivity}. This is a counterexample, then the claim is not true.
+
+\subsection*{c.}
+
+\textit{Note: The predicate for a relation R -on a set A- to be transitive will be used frequently below and it is "$\forall (a, b, c)\in A$ $\textbf{(}(a,b)\in R \wedge (b,c) \in R \implies (a, c) \in R\textbf{)}$"} \\ \\
+Since the claim to be proven in the question is an \textit{if and only if} structure, we should break it into two subproofs as below.\\
+
+\begin{proof}
+\textit{R is to be any relation on a set A, take the pairs $(a,b)$, $(b,c)$, $(a,c)$ for the relation $R$ on set $A$. Depending on the cases, some or all of these pairs may or may not exist}.
+
+\begin{enumerate}
+\item{$R$ is transitive if $R\circ R \subseteq R$}\\ \\
+In first case, assume one or both of the pairs $(a,b)$, $(b,c)$ does not exist in $R$ so $(a,c)$ does not exist in $R \circ R$ so that $R \circ R \subseteq R$. In that case, the predicate for R to be transitive is satisfied because left hand side of the predicate is \textit{false}.\\
+In second case, assume both of the pairs $(a,b)$, $(b,c)$ exist in $R$ so $(a,c)$ exists in $R \circ R$ by the definition of composition. In that case our predicate for \textit{transitivity} is again satisfied because both sides of predicate is \textit{true}.\\
+
+As we see, for all these three cases, in which $R\circ R \subseteq R$, explained above, $R$ is transitive. 
+
+\item{If $R$ is transitive then $R\circ R \subseteq R$}\\ \\
+In first case, assume one or both of the pairs $(a,b)$, $(b,c)$ does not exist in $R$ but $(a,c)$ does. $R \circ R = \emptyset \subseteq R$, where $R$ has at least the pair $(a, c)$\\
+In second case, assume one or both of the pairs $(a,b)$, $(b,c)$ does not exist in $R$ and $(a,c)$ also does not exist. $R \circ R = \emptyset \subseteq R$, as $R\circ R$ is an empty set, it is subset of all the sets.\\
+In third case, assume both of the pairs $(a,b)$, $(b,c)$ exist in $R$ and $(a,c)$ exist. $R \circ R = \{(a,c)\} \subseteq R$, as $R=\{(a,b),(b,c),(a,c)\}$.\\ \\
+As we see, for all these three cases, where we have transitive relations, explained above, whenever $R$ is transitive $R\circ R \subseteq R$ holds. 
+
+\end{enumerate}
+
+\end{proof}
+
+\section*{Answer 3}
+
+\subsection*{a.}
+
+For each open paranthesis, we have a closed paranthesis. We can treat the overall patern as $(A)B$, in which pattern if another pair of paranthesis came, we can initialize a new pattern either in the set $A$ or in the set $B$. We have in total $n$ pairs of paranthesis in the sets $A$ and $B$, and we also have another pair, shown explicitly in our patern, so we can say that we have $P_{n+1}$ many ways to distribute $n+1$ pairs of paranthesis according to pattern. Here we can leave $A$ or $B$ empty safely since we take the basis case \textit{$P_0$=1} and our pattern is valid whenever $n\geq0$. Therefore we can distribute these $n$ pairs as below:\\
+$$P_{n+1}=P_0 P_{n-1}+ P_1 P_{n-2}+\dots +P_{n-1} P_0$$
+Hence,
+$$P_{n+1}=\sum_{i=0}^{n}P_i P_{n-i}$$\\
+\textbf{Note:} The recurrence relation given above is a recurrenc relation for the \textbf{Catalan Numbers} in its summation form and can be converted to a simpler form as described in the text book.
+
+\subsection*{b.}
+
+\begin{enumerate}
+\item{\textit{Find number of ways to construct mountain ranges on a horizontal line for n upstrokes and n downstrokes so that the path does never pass the horizantal line}}\\ \\
+In this problem, as in the problem of paranthesis matching, we should again match the up and down strokes. Also the order of ups and downs again matter as in the case of paranthesis matching to guarantee that we will never fall down to the other side of the horizontal line. Hence at any time \textbf{before} the problem solved number of upstrokes are greater than or equal to the number of downstrokes and no downstroke not matching a previous upstroke should exist. At the end, number of upstrokes is equal to the number of downstrokes to reach to the horizontal line.
+\item{\textit{Finding number of all possible paths from $(0,0)$ to $(n,n)$ in an $n\times n$ grid, without touching the primary diagonal and under the restriction that only rightward and upward moves are allowed.}}\\ \\
+In this problem, we should match the rightward and upward moves to reach to $(n,n)$. We should also take care of the order of the rightward and upward moves to prevent to pass the diagonal. So at any time \textbf{before} the problem solved number of rightward moves are greater than or equal to the number of upward moves and no upward move not matching a previous rightward move should exist. At the end, number of rightward moves is equal to the number of upward moves to reach to the desired point.
+
+\end{enumerate}
+
+\section*{Answer 4}
+
+\begin{enumerate}[label=\roman*]
+
+\item 
+If the first comer sits in the right place(\textit{its own seat, i.e it choses the right place between n seats}), then no problem occurs because the ones come after him/her will definitely sit their assigned place. So the probability that $n-th$ comer will take the lab exam in the right place in such a case is: $$\frac{1}{n}$$
+\item 
+If the first comer sits in the $n-th$ seat, which has also a probability of $\frac{1}{n}$, then the probabilty for $n-th$ comer to sit to the right place is $0$. Hence this case should not be included to the overall probability.\\ \\
+\item 
+If the first comer sits in a seat of \textbf{i-th} person, where $i$ is in the \textbf{open} interval of $(1,n)$, then again the overall recurrence relation should be considered. For every possible $i-th$ comers, We have $n-i+1$ seats at hand which are the seats owned by the $1, i+1, i+2, i+3,\dots n$'th comers. If this $i-th$ comer sits to the place of $1st$ comer then no problem occurs and the later comers will sit their right places, if sits to the place of $j-th \in (i, n)$ comer, then again the recurrence relation occurs or else if sits to the position of $n-th$ comer, then $n-th$ comer cannot sit to the right place. Note that the probabily that $1st$ comer choose any place in the room is $\frac{1}{n}$. So the probability that $n-th$ one will take the lab exam in the right place in such a case is: $$\frac{1}{n} \sum_{i=2}^{n-1}a_{n-i+1}$$
+\end{enumerate}
+
+So the overall recurrence relation is: $$a_n=\frac{1}{n}(1+\sum_{i=2}^{n-1}a_i)$$
+
+In addition, choose $n=2$ as the base case. In that case if first one sits to its own place then 2nd one sits to right place, otherwise 2nd one cannot sit to the right place. Hence $$a_2=\frac{1}{2}$$
+
+\section*{Answer 5}
+\subsection*{a.}
+
+Note: A \textbf{desired string} refers to a \textit{ternary string that do not contain two consecutive 0s or two consecutive 1s}.
+
+\begin{align*}
+a_n &: \text{number of desired strings ending with 0} \\
+b_n &: \text{number of desired strings ending with 1} \\
+c_n &: \text{number of desired strings ending with 2} \\
+d_n &: a_n+b_n+c_n
+\end{align*}
+
+Note: $d_n$ is the main recurrence relation we want to find.\\
+
+We can construct a desired string ending with $2$ in three ways:
+\begin{enumerate}[label=\roman*]
+\item
+adding a $2$ to the end of a desired string ending with $2$
+\item
+adding a $2$ to the end of a desired string ending with $0$
+\item
+adding a $2$ to the end of a desired string ending with $1$
+\end{enumerate}
+
+Hence:
+\begin{equation} c_n = c_{n-1}+a_{n-1}+b_{n-1} \end{equation}
+which is also equal to $d_{n-1}$.\\
+
+We can construct a desired string ending with $1$ in two ways:
+\begin{enumerate}[label=\roman*]
+\item
+adding a $1$ to the end if a desired string ending with $2$
+\item
+adding a $1$ to the end if a desired string ending with $0$
+\end{enumerate}
+
+Hence:
+\begin{equation} b_n=c_{n-1}+a_{n-1} \end{equation}
+
+We can construct a desired string ending with $0$ in two ways:
+\begin{enumerate}[label=\roman*]
+\item
+adding a $0$ to the end if a desired string ending with $2$
+\item
+adding a $0$ to the end if a desired string ending with $1$
+\end{enumerate}
+
+Hence:
+\begin{equation} a_n=c_{n-1}+b_{n-1} \end{equation}
+
+If we add the equations (1),(2) and (3), we get:
+
+\begin{equation*} \underbrace{a_n+b_n+c_n}_{\text{$d_n$}}=2(\underbrace{a_{n-1}+b_{n-1}+c_{n-1}}_{\text{$d_{n-1}$}})+c_{n-1} \end{equation*}
+
+Also we know $c_{n-1}=d_{n-2}$ deriving from the fact that equation (1) is equal to $d_{n-1}$. Hence:
+\begin{equation} d_n=2d_{n-1}+d_{n-2}\end{equation}
+
+Base cases are $d_0=1$ \textit{-we have an empty string-} and $d_1=3$ \textit{-we have the strings 0, 1 and 2-}.\\
+
+Take $F(x)=\sum_{n=0}^{\infty}d_n x^n$.
+
+\begin{align*}
+F(x)-d_0-d_1 x &= \sum_{n=2}^{\infty}d_n x^n\\
+		   	   &= 2\sum_{n=2}^{\infty}d_{n-1} x^n + \sum_{n=2}^{\infty}d_{n-2} x^n\\
+ 	           &= 2x\sum_{n=1}^{\infty}d_n x^n+x^2 \sum_{n=0}^{\infty}d_n x^n\\
+			   &= 2x(F(x)-a_0)+x^2 F(x)
+\end{align*}
+Hence:
+\begin{align*}
+F(x) &= \frac{x+1}{1-x^2-2x}\\
+	 &= \frac{1}{2}\left(\frac{1}{(\sqrt{2}-1)-x} + \frac{1}{(-\sqrt{2}-1)-x}\right)\\
+	 &= \frac{1}{2}\left(\left(\frac{1}{\sqrt{2}-1}\right)\frac{1}{1-\frac{1}{\sqrt{2}-1}x} + \left(\frac{1}{-\sqrt{2}-1}\right)\frac{1}{1-\frac{1}{-\sqrt{2}-1}x}\right)\\
+	 &= \frac{1}{2}\left((\sqrt{2}+1)\frac{1}{1-(\sqrt{2}+1)x} + (-\sqrt{2}+1)\frac{1}{1-(-\sqrt{2}+1)x}\right)\\
+\end{align*}
+Then our series $d_n$ looks like: $$<\frac{(\sqrt{2}+1)(\sqrt{2}+1)^0+(-\sqrt{2}+1)(-\sqrt{2}+1)^0}{2},\frac{(\sqrt{2}+1)(\sqrt{2}+1)^1+(-\sqrt{2}+1)(-\sqrt{2}+1)^1}{2},\dots>$$
+Then the answer is: $$d_n=\frac{(\sqrt{2}+1)^{n+1}+(-\sqrt{2}+1)^{n+1}}{2}$$
+
+\subsection*{b.}
+
+Note: A \textbf{desired string} refers to a \textit{ternary string that contains two consecutive 0s,1s or 2s}.
+
+Take the number of desired strigns is equal to $a_n$.\\
+
+Desired strings ending with $0$, ending with $1$ and ending with $2$ are, each of them, equal to $\frac{a_n}{3}$ by observation.\\
+
+Consider the \textbf{desired strings} ending with $0$. Insert $0$ to the end of an arbitrary string. The term before last $0$ can be $0$, $1$ or $2$.
+
+\begin{enumerate}
+\item
+If the term before last $0$ is $0$, than we have the \textbf{desired stirng} at hand. Hence the other terms can be anything and we can choose these terms in $3^{n-2}$ many ways.
+\item
+If the term before last $0$ is $1$, then we have again the same recurrence starting from this $n-1$ $th$ term. Hence we have $\frac{a_{n-1}}{3}$ many ways to generate this kind of strings. Also if the term before last $0$ is $2$, then we have again the same case at hand. Then we should multiply the result found $2$ line above by $2$. Hence we have $\dfrac{2a_{n-1}}{3}$ many options in total for this case.
+\end{enumerate}
+
+Then we can generate \textbf{desired string} according to the recurrence relation given below:\\
+
+$$\frac{a_n}{3}=3^{n-2}+\frac{2a_{n-1}}{3}$$
+
+Hence:
+
+$$a_n=3^{n-1}+2a_{n-1}$$
+
+where $n\geq 2$ as we cannot generate a desired string with a length less than $2$. Also, due to the same reason, $a_0=a_1=0$.
+
+Take $F(x)=\sum_{n=0}^{\infty}d_n x^n$.
+
+\begin{align*}
+F(x)-a_0-a_1 x &= \frac{1}{3} \sum_{n=2}^{\infty} 3^n x^n + 2\sum_{n=2}^{\infty} a_{n-1} x^n \\
+			   &= \frac{1}{3} \sum_{n=2}^{\infty} 3^n x^n + 2x\sum_{n=1}^{\infty} a_n x^n \\
+			   &= \frac{1}{3}\left(\sum_{n=0}^{\infty} 3^n x^n -1 -3x\right) + 2x\left(\sum_{n=0}^{\infty} a_n x^n - a_0\right) \\
+			   &= \frac{1}{3} \left(\frac{1}{1-3x}-(1+3x)\right) + 2x F(x) \\
+			   &= 2x F(x) - \frac{1}{3} \left(\frac{1}{3x-1}+(3x+1)\right) \\
+			   &= 2x F(x) + 3 x^2 \frac{1}{1-3x} \\
+\end{align*}
+
+Hence:
+
+$$F(x)=3 x^2 \frac{1}{(1-2x)(1-3x)}=3x^2\left(\frac{3}{1-3x}-\frac{2}{1-2x}\right)$$
+
+Then:
+
+$$\left(\frac{3}{1-3x}-\frac{2}{1-2x}\right) \longleftrightarrow 
+<3^1 - 2^1, 3^2 - 2^2,\dots,3^{k+1} - 2^{k+1},\dots>$$ \\
+
+Therefore, by shifting the series by $2$ to the right and multiplying by $3$ we get:
+$$<0,0,3^2 - 3.2^1, 3^3 - 3.2^2,\dots,3^{k} - 3.2^{k-1},\dots>$$ 
+
+Hence:
+$$a_n=3^n-3.2^{n-1}$$
+
+\section*{Answer 6}
+
+Say a \textbf{regular chessboard} is a tiled chessboard with the dimensions $3\times n$ so that \textit{n is even} and a \textbf{non-regular chessboard} is a chessboard with the dimensions $2\times n$ that cannot be tiled, with \textit{n is odd}. Also note that these non-regular chessboards have exactly one non-tiled $1\times 1$ square in it, either placed in its right-top corner or in its right-bottom corner. We are asked to find the number of regular chessboards, say it is $a_n$ and let number of the non-regular chessboards be the $b_n$.\\
+
+\begin{enumerate}
+\item
+We can generate a regular chessboard length of $n$ by adding $3$ horizontal $2\times 1$ pieces to a regular chessboard length of $n-2$, which can be generated in $a_{n-2}$ many ways. Though we have other options to generate such a chessboard, they will be included in other cases. Hence we have $a_{n-2}$ many options for this case.
+\item
+We can generate a regular chessboard length of $n$ from a non-regular chessboard length of $n-1$, whose non-tiled corner is in its right-bottom corner, which can be generated in $b_{n-1}$ many ways. Introduce a horizontal $2\times 1$ piece so that left-half of it overlaps with the non-tiled square. Then introduce a vertical $2\times 1$ piece so that its bottom touches to the top of the right half of the piece introduced before. Also we can generate a regular chessboard length of $n$ from the same type of non-regular chessboard but having its non-tiled corner in its right-top corner, which can also be generated in $b_{n-1}$ many ways. Hence we have $2b_{n-1}$ many options for this case.\\ \\
+Hence \begin{equation}a_n=a_{n-2}+2b_{n-1} \end{equation}
+\end{enumerate}
+
+\begin{enumerate}
+\item
+We can generate a non-regular chessboard length of $n$ from a regular chessboard length of $n-1$. Introduce a vertical $2\times 1$ piece to the end of the regular chessboard, which can be generated in $a_{n-1}$ many ways, so that the non-tiled corner will be in the right-bottom corner of the non-regular chessboard. \textit{(Note: We will not multiply the result by $2$ to include the case where the non-tiled piece is in its right-top corner because this multiplying already done above.)} Hence we have $a_{n-1}$ many options for this case.
+\item
+We can generate a non-regular chessboard length of $n$ from a non-regular chessboard length of $n-2$, with its non-tiled corner is placed in its right-bottom corner. Introduce $3$ horizontal $2\times 1$ pieces so that their left sides touch to the rightmost boundries of the non-regular chessboard length of $n-2$, which can me generated in $b_{n-2}$ many ways. \textit{(Note: We will not multiply the result by $2$ to include the case where the non-tiled piece of the chessboard length of $n-2$ is in its right-top corner because this multiplying already done above.)} Hence we have $b_{n-2}$ many options for this case.\\ \\
+Hence \begin{equation}b_n=a_{n-1}+b_{n-2} \end{equation}
+\end{enumerate}
+
+We have the base cases for $a_n$: $a_0=1$ and $a_2=3$. Note that $a_n=0$ $\forall n=2k, k\in N$. Base cases for $b_n$ are not important as we will eliminate terms with $b_i$.
+
+Substitute the equation $(6)$ in $b_{n-1}$ form in $(5)$:
+
+\begin{equation} a_n=3a_{n-2}+2b_{n-3}\end{equation}
+
+Subtract the equation $(5)$ in the form $a_{n-2}$ from $(7)$:
+
+$$a_n=4a_{n-2}-a_{n-4}$$
+
+And this was our answer.
+
+\end{document}
+
+​
+

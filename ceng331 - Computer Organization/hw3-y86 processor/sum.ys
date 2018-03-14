@@ -1,0 +1,52 @@
+# 2099380
+# Onur Can TIRTIR
+
+.pos 0
+
+init:  
+        irmovq stack, %rsp
+        irmovq stack, %rbp
+        call main
+        halt
+
+.align 8
+
+ele1:
+        .quad 0x00a
+        .quad ele2
+
+ele2:
+        .quad 0x0b0
+        .quad ele3
+
+ele3:
+        .quad 0xc00
+        .quad 0
+
+main:
+        irmovq ele1, %rdi
+        call sum_list
+        ret
+
+# begin sum_list
+sum_list:
+        irmovq $0x0, %rax
+        jmp    test
+
+loop:
+        mrmovq (%rdi), %rcx
+        addq   %rcx, %rax
+        mrmovq $0x8(%rdi), %rdi
+
+test:
+        andq   %rdi, %rdi
+        jne    loop
+
+end:
+        ret
+# end of sum_list
+
+.pos 0x200
+
+stack:
+
