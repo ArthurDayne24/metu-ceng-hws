@@ -27,26 +27,13 @@ public class CengHashTable {
     }
 
     public CengBucket getRowsBucket(int rowIndex)
-    {
-        //CengBucket b = bucketlist.bucketAtIndex(rowAtIndex(rowIndex).getBucketIndex());
+    {        
         CengBucket b = rowAtIndex(rowIndex).getBucket();
-//        System.out.println("hashtableTEST: bucketIndex: " + rowAtIndex(rowIndex).getBucketIndex() + " prefix: "+ rowAtIndex(rowIndex).prefix);
-
         return b;
     }
 
     private void extend()
     {
-        // System.out.println("bits: " + bits + "rows: " + hashRows.size() + "  --------before extend--------------");
-        //for (CengHashRow cr: hashRows)
-        //{
-            // System.out.println("++++++++++++++++++++++++-");
-            // System.out.println("bucketindex: " + cr.bucketIndex);
-            // System.out.println("bits: " + cr.bits);
-            // System.out.println("prefix: " + cr.prefix);
-            // System.out.println("++++++++++++++++++++++++-");
-        //}
-
         ArrayList<CengHashRow> trows = new ArrayList<CengHashRow>(hashRows.size()*2);
         bits++;
 
@@ -55,7 +42,7 @@ public class CengHashTable {
             CengBucket bucket = getRowsBucket(i);
             bucket.notifyNoOnePoints();
         }
-        // System.out.println("In extent");
+
         for (int i = 0; i < hashRows.size(); i++)
         {
             CengBucket bucket = getRowsBucket(i);
@@ -72,28 +59,6 @@ public class CengHashTable {
             bucket.notify(2*i+1);
         }
         hashRows = trows;
-
-//        System.out.println("After exten++++++++++++++++++++++++++d");
-
-
-       // for (int i = 0; i < hashRows.size(); i++)
-        //{
-         //   System.out.println(hashRows.get(i).bucketIndex);
-          //  CengBucket bucket = getRowsBucket(i);
-  //          System.out.println("pointing: " + bucket.pointing + "\nnpointing: " + bucket.npointing);
-    //        System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-       // }
-
-        // System.out.println("bits: " + bits + "rows: " + hashRows.size() + "----------after extend--------------");
-        //for (CengHashRow cr: hashRows)
-        //{
-            // System.out.println("++++++++++++++++++++++++-");
-            // System.out.println("bucketindex: " + cr.bucketIndex);
-            // System.out.println("bits: " + cr.bits);
-            // System.out.println("prefix: " + cr.prefix);
-            // System.out.println("++++++++++++++++++++++++-");
-        //}
-
     }
 
     public CengBucket getBucket(CengCoin coin)
@@ -119,7 +84,6 @@ public class CengHashTable {
     public void splitBucket(CengBucket bucket)
     {
 
-        // System.out.println("Enter split!");
         bucketlist.disableOneBucket();
 
         int bucketIndex1 = bucketlist.addBucket(bucket.bits+1);
@@ -142,50 +106,23 @@ public class CengHashTable {
         {
             addCoin(coin);
         }
-
-//        bucket = new CengBucket(0, 0); //TODO
-        
-        // System.out.println("After split; bits = " + bits + " and rows.size = " + hashRows.size());
-//        for (CengHashRow cr: hashRows)
-  //      {
-            // System.out.println("++++++++++++++++++++++++");
-            // System.out.println("bucketindex: " + cr.bucketIndex);
-            // System.out.print("For that bucket\n");
-    //        for (CengCoin c: bucketlist.bucketAtIndex(cr.bucketIndex).coins)
-      //      {
-                // System.out.println("\t"+c.key());
-        //    }
-            // System.out.println("bits: " + cr.bits);
-            // System.out.println("prefix: " + cr.prefix);
-            // System.out.println("++++++++++++++++++++++++-");
-       // }
     }
 
     public void addCoin(CengCoin coin)
     {           
-        // System.out.println(146);
         CengBucket bucket = getBucket(coin);
-        // System.out.println(coin.key() + " is now being added...");
 
         if (!bucket.addSucceeds(coin))
         {
-            // System.out.println(151);
             if (isSplittable(bucket))
             {
-                // System.out.println(154);
-                // System.out.println("I should be there when 2!");
                 splitBucket(bucket);
-                // System.out.println(157);
                 addCoin(coin);
-                // System.out.println(159);
             }
             else
             {
-                // System.out.println(163);
                 extend();
-                // System.out.println(165);
                 addCoin(coin);
-                // System.out.println(167);
             }
         }
     }
@@ -296,11 +233,7 @@ public class CengHashTable {
         
         String innerTabs = generateTabs(tabs);
 
-//        String pointings = "-> "; // 
-//        for (int i = bucket.pointing; i < bucket.pointing+bucket.npointing; i++) //
- //           pointings += i+","; //
         String text =
-   //         innerTabs+"<bucket>"+pointings+"\n" +// 
             innerTabs+"<bucket>\n"+ // 
                 innerTabs+"\t<hashLength>"+bucket.bits+"</hashLength>\n"+
                 coinsText+
@@ -316,7 +249,6 @@ public class CengHashTable {
         String innerTabs = generateTabs(tabs);
         String trick = cengHashRow.prefix.equals("") ? "0" : cengHashRow.prefix;
         String text =
-//          innerTabs+"<row>myBucket: " + cengHashRow.bucketIndex+"\n"+
             innerTabs+"<row>\n"+
                 innerTabs+"\t<hashPrefix>"+trick+"</hashPrefix>\n"+
                 bucketText+
