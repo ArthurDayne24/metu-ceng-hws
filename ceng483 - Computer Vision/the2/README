@@ -1,0 +1,42 @@
+usage: train.py [-h] [--l [L [L ...]]] [--n N] [--r R] [--b B] [--lr LR]
+                [--w W] [--e E] [--i I] [--v V] [--s S] [--d D] [--bl BL]
+
+optional arguments:
+  -h, --help       show this help message and exit
+  --l [L [L ...]]  Neurons per hidden layers, should be specified if there is
+                   at least one hidden layer.
+  --n N            Model name, should be specified.
+  --r R            Create a new model if 0, else reload model specified above
+                   and ignore 'args.lr, args.l and args.w' parameters (to be
+                   derived from saved model), default=0.
+  --b B            Batch size, default=32.
+  --lr LR          Learning rate, default=0.001
+  --w W            Weight decay, default=0.0
+  --e E            Epochs, default=5.
+  --i I            Log interval, default=5.
+  --v V            Validate at the end of each epoch if 1, default=0
+  --s S            Save for every n'th epoch, 0 disables, default=0
+  --d D            Device (cuda or cpu), default='cuda'.
+  --bl BL          For training set, generate only epoch loss for each
+                   epoch if 0, default=1.
+                   
+--------------------------------------------------------------------------------
+
+usage: eval.py [-h] [--n N] [--self SELF] [--tv TV]
+
+optional arguments:
+  -h, --help   show this help message and exit
+  --n N        Model name, should be specified.
+  --self SELF  Evaluate self portrait in test mode.
+  --tv TV      'test' or 'validate mode', default='validate'
+
+--------------------------------------------------------------------------------
+
+1) model/ and eval/ directories are initially empty, they are created to store
+   models and results etc.
+2) npy files should be in this top directory.
+3) An example usage to test the final model mentioned in report:
+    python3.5 train.py --l 256 128 64 --n final --e 11 --d cuda --v 0
+    python3.5 eval.py --n final --tv test
+   These will generate mdl-finalestim-test.npy under eval/ directory
+                

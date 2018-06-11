@@ -1,0 +1,55 @@
+/******************************************************************************/
+
+Note: It is assumed that files included in "the3_test.zip" and "the3.zip"
+      archieves are put in this directory.
+
+/******************************************************************************/
+
+usage: train.py [-h] [--b B] [--lr LR] [--e E] [--w W] [--r R] [--n N] [--c C]
+                [--s S]
+
+optional arguments:
+  -h, --help  show this help message and exit
+  --b B       Batch size, default=8.
+  --lr LR     Learning rate, default=0.0001
+  --e E       Epochs, default=20.
+  --w W       Weight decay, default=0.0001
+  --r R       Create a new model if 0, else reload model specified above and
+              ignore 'args.lr, args.b and args.w' parameters (to be derived
+              from saved model), default=0.
+  --n N       Model name, should be specified.
+  --c C       On cuda (1) or not (1), default=0.
+  --s S       Save for each n epochs, 0 disables, default=0.
+
+/******************************************************************************/
+
+usage: eval.py [-h] [--n N] [--tv TV] [--c C]
+
+optional arguments:
+  -h, --help  show this help message and exit
+  --n N       Model name, should be specified.
+  --tv TV     'test' or 'validate mode', default='validate'
+  --c C       On cuda (1) or not (1), default=1.
+
+/******************************************************************************/
+
+Usage to generate "estimations_test.npy" with following (final) configurations:
+    Learning rate = 0.0001
+    Weight decay = 0.0001
+    Batch size = 8
+    Number of epochs = 88
+
+Run
+python3.5 gener.py
+Now we have numpy files for train, test and validation data's.
+
+Run
+python3.5 -W ignore train.py --e 88 --n final --c 1
+Now we have a trained model named "final" under "models/".
+
+Run
+python3.5 -W ignore eval.py --n final --tv test --c 1
+Now we have generated "estimations_test.npy" under this directory.
+
+/******************************************************************************/
+
