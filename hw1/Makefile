@@ -1,7 +1,7 @@
 all:
-	g++ *.cpp -o main -std=c++11
+	g++ *.cpp -o raytracer -std=c++11
 inspect:
-	g++ *.cpp -o main -std=c++11 -Wall -Wextra
+	g++ *.cpp -o raytracer -std=c++11 -Wall -Wextra
 clean:
-	rm main
+	rm raytracer
 
