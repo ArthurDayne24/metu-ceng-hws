@@ -2,7 +2,146 @@
 #include "tinyxml2.h"
 #include <sstream>
 #include <stdexcept>
+#include <cmath>
 #include <iostream>
+
+parser::Ray(const Camera & camera, float pixeli, float pixelj)
+    : origin(camera.position)
+{
+    float l = camera.near_plane.x,
+          r = camera.near_plane.y,
+          b = camera.near_plane.z,
+          t = camera.near_plane.w;
+
+    // pixel coordinates
+    float u = l + rminusl * (pixeli + 0.5) / image_width,
+          v = b + tminusb * (pixelj + 0.5) / image_height;
+
+    direction = scale(Camera.cross, u) + scale(Camera.cross, v) +
+        scale(Camera.gaze, near_distance);
+}
+
+bool parser::Ray::intersects(const Face & face, const std::vector<Vec3f> & vertex_data,
+                Vec3f & intersection)
+{
+    const Vec3f & vertex_a = vertex_data[face.v0_id - 1];
+    const Vec3f & vertex_b = vertex_data[face.v1_id - 1];
+    const Vec3f & vertex_c = vertex_data[face.v2_id - 1];
+
+    float a = vertex_a.x - vertex_b.x,
+          b = vertex_a.y - vertex_b.y,
+          c = vertex_a.z - vertex_b.z,
+          d = vertex_a.x - vertex_c.x,
+          e = vertex_a.y - vertex_c.y,
+          f = vertex_a.z - vertex_c.z,
+          g = vertex_d.x,
+          h = vertex_d.y,
+          i = vertex_d.z,
+          j = vertex_a.x - vertex_e.x,
+          k = vertex_a.y - vertex_e.y,
+          l = vertex_a.z - vertex_e.z;
+
+    float ei_hf = e*i - h*f,
+          gf_di = g*f - d*i,
+          dh_eg = d*h - e*g,
+          ak_jb = a*k - j*b,
+          jc_al = j*c - a*l,
+          bl_kc = b*l - k*c;
+
+    float M = a*ei_hf + b*gf_di + c*dh_eg;
+
+    float beta = (j*ei_hf + k*gf_di + l*dh_eg) / M,
+          gamma = (i*ak_jb + h*jc_al + g*bl_kc) / M,
+          t = -(f*ak_jb + e*jc_al + d*bl_kc) / M;
+    
+    // t0 ve t1 early stop conditionlarimiz yok, page 80 TODO
+    if (gamma < 0 || gamma > 1) {
+        return 0;
+    }
+    if (beta < 0 || beta > (1 - gamma)) {
+        return 0;
+    }
+    return 1;
+}
+
+bool parser::Ray::intersects(const Sphere & sphere,
+        const std::vector<Vec3f> & vertex_data, Vec3f & intersection)
+{
+    // object(sphere)'s center
+    const Vec3f & center = vertex_data[sphere.center_vertex_id-1];
+
+    // e - c (origin - center)
+    Vec3f B = diff(origin, center);
+    float C = dot(direction, direction);
+
+    float discriminant = pow(dot(B, direction), 2) - C * (dot(B, B) - pow(sphere.radius, 2));
+
+    if (discriminant < 0) {
+        return 0;
+    }
+    else if (discriminant == 0) {
+        float t = scale(dot(direction, B), -1) / C;
+
+        intersection = add(origin, scale(direction, t));
+    }
+    else /* if (discriminant > 0) */ {
+        float A = scale(dot(direction, B), -1),
+              S = sqrt(discriminant);
+
+        float t1 = (A + S) / C,
+              t2 = (A - S) / C;
+
+        Vec3f intersection1 = add(origin, scale(direction, t1)),
+              intersection2 = add(origin, sclae(direction, t2));
+
+        if (distance(origin, intersection1) < distance(origin, intersection2)) {
+            intersection = intersection1;
+        }
+        else {
+            intersection = intersection2;
+        }
+    }
+
+    return 1;
+}
+
+Vec3f parser::Ray::intensity_at(const Vec3f & point)
+{
+    float d2 = pow(distance(origin.position, point), 2);
+
+    return Vec3f(origin.intensity.x / d2, origin.intensity.y / d2,
+            origin.intensity / d2);
+}
+
+inline float parser::distance(const Vec3f & vec1,const Vec3f & vec2)
+{
+    return normalize(diff(vec1, vec2));
+}
+
+inline float parser::normalize(const Vec3f & vec)
+{
+    return sqrt(powf(vec.x,const 2& ) + powf(vec.y, 2) + powf(vec.z, 2));
+}
+
+inline float parser::diff(const Vec3f & vec1,const Vec3f & vec2)
+{
+    return Vec3f(vec1.x - vec2.x, vec1.y - vec2.y, vec1.z - vec2.z);
+}
+
+inline float parser::add(const Vec3f & vec1,const Vec3f & vec2)
+{
+    return Vec3f(vec1.x + vec2.x, vec1.y + vec2.y, vec1.z + vec2.z);
+}
+
+inline float parser::dot(const Vec3f & vec1,const Vec3f & vec2)
+{
+    return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
+}
+
+inline void parser::scale(const Vec3f & vec, float k)
+{
+    vec.x *= k; vec.y *= k; vec.z *= k;
+}
 
 void parser::Scene::loadFromXml(const std::string& filepath)
 {
@@ -85,6 +224,14 @@ void parser::Scene::loadFromXml(const std::string& filepath)
         stream >> camera.near_distance;
         stream >> camera.image_width >> camera.image_height;
         stream >> camera.image_name;
+
+        // Additional initialization steps for camera
+        
+        // For now hardcoded TODO
+        camera.cross = Vec3f(1, 0, 0);
+
+        camera.rminusl = camera.near_plane.y - camera.near_plane.x;
+        camera.tminusb = camera.near_plane.w - camera.near_plane.z;
 
         cameras.push_back(camera);
         element = element->NextSiblingElement("Camera");

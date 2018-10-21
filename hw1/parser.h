@@ -8,74 +8,107 @@ namespace parser
 {
     //Notice that all the structures are as simple as possible
     //so that you are not enforced to adopt any style or design.
-    struct Vec3f
+    typedef struct Vec3f
     {
         float x, y, z;
-    };
 
-    struct Vec3i
+    } Vec3f;
+
+    // Vec3f utils
+    inline float distance(const Vec3f & vec1,const Vec3f & vec2);
+    inline float normalize(const Vec3f & vec);
+    inline float diff(Vec3f vec1,const Vec3f & vec2);
+    inline float add(const Vec3f & vec1,const Vec3f & vec2);
+    inline float dot(const Vec3f & vec1,const Vec3f & vec2);
+    inline void scale(const Vec3f & vec, float k);
+
+    typedef struct Vec3i
     {
         int x, y, z;
-    };
+    } Vec3i;
 
-    struct Vec4f
+    typedef struct Vec4f
     {
         float x, y, z, w;
-    };
+    } Vec4f;
 
-    struct Camera
+    typedef struct Camera
     {
         Vec3f position;
-        Vec3f gaze;
-        Vec3f up;
-        Vec4f near_plane;
+        Vec3f gaze; // -w
+        Vec3f cross; // u
+        Vec3f up; // v
+        Vec4f near_plane; // left, right, bottom, top
         float near_distance;
         int image_width, image_height;
         std::string image_name;
-    };
+        // for reuse at each ray, optimization :)
+        float rminusl;
+        float tminusb;
+    } Camera;
 
-    struct PointLight
+    typedef struct PointLight
     {
         Vec3f position;
-        Vec3f intensity;
-    };
+        Vec3f intensity;     
+    } PointLight;
 
-    struct Material
+    typedef struct Ray
+    {
+        struct Vec3f origin;
+        Vec3f direction;
+
+        Ray(const struct PointLight & origin, const struct & Vec3f pixel);
+
+        Vec3f intensity_at(const Vec3f & point);
+
+        // These two functions also fill "intersection" with intersecting point and 
+        // return True if intersection exists, else just return False
+
+        // Can be used both for Triangle and Mesh objects
+        bool intersects(const Face & face, const std::vector<Vec3f> & vertex_data,
+                Vec3f & intersection);
+        // For sphere
+        bool intersects(const Sphere & sphere, const std::vector<Vec3f> & vertex_data,
+                Vec3f & intersection);
+    } Ray;
+
+    typedef struct Material
     {
         Vec3f ambient;
         Vec3f diffuse;
         Vec3f specular;
         Vec3f mirror;
         float phong_exponent;
-    };
+    } Material;
 
-    struct Face
+    typedef struct Face
     {
         int v0_id;
         int v1_id;
         int v2_id;
-    };
+    } Face;
 
-    struct Mesh
+    typedef struct Mesh
     {
         int material_id;
         std::vector<Face> faces;
-    };
+    } Mesh;
 
-    struct Triangle
+    typedef struct Triangle
     {
         int material_id;
         Face indices;
-    };
+    } Triangle;
 
-    struct Sphere
+    typedef struct Sphere
     {
         int material_id;
         int center_vertex_id;
         float radius;
-    };
+    } Sphere;
 
-    struct Scene
+    typedef struct Scene
     {
         //Data
         Vec3i background_color;
@@ -92,7 +125,7 @@ namespace parser
 
         //Functions
         void loadFromXml(const std::string& filepath);
-    };
+    } Scene;
 }
 
 #endif

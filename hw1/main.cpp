@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
         {   0,   0, 255 },  // Blue
         {   0,   0,   0 },  // Black
     };
-
+/*
     int width = 640, height = 480;
     int columnWidth = width / 8;
 
@@ -45,5 +45,6 @@ int main(int argc, char* argv[])
     }
 
     write_ppm(argv[2], image, width, height);
+*/
 
 }
