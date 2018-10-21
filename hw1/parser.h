@@ -12,15 +12,23 @@ namespace parser
     {
         float x, y, z;
 
+        Vec3f(float x=0, float y=0, float z=0); 
+
+        // Sorry but I could not move them to .cpp xd
+        friend Vec3f operator+(const Vec3f & vec1,const Vec3f & vec2) {
+            return parser::Vec3f(vec1.x + vec2.x, vec1.y + vec2.y, vec1.z + vec2.z);
+        }
+
+        friend Vec3f operator-(const Vec3f & vec1,const Vec3f & vec2) {
+            return parser::Vec3f(vec1.x - vec2.x, vec1.y - vec2.y, vec1.z - vec2.z);
+        }
+
     } Vec3f;
 
-    // Vec3f utils
     inline float distance(const Vec3f & vec1,const Vec3f & vec2);
-    inline float normalize(const Vec3f & vec);
-    inline float diff(Vec3f vec1,const Vec3f & vec2);
-    inline float add(const Vec3f & vec1,const Vec3f & vec2);
+    inline float norm(const Vec3f & vec);
     inline float dot(const Vec3f & vec1,const Vec3f & vec2);
-    inline void scale(const Vec3f & vec, float k);
+    inline Vec3f scale(const Vec3f & vec, float k);
 
     typedef struct Vec3i
     {
@@ -52,26 +60,6 @@ namespace parser
         Vec3f position;
         Vec3f intensity;     
     } PointLight;
-
-    typedef struct Ray
-    {
-        struct Vec3f origin;
-        Vec3f direction;
-
-        Ray(const struct PointLight & origin, const struct & Vec3f pixel);
-
-        Vec3f intensity_at(const Vec3f & point);
-
-        // These two functions also fill "intersection" with intersecting point and 
-        // return True if intersection exists, else just return False
-
-        // Can be used both for Triangle and Mesh objects
-        bool intersects(const Face & face, const std::vector<Vec3f> & vertex_data,
-                Vec3f & intersection);
-        // For sphere
-        bool intersects(const Sphere & sphere, const std::vector<Vec3f> & vertex_data,
-                Vec3f & intersection);
-    } Ray;
 
     typedef struct Material
     {
@@ -107,6 +95,24 @@ namespace parser
         int center_vertex_id;
         float radius;
     } Sphere;
+
+    typedef struct CameraRay
+    {
+        Vec3f origin;
+        Vec3f direction;
+
+        CameraRay(const Camera & camera, float pixeli, float pixelj);
+
+        // These two functions also fill "intersection" with intersecting point and 
+        // return True if intersection exists, else just return False
+
+        // Can be used both for Triangle and Mesh objects
+        bool intersects(const Face & face, const std::vector<Vec3f> & vertex_data,
+                Vec3f & intersection);
+        // For sphere
+        bool intersects(const Sphere & sphere, const std::vector<Vec3f> & vertex_data,
+                Vec3f & intersection);
+    } CameraRay;
 
     typedef struct Scene
     {
