@@ -19,7 +19,7 @@ parser::CameraRay::CameraRay(const Camera & camera, float pixeli, float pixelj)
     float u = l + camera.rminusl * (pixeli + 0.5) / camera.image_width,
           v = b + camera.tminusb * (pixelj + 0.5) / camera.image_height;
 
-    ray_direction = scale(camera.cross, u) + scale(camera.cross, v) +
+    ray_direction = scale(camera.cross, u) + scale(camera.up, v) +
         scale(camera.gaze, camera.near_distance);
 }
 
