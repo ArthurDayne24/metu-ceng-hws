@@ -33,8 +33,8 @@ parser::LightRay::LightRay(const PointLight & point_light, const Vec3f & target_
     ray_direction = scale(diff, 1 / length);
 }
 
-bool parser::Ray::intersects(const Face & face, const std::vector<Vec3f> & vertex_data,
-        Vec3f & intersection)
+bool parser::CameraRay::intersects(const Face & face,
+        const std::vector<Vec3f> & vertex_data, Vec3f & intersection)
 {
     const Vec3f & vertex_a = vertex_data[face.v0_id - 1];
     const Vec3f & vertex_b = vertex_data[face.v1_id - 1];
@@ -77,7 +77,24 @@ bool parser::Ray::intersects(const Face & face, const std::vector<Vec3f> & verte
     return 1;
 }
 
-bool parser::Ray::intersects(const Sphere & sphere,
+bool parser::CameraRay::intersects(const Triangle & triangle,
+        const std::vector<Vec3f> & vertex_data, Vec3f & intersection)
+{
+    return intersects(triangle.indices, vertex_data, intersection);
+}
+
+bool parser::CameraRay::intersects(const Mesh & mesh,
+        const std::vector<Vec3f> & vertex_data, Vec3f & intersection)
+{
+    for (const Face & face: mesh.faces) {
+        if (intersects(face, vertex_data, intersection)) {
+            return 1;            
+        }
+    }
+    return 0;
+}
+
+bool parser::CameraRay::intersects(const Sphere & sphere,
         const std::vector<Vec3f> & vertex_data, Vec3f & intersection)
 {
     // object(sphere)'s center
@@ -173,6 +190,13 @@ inline parser::Vec3f parser::scale(const parser::Vec3f & vec, float k)
     return parser::Vec3f(vec.x * k, vec.y * k, vec.z * k);
 }
 
+inline parser::Vec3f parser::cross_product(const Vec3f & vec1, const Vec3f & vec2)
+{
+    return Vec3f(vec1.y * vec2.z - vec2.y * vec1.z,
+            vec2.x * vec1.z - vec1.x * vec2.z,
+            vec1.x * vec2.y - vec2.x * vec1.y);
+}
+
 void parser::Scene::loadFromXml(const std::string& filepath)
 {
     tinyxml2::XMLDocument file;
@@ -257,8 +281,7 @@ void parser::Scene::loadFromXml(const std::string& filepath)
 
         // Additional initialization steps for camera
         
-        // For now hardcoded TODO
-        camera.cross = Vec3f(1, 0, 0);
+        camera.cross = parser::cross_product(camera.up, scale(camera.gaze, -1)) ;
 
         camera.rminusl = camera.near_plane.y - camera.near_plane.x;
         camera.tminusb = camera.near_plane.w - camera.near_plane.z;

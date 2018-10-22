@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
     // The code below creates a test pattern and writes
     // it to a PPM file to demonstrate the usage of the
     // ppm_write function.
-
+/*
     const RGB BAR_COLOR[8] =
     {
         { 255, 255, 255 },  // 100% White
@@ -26,9 +26,8 @@ int main(int argc, char* argv[])
         {   0,   0, 255 },  // Blue
         {   0,   0,   0 },  // Black
     };
-/*
-    int width = 640, height = 480;
-    int columnWidth = width / 8;
+    
+    int width = scene.width, height = scene.height;
 
     unsigned char* image = new unsigned char [width * height * 3];
 
@@ -37,7 +36,6 @@ int main(int argc, char* argv[])
     {
         for (int x = 0; x < width; ++x)
         {
-            int colIdx = x / columnWidth;
             image[i++] = BAR_COLOR[colIdx][0];
             image[i++] = BAR_COLOR[colIdx][1];
             image[i++] = BAR_COLOR[colIdx][2];
@@ -46,5 +44,5 @@ int main(int argc, char* argv[])
 
     write_ppm(argv[2], image, width, height);
 */
-
 }
+

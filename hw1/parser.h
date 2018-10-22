@@ -29,6 +29,7 @@ namespace parser
     inline float norm(const Vec3f & vec);
     inline float dot(const Vec3f & vec1,const Vec3f & vec2);
     inline Vec3f scale(const Vec3f & vec, float k);
+    inline Vec3f cross_product(const Vec3f & vec1, const Vec3f & vec2);
 
     typedef struct Vec3i
     {
@@ -102,22 +103,31 @@ namespace parser
         Vec3f ray_direction;
 
         Ray(const Vec3f & origin);
-
-        // These two functions also fill "intersection" with intersecting point and 
-        // return True if intersection exists, else just return False
-
-        // Object-wise intersection functions to find intersection point if exists
-        // Can be used both for Triangle and Mesh objects
-        bool intersects(const Face & face, const std::vector<Vec3f> & vertex_data,
-                Vec3f & intersection);
-        // For sphere
-        bool intersects(const Sphere & sphere, const std::vector<Vec3f> & vertex_data,
-                Vec3f & intersection);
     } Ray;
 
     typedef struct CameraRay: public Ray
     {
         CameraRay(const Camera & camera, float pixeli, float pixelj);
+
+        // Object-wise intersection
+        // These functions also fill "intersection" with intersecting point and 
+        // return True if intersection exists, else just return False
+
+        // For sphere
+        bool intersects(const Sphere & sphere, const std::vector<Vec3f> & vertex_data,
+                Vec3f & intersection);
+        // For triangle
+        bool intersects(const Triangle & triangle, const std::vector<Vec3f> & vertex_data,
+                Vec3f & intersection);
+        // For mesh
+        bool intersects(const Mesh & mesh, const std::vector<Vec3f> & vertex_data,
+                Vec3f & intersection);
+
+        private:
+        // For face
+        bool intersects(const Face & face, const std::vector<Vec3f> & vertex_data,
+                Vec3f & intersection);
+
     } CameraRay;
 
     // TODO to be determined later
@@ -130,7 +140,7 @@ namespace parser
     
         LightRay(const PointLight & point_ligt, const Vec3f & target_point);
 
-        // Point wise intersection
+        // Point wise intersection up to an error of EqualityEpsilon
         bool intersects(const Vec3f & point);
 
         Vec3f intensity_at(const Vec3f & point);
