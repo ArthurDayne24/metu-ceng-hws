@@ -99,34 +99,41 @@ namespace parser
     typedef struct Ray
     {
         Vec3f origin;
+        Vec3f ray_direction;
 
         Ray(const Vec3f & origin);
 
         // These two functions also fill "intersection" with intersecting point and 
         // return True if intersection exists, else just return False
 
+        // Object-wise intersection functions to find intersection point if exists
         // Can be used both for Triangle and Mesh objects
-        bool intersects(const Face & face, const Vec3f & ray_direction,
-                const std::vector<Vec3f> & vertex_data, Vec3f & intersection);
+        bool intersects(const Face & face, const std::vector<Vec3f> & vertex_data,
+                Vec3f & intersection);
         // For sphere
-        bool intersects(const Sphere & sphere, const Vec3f & ray_direction,
-                const std::vector<Vec3f> & vertex_data, Vec3f & intersection);
+        bool intersects(const Sphere & sphere, const std::vector<Vec3f> & vertex_data,
+                Vec3f & intersection);
     } Ray;
 
     typedef struct CameraRay: public Ray
     {
-        // LightRay does not have a "persistent" direction but CameraRay has
-        Vec3f ray_direction;
-        
         CameraRay(const Camera & camera, float pixeli, float pixelj);
     } CameraRay;
+
+    // TODO to be determined later
+    // Used to achieve precision loss due to floating points
+    const float EqualityEpsilon = 1e-6;
 
     typedef struct LightRay: public Ray
     {
         Vec3f intensity;
+    
+        LightRay(const PointLight & point_ligt, const Vec3f & target_point);
 
-        LightRay(const PointLight & point_ligt);
-        Vec3f intensity_at(const Vec3f & vec);
+        // Point wise intersection
+        bool intersects(const Vec3f & point);
+
+        Vec3f intensity_at(const Vec3f & point);
     } LightRay;
 
     typedef struct Scene

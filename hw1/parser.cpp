@@ -23,13 +23,18 @@ parser::CameraRay::CameraRay(const Camera & camera, float pixeli, float pixelj)
         scale(camera.gaze, camera.near_distance);
 }
 
-parser::LightRay::LightRay(const PointLight & point_light)
+parser::LightRay::LightRay(const PointLight & point_light, const Vec3f & target_point)
     : Ray(point_light.position), intensity(point_light.intensity)
 {
+    Vec3f diff = target_point - origin;
+    float length = norm(diff);
+
+    // unit vector
+    ray_direction = scale(diff, 1 / length);
 }
 
-bool parser::Ray::intersects(const Face & face, const Vec3f & ray_direction,
-        const std::vector<Vec3f> & vertex_data, Vec3f & intersection)
+bool parser::Ray::intersects(const Face & face, const std::vector<Vec3f> & vertex_data,
+        Vec3f & intersection)
 {
     const Vec3f & vertex_a = vertex_data[face.v0_id - 1];
     const Vec3f & vertex_b = vertex_data[face.v1_id - 1];
@@ -72,7 +77,7 @@ bool parser::Ray::intersects(const Face & face, const Vec3f & ray_direction,
     return 1;
 }
 
-bool parser::Ray::intersects(const Sphere & sphere, const Vec3f & ray_direction,
+bool parser::Ray::intersects(const Sphere & sphere,
         const std::vector<Vec3f> & vertex_data, Vec3f & intersection)
 {
     // object(sphere)'s center
@@ -108,6 +113,30 @@ bool parser::Ray::intersects(const Sphere & sphere, const Vec3f & ray_direction,
         else {
             intersection = intersection2;
         }
+    }
+
+    return 1;
+}
+
+bool parser::LightRay::intersects(const Vec3f & point)
+{
+    Vec3f diff = point - origin;
+
+    float ratio_x = diff.x / point.x,
+          ratio_y = diff.y / point.y,
+          ratio_z = diff.z / point.z;
+
+    if (ratio_x > ratio_y + parser::EqualityEpsilon ||
+            ratio_x < ratio_y - parser::EqualityEpsilon) {
+        return 0;
+    }
+    if (ratio_z > ratio_y + parser::EqualityEpsilon ||
+            ratio_z < ratio_y - parser::EqualityEpsilon) {
+        return 0;
+    }
+    if (ratio_x > ratio_z + parser::EqualityEpsilon ||
+            ratio_x < ratio_z - parser::EqualityEpsilon) {
+        return 0;
     }
 
     return 1;
