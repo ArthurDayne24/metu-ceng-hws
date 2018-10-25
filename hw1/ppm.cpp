@@ -13,9 +13,9 @@ void write_ppm(const char* filename, unsigned char* data, int width, int height)
     (void) fprintf(outfile, "P3\n%d %d\n255\n", width, height);
 
     unsigned char color;
-    for (size_t j = 0, idx = 0; j < height; ++j)
+    for (int j = 0, idx = 0; j < height; ++j)
     {
-        for (size_t i = 0; i < width; ++i)
+        for (int i = 0; i < width; ++i)
         {
             for (size_t c = 0; c < 3; ++c, ++idx)
             {

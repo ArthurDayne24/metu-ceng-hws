@@ -16,11 +16,11 @@ namespace parser
 
         // Sorry but I could not move them to .cpp xd
         friend Vec3f operator+(const Vec3f & vec1,const Vec3f & vec2) {
-            return parser::Vec3f(vec1.x + vec2.x, vec1.y + vec2.y, vec1.z + vec2.z);
+            return Vec3f(vec1.x + vec2.x, vec1.y + vec2.y, vec1.z + vec2.z);
         }
 
         friend Vec3f operator-(const Vec3f & vec1,const Vec3f & vec2) {
-            return parser::Vec3f(vec1.x - vec2.x, vec1.y - vec2.y, vec1.z - vec2.z);
+            return Vec3f(vec1.x - vec2.x, vec1.y - vec2.y, vec1.z - vec2.z);
         }
 
     } Vec3f;
@@ -54,6 +54,7 @@ namespace parser
         // for reuse at each ray, optimization :)
         float rminusl;
         float tminusb;
+
     } Camera;
 
     typedef struct PointLight
@@ -99,40 +100,50 @@ namespace parser
 
     typedef struct Ray
     {
-        Vec3f origin;
+        Vec3f ray_origin;
         Vec3f ray_direction;
 
-        Ray(const Vec3f & origin);
+        Ray(const Vec3f & ray_origin);
     } Ray;
 
+    // For each pixel, there exist a CameraRay
+    // It stores intersection point and """"RGB value represented by that pixel""""
+    // So calculations for each pixel will be stored in CameraRay objects' "RGB vector"
+    // CameraRay intersects an object, else intersection_exists is set to 0
     typedef struct CameraRay: public Ray
     {
         CameraRay(const Camera & camera, float pixeli, float pixelj);
 
+        Vec3f RGB;
+        bool intersection_exists = 0;
+        // These are set in main/render_image by compairing all objects !
+        Vec3f intersection;
+        Vec3f intersection_distance;
+
         // Object-wise intersection
-        // These functions also fill "intersection" with intersecting point and 
-        // return True if intersection exists, else just return False
+        // These functions also fill "f_intersection" with intersecting point and
+        // and f_distance and return True if intersection exists, else just return False
 
         // For sphere
         bool intersects(const Sphere & sphere, const std::vector<Vec3f> & vertex_data,
-                Vec3f & intersection);
+                Vec3f & f_intersection, float & f_distance);
         // For triangle
         bool intersects(const Triangle & triangle, const std::vector<Vec3f> & vertex_data,
-                Vec3f & intersection);
+                Vec3f & f_intersection, float & f_distance);
         // For mesh
         bool intersects(const Mesh & mesh, const std::vector<Vec3f> & vertex_data,
-                Vec3f & intersection);
+                Vec3f & f_intersection, float & f_distance);
 
         private:
         // For face
         bool intersects(const Face & face, const std::vector<Vec3f> & vertex_data,
-                Vec3f & intersection);
+                Vec3f & f_intersection, float & f_distance);
 
     } CameraRay;
 
     // TODO to be determined later
     // Used to achieve precision loss due to floating points
-    const float EqualityEpsilon = 1e-6;
+    const float EqualityEpsilon = 1e-4;
 
     typedef struct LightRay: public Ray
     {

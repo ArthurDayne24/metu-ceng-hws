@@ -5,12 +5,12 @@
 #include <cmath>
 #include <iostream>
 
-parser::Ray::Ray(const Vec3f & origin) : origin(origin)
+parser::Ray::Ray(const Vec3f & ray_origin) : ray_origin(ray_origin)
 {
 }
 
 parser::CameraRay::CameraRay(const Camera & camera, float pixeli, float pixelj)
-    : Ray(camera.position)
+    : Ray(camera.position), RGB(0, 0, 0)
 {
     float l = camera.near_plane.x,
           b = camera.near_plane.z;
@@ -26,7 +26,7 @@ parser::CameraRay::CameraRay(const Camera & camera, float pixeli, float pixelj)
 parser::LightRay::LightRay(const PointLight & point_light, const Vec3f & target_point)
     : Ray(point_light.position), intensity(point_light.intensity)
 {
-    Vec3f diff = target_point - origin;
+    Vec3f diff = target_point - ray_origin;
     float length = norm(diff);
 
     // unit vector
@@ -34,7 +34,7 @@ parser::LightRay::LightRay(const PointLight & point_light, const Vec3f & target_
 }
 
 bool parser::CameraRay::intersects(const Face & face,
-        const std::vector<Vec3f> & vertex_data, Vec3f & intersection)
+        const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection, float & f_distance)
 {
     const Vec3f & vertex_a = vertex_data[face.v0_id - 1];
     const Vec3f & vertex_b = vertex_data[face.v1_id - 1];
@@ -49,9 +49,9 @@ bool parser::CameraRay::intersects(const Face & face,
           g = ray_direction.x,
           h = ray_direction.y,
           i = ray_direction.z,
-          j = vertex_a.x - origin.x,
-          k = vertex_a.y - origin.y,
-          l = vertex_a.z - origin.z;
+          j = vertex_a.x - ray_origin.x,
+          k = vertex_a.y - ray_origin.y,
+          l = vertex_a.z - ray_origin.z;
 
     float ei_hf = e*i - h*f,
           gf_di = g*f - d*i,
@@ -66,7 +66,7 @@ bool parser::CameraRay::intersects(const Face & face,
           gamma = (i*ak_jb + h*jc_al + g*bl_kc) / M,
           t = -(f*ak_jb + e*jc_al + d*bl_kc) / M;
    
-    // Find intersection and assign to given ref variable TODO
+    // Find intersection and assign f_intersection and f_distance TODO
     // t0 ve t1 early stop conditionlarimiz yok, page 80 TODO
     if (gamma < 0 || gamma > 1) {
         return 0;
@@ -78,16 +78,16 @@ bool parser::CameraRay::intersects(const Face & face,
 }
 
 bool parser::CameraRay::intersects(const Triangle & triangle,
-        const std::vector<Vec3f> & vertex_data, Vec3f & intersection)
+        const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection, float & f_distance)
 {
-    return intersects(triangle.indices, vertex_data, intersection);
+    return intersects(triangle.indices, vertex_data, f_intersection, f_distance);
 }
 
 bool parser::CameraRay::intersects(const Mesh & mesh,
-        const std::vector<Vec3f> & vertex_data, Vec3f & intersection)
+        const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection, float & f_distance)
 {
     for (const Face & face: mesh.faces) {
-        if (intersects(face, vertex_data, intersection)) {
+        if (intersects(face, vertex_data, f_intersection, f_distance)) {
             return 1;            
         }
     }
@@ -95,13 +95,12 @@ bool parser::CameraRay::intersects(const Mesh & mesh,
 }
 
 bool parser::CameraRay::intersects(const Sphere & sphere,
-        const std::vector<Vec3f> & vertex_data, Vec3f & intersection)
+        const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection, float & f_distance)
 {
-    // object(sphere)'s center
-    const Vec3f & center = vertex_data[sphere.center_vertex_id-1];
+    const Vec3f & sphere_center = vertex_data[sphere.center_vertex_id-1];
 
-    // e - c (origin - center)
-    Vec3f B = origin - center;
+    // e - c (ray_origin - sphere_center)
+    Vec3f B = ray_origin - sphere_center;
     float C = dot(ray_direction, ray_direction);
 
     float discriminant = powf(dot(B, ray_direction), 2) - C * (dot(B, B) - powf(sphere.radius, 2));
@@ -112,7 +111,7 @@ bool parser::CameraRay::intersects(const Sphere & sphere,
     else if (discriminant == 0) {
         float t = -dot(ray_direction, B) / C;
 
-        intersection = origin + scale(ray_direction, t);
+        f_intersection = ray_origin + scale(ray_direction, t);
     }
     else /* if (discriminant > 0) */ {
         float A = -dot(ray_direction, B),
@@ -121,23 +120,25 @@ bool parser::CameraRay::intersects(const Sphere & sphere,
         float t1 = (A + S) / C,
               t2 = (A - S) / C;
 
-        Vec3f intersection1 = origin + scale(ray_direction, t1),
-              intersection2 = origin + scale(ray_direction, t2);
+        Vec3f intersection1 = ray_origin + scale(ray_direction, t1),
+              intersection2 = ray_origin + scale(ray_direction, t2);
 
-        if (distance(origin, intersection1) < distance(origin, intersection2)) {
-            intersection = intersection1;
+        if (distance(ray_origin, intersection1) < distance(ray_origin, intersection2)) {
+            f_intersection = intersection1;
         }
         else {
-            intersection = intersection2;
+            f_intersection = intersection2;
         }
     }
 
+    f_distance = parser::distance(f_intersection, ray_origin);
+    
     return 1;
 }
 
 bool parser::LightRay::intersects(const Vec3f & point)
 {
-    Vec3f diff = point - origin;
+    Vec3f diff = point - ray_origin;
 
     float ratio_x = diff.x / point.x,
           ratio_y = diff.y / point.y,
@@ -161,7 +162,7 @@ bool parser::LightRay::intersects(const Vec3f & point)
 
 parser::Vec3f parser::LightRay::intensity_at(const Vec3f & point)
 {
-    float d = distance(origin, point);
+    float d = distance(ray_origin, point);
 
     return scale(intensity, 1 / powf(d, 2));
 }
