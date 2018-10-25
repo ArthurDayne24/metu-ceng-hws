@@ -281,7 +281,7 @@ void parser::Scene::loadFromXml(const std::string& filepath)
 
         // Additional initialization steps for camera
         
-        camera.cross = parser::cross_product(camera.up, scale(camera.gaze, -1)) ;
+        camera.cross = parser::cross_product(camera.up, camera.gaze) ;
 
         camera.rminusl = camera.near_plane.y - camera.near_plane.x;
         camera.tminusb = camera.near_plane.w - camera.near_plane.z;
