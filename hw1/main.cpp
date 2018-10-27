@@ -20,74 +20,117 @@ const RGB BAR_COLOR[8] =
 // Our main function for homework
 void render_image(const parser::Camera & camera, const parser::Scene & scene)
 {
-        int width = camera.image_width, height = camera.image_height;
-        unsigned char image[width * height * 3];
+    int width = camera.image_width, height = camera.image_height;
+    unsigned char image[height * width * 3];
 
-        // ***********************************************************************
-        // Store intersection points and "RGB" values for corresponding pixel
-        // ***********************************************************************
-        
-        std::vector<parser::CameraRay> cameraRays;
-        cameraRays.reserve(width * height * 3);
-        
-        // Calculate "parser::CameraRay"s for each pixel
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
+    // ***********************************************************************
+    // Store intersection points and "RGB" values for corresponding pixel
+    // ***********************************************************************
+    
+    std::vector<std::vector<parser::CameraRay>> cameraRays;
+    cameraRays.reserve(height);
+    
+    // Calculate "parser::CameraRay"s for each pixel
+    for (int y = 0; y < height; ++y) {
 
-                cameraRays.emplace_back(parser::CameraRay(camera, x, y));
-                parser::CameraRay & cameraRay = cameraRays.back();
-                
-                float min_distance = std::numeric_limits<float>::max(), f_distance;
-                parser::Vec3f min_dist_intersection, f_intersection;
+        cameraRays.emplace_back(std::vector<parser::CameraRay>());
+        std::vector<parser::CameraRay> & cameraRaysCurHeight = cameraRays.back();
+        cameraRaysCurHeight.reserve(width);
 
-                for (const parser::Mesh & o: scene.meshes) {
-                    if (cameraRay.intersects(o, scene.vertex_data, f_intersection, f_distance)) {
-                        if (f_distance < min_distance) {
-                            min_distance = f_distance;
-                            min_dist_intersection = f_intersection;
-                        }
+        for (int x = 0; x < width; ++x) {
+
+            cameraRaysCurHeight.emplace_back(parser::CameraRay(camera, x, y));
+            parser::CameraRay & cameraRay = cameraRaysCurHeight.back();
+            
+            float min_distance = std::numeric_limits<float>::max(), f_distance;
+            parser::Vec3f min_dist_intersection, f_intersection;
+            int min_dist_mat_id;
+            parser::Vec3f min_dist_normal, f_normal;
+
+            for (const parser::Mesh & o: scene.meshes) {
+                if (cameraRay.intersects(o, scene.vertex_data, f_intersection,
+                            f_distance, f_normal)) {
+                    if (f_distance < min_distance) {
+                        min_distance = f_distance;
+                        min_dist_intersection = f_intersection;
+                        min_dist_mat_id = o.material_id;
+                        min_dist_normal = f_normal;
                     }
-                }
-                for (const parser::Triangle & o: scene.triangles) {
-                    if (cameraRay.intersects(o, scene.vertex_data, f_intersection, f_distance)) {
-                        if (f_distance < min_distance) {
-                            min_distance = f_distance;
-                            min_dist_intersection = f_intersection;
-                        }
-                    }
-                }
-                for (const parser::Sphere & o: scene.spheres) {
-                    if (cameraRay.intersects(o, scene.vertex_data, f_intersection, f_distance)) {
-                        if (f_distance < min_distance) {
-                            min_distance = f_distance;
-                            min_dist_intersection = f_intersection;
-                        }
-                    }
-                }
-
-                if (min_distance != std::numeric_limits<float>::max()) {
-                    cameraRay.intersection = min_dist_intersection;
-                    cameraRay.intersection_distance = min_distance;
-                    cameraRay.intersection_exists = 1;
-                }
-                else {
-                    cameraRay.intersection_exists = 0;
-                    // TODO set RGB to background colour;
                 }
             }
+            for (const parser::Triangle & o: scene.triangles) {
+                if (cameraRay.intersects(o, scene.vertex_data, f_intersection,
+                            f_distance, f_normal)) {
+                    if (f_distance < min_distance) {
+                        min_distance = f_distance;
+                        min_dist_intersection = f_intersection;
+                        min_dist_mat_id = o.material_id;
+                        min_dist_normal = f_normal;
+                    }
+                }
+            }
+            for (const parser::Sphere & o: scene.spheres) {
+                if (cameraRay.intersects(o, scene.vertex_data, f_intersection,
+                            f_distance, f_normal)) {
+                    if (f_distance < min_distance) {
+                        min_distance = f_distance;
+                        min_dist_intersection = f_intersection;
+                        min_dist_mat_id = o.material_id;
+                        min_dist_normal = f_normal;
+                    }
+                }
+            }
+
+            if (min_distance != std::numeric_limits<float>::max()) {
+                cameraRay.intersection_exists = 1;
+                cameraRay.register_intersection(min_dist_intersection, min_distance,
+                        min_dist_mat_id, min_dist_normal);
+            }
+            else {
+                cameraRay.intersection_exists = 0;
+                cameraRay.RGB.x = scene.background_color.x;
+                cameraRay.RGB.y = scene.background_color.y;
+                cameraRay.RGB.z = scene.background_color.z;
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // Last step, write pixels from cameraRays to image
+    
+    int imageIt = 0;
+
+    auto cameraRaysCurHeightIt = cameraRays.begin();
+    
+    for (int y = 0; y < height; ++y, std::advance(cameraRaysCurHeightIt, 1)) {
+        auto cameraRayIt = (*cameraRaysCurHeightIt).begin();
+
+        for (int x = 0; x < width; ++x, std::advance(cameraRayIt, 1)) {
+            image[imageIt++] = (*cameraRayIt).RGB.x;
+            image[imageIt++] = (*cameraRayIt).RGB.y;
+            image[imageIt++] = (*cameraRayIt).RGB.z;
         }
 
-
-        
-        
-        
-        
-        
-        
-        
-        
-        write_ppm(camera.image_name.c_str(), image, width, height);
-
+    }
+    write_ppm(camera.image_name.c_str(), image, width, height);
 }
 
 int main(int argc, char* argv[])
