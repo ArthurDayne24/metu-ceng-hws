@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <cmath>
 
 namespace parser
 {
@@ -33,11 +34,30 @@ namespace parser
 
     } Vec3f;
 
-    inline float distance(const Vec3f & vec1,const Vec3f & vec2);
-    inline float length(const Vec3f & vec);
-    inline float dot(const Vec3f & vec1,const Vec3f & vec2);
-    inline Vec3f scale(const Vec3f & vec, float k);
-    inline Vec3f cross_product(const Vec3f & vec1, const Vec3f & vec2);
+    //inline float length(const Vec3f & vec);
+    inline float length(const Vec3f & vec)
+    {
+        return sqrt(powf(vec.x, 2) + powf(vec.y, 2) + powf(vec.z, 2));
+    }
+    //inline float distance(const Vec3f & vec1,const Vec3f & vec2);
+    inline float distance(const Vec3f & vec1,const Vec3f & vec2)
+    {
+        return length(vec1 - vec2);
+    }
+    inline float dot(const parser::Vec3f & vec1,const parser::Vec3f & vec2)
+    {
+        return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
+    }
+    inline Vec3f scale(const parser::Vec3f & vec, float k)
+    {
+        return Vec3f(vec.x * k, vec.y * k, vec.z * k);
+    }
+    inline Vec3f cross_product(const Vec3f & vec1, const Vec3f & vec2)
+    {
+        return Vec3f(vec1.y * vec2.z - vec2.y * vec1.z,
+                vec2.x * vec1.z - vec1.x * vec2.z,
+                vec1.x * vec2.y - vec2.x * vec1.y);
+    }
 
     typedef struct Vec3i
     {
@@ -112,30 +132,12 @@ namespace parser
         Vec3f ray_direction;
 
         Ray(const Vec3f & ray_origin);
-    } Ray;
-
-    // For each pixel, there exist a CameraRay
-    // It stores intersection point and """"RGB value represented by that pixel""""
-    // So calculations for each pixel should be stored in CameraRay objects' "RGB vector"
-    //  if CameraRay intersects an object, else intersection_exists is set to 0 RGB is
-    //  set to background_color
-    // It also stores normal vector and material_id of intersection point for further use
-    typedef struct CameraRay: public Ray
-    {
-        CameraRay(const Camera & camera, float pixeli, float pixelj);
-
-        Vec3f RGB;
-        bool intersection_exists = 0;
 
         // These are set in main/render_image by register_intersection!
         Vec3f intersection;
         float intersection_distance;
         int material_id;
         Vec3f normal; // unit vector
-
-        // After intersecting object is found, this function should be called
-        void register_intersection(const Vec3f & r_intersection,
-                float r_intersection_distance, int material_id, const Vec3f & r_normal);
 
         // Object-wise intersection
         // These functions also fill "f_intersection" with intersecting point,
@@ -156,7 +158,24 @@ namespace parser
         // For face
         bool intersects(const Face & face, const std::vector<Vec3f> & vertex_data,
                 Vec3f & f_intersection, float & f_distance, Vec3f & f_normal);
+    } Ray;
 
+    // For each pixel, there exist a CameraRay
+    // It stores intersection point and """"RGB value represented by that pixel""""
+    // So calculations for each pixel should be stored in CameraRay objects' "RGB vector"
+    //  if CameraRay intersects an object, else intersection_exists is set to 0 RGB is
+    //  set to background_color
+    // It also stores normal vector and material_id of intersection point for further use
+    typedef struct CameraRay: public Ray
+    {
+        CameraRay(const Camera & camera, float pixeli, float pixelj);
+
+        Vec3f RGB;
+        bool intersection_exists = 0;
+
+        // After intersecting object is found, this function should be called
+        void register_intersection(const Vec3f & r_intersection,
+                float r_intersection_distance, int material_id, const Vec3f & r_normal);
     } CameraRay;
 
     typedef struct LightRay: public Ray
@@ -166,7 +185,7 @@ namespace parser
         LightRay(const PointLight & point_light, const Vec3f & target_point);
 
         // Point wise intersection up to an error of EqualityEpsilon
-        bool intersects(const Vec3f & point);
+        //bool intersects(const Vec3f & point);
 
         Vec3f intensity_at(const Vec3f & point);
     } LightRay;

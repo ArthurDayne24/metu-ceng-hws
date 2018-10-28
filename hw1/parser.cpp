@@ -2,7 +2,6 @@
 #include "tinyxml2.h"
 #include <sstream>
 #include <stdexcept>
-#include <cmath>
 #include <iostream>
 
 parser::Ray::Ray(const Vec3f & ray_origin) : ray_origin(ray_origin)
@@ -24,15 +23,16 @@ parser::CameraRay::CameraRay(const Camera & camera, float pixeli, float pixelj)
 }
 
 parser::LightRay::LightRay(const PointLight & point_light, const Vec3f & target_point)
-    : Ray(point_light.position), intensity(point_light.intensity)
+    : Ray(target_point), intensity(point_light.intensity)
 {
-    Vec3f diff = target_point - ray_origin;
+    // lightrays point from intersection point to the light source for easier cosine calculation
+    Vec3f diff = point_light.position - ray_origin;
 
     // unit vector
     ray_direction = parser::scale(diff, 1 / parser::length(diff));
 }
 
-bool parser::CameraRay::intersects(const Face & face,
+bool parser::Ray::intersects(const Face & face,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
         float & f_distance, parser::Vec3f & f_normal)
 {
@@ -86,7 +86,7 @@ bool parser::CameraRay::intersects(const Face & face,
     return 1;
 }
 
-bool parser::CameraRay::intersects(const Triangle & triangle,
+bool parser::Ray::intersects(const Triangle & triangle,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
         float & f_distance, parser::Vec3f & f_normal)
 {
@@ -94,7 +94,7 @@ bool parser::CameraRay::intersects(const Triangle & triangle,
             f_normal);
 }
 
-bool parser::CameraRay::intersects(const Mesh & mesh,
+bool parser::Ray::intersects(const Mesh & mesh,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
         float & f_distance, parser::Vec3f & f_normal)
 {
@@ -106,7 +106,7 @@ bool parser::CameraRay::intersects(const Mesh & mesh,
     return 0;
 }
 
-bool parser::CameraRay::intersects(const Sphere & sphere,
+bool parser::Ray::intersects(const Sphere & sphere,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
         float & f_distance, parser::Vec3f & f_normal)
 {
@@ -161,7 +161,7 @@ void parser::CameraRay::register_intersection(const parser::Vec3f & r_intersecti
     normal = r_normal;
 }
 
-
+/*
 bool parser::LightRay::intersects(const Vec3f & point)
 {
     Vec3f diff = point - ray_origin;
@@ -173,7 +173,7 @@ bool parser::LightRay::intersects(const Vec3f & point)
     return is_equal_epsilon(ratio_x, ratio_y) && is_equal_epsilon(ratio_y, ratio_z) &&
         is_equal_epsilon(ratio_x, ratio_z);
 }
-
+*/
 parser::Vec3f parser::LightRay::intensity_at(const Vec3f & point)
 {
     float d = distance(ray_origin, point);
@@ -181,35 +181,8 @@ parser::Vec3f parser::LightRay::intensity_at(const Vec3f & point)
     return scale(intensity, 1 / powf(d, 2));
 }
 
-inline float parser::distance(const Vec3f & vec1,const Vec3f & vec2)
-{
-    return length(vec1 - vec2);
-}
-
-inline float parser::length(const Vec3f & vec)
-{
-    return sqrt(powf(vec.x, 2) + powf(vec.y, 2) + powf(vec.z, 2));
-}
-
 parser::Vec3f::Vec3f(float x, float y, float z) : x(x), y(y), z(z)
 {
-}
-
-inline float parser::dot(const parser::Vec3f & vec1,const parser::Vec3f & vec2)
-{
-    return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
-}
-
-inline parser::Vec3f parser::scale(const parser::Vec3f & vec, float k)
-{
-    return parser::Vec3f(vec.x * k, vec.y * k, vec.z * k);
-}
-
-inline parser::Vec3f parser::cross_product(const Vec3f & vec1, const Vec3f & vec2)
-{
-    return Vec3f(vec1.y * vec2.z - vec2.y * vec1.z,
-            vec2.x * vec1.z - vec1.x * vec2.z,
-            vec1.x * vec2.y - vec2.x * vec1.y);
 }
 
 inline bool parser::is_equal_epsilon(float a, float b)

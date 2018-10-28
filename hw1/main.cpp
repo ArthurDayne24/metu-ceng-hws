@@ -5,6 +5,7 @@
 
 typedef unsigned char RGB[3];
 
+
 const RGB BAR_COLOR[8] =
 {
     { 255, 255, 255 },  // 100% White
@@ -27,7 +28,7 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
     // Store intersection points and "RGB" values for corresponding pixel
     // ***********************************************************************
     
-    std::vector<std::vector<parser::CameraRay>> cameraRays;
+    std::vector<std::vector<parser::CameraRay> > cameraRays; // pixel sutunlarini tutan yapi
     cameraRays.reserve(height);
     
     // Calculate "parser::CameraRay"s for each pixel
@@ -39,7 +40,7 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
 
         for (int x = 0; x < width; ++x) {
 
-            cameraRaysCurHeight.emplace_back(parser::CameraRay(camera, x, y));
+            cameraRaysCurHeight.emplace_back(parser::CameraRay(camera, x, y)); // bir pixel satiri
             parser::CameraRay & cameraRay = cameraRaysCurHeight.back();
             
             float min_distance = std::numeric_limits<float>::max(), f_distance;
@@ -82,9 +83,69 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
             }
 
             if (min_distance != std::numeric_limits<float>::max()) {
+                
+                // SHADING BEGINS HERE
+
                 cameraRay.intersection_exists = 1;
                 cameraRay.register_intersection(min_dist_intersection, min_distance,
                         min_dist_mat_id, min_dist_normal);
+                
+                // FROM THIS POINT ON, WE HAVE TO HANDLE THE INTERSECTION
+
+                // add ambient shading values 
+                cameraRay.RGB.x = scene.ambient_light.x * scene.materials[cameraRay.material_id].ambient.x;
+                cameraRay.RGB.y = scene.ambient_light.y * scene.materials[cameraRay.material_id].ambient.y;
+                cameraRay.RGB.z = scene.ambient_light.z * scene.materials[cameraRay.material_id].ambient.z;
+
+                // calcuate diffuse shading value(s) by tracking the reflection of the cameraray with the intersection surface
+                
+                for (const parser::PointLight & l : scene.point_lights){
+                    bool inShadow = false;
+                    
+                    // create a lightray from each point light source to the intersection point
+                    parser::LightRay lightRay = parser::LightRay(l, cameraRay.intersection);
+                    float lightDistance = parser::distance(l.position, cameraRay.intersection); // found distance must be lesser than this distance for shadow occurrence
+                    
+                    for (const parser::Mesh & o: scene.meshes) {
+                        if (lightRay.intersects(o, scene.vertex_data, f_intersection,
+                                    f_distance, f_normal)) {
+                            if (fabs(f_distance - lightDistance) < scene.shadow_ray_epsilon) {
+                                inShadow = true;
+                            }
+                        }
+                    }
+                    for (const parser::Triangle & o: scene.triangles) {
+                        if (lightRay.intersects(o, scene.vertex_data, f_intersection,
+                                    f_distance, f_normal)) {
+                            if (fabs(f_distance - lightDistance) < scene.shadow_ray_epsilon) {
+                                inShadow = true;
+                            }
+                        }
+                    }
+                    for (const parser::Sphere & o: scene.spheres) {
+                        if (lightRay.intersects(o, scene.vertex_data, f_intersection,
+                                    f_distance, f_normal)) {
+                            if (fabs(f_distance - lightDistance) < scene.shadow_ray_epsilon) {
+                                inShadow = true;
+                            }
+                        }
+                    }
+                    if (inShadow){
+                        // point is in shadow for this light source, no diffuse or specular component, continue
+                        continue;
+                    }
+                    else{
+                        // point is not in shadow from this light source, calculate diffuse and specular shading
+                        float orientationAngle = fmax(0, parser::dot(lightRay.ray_direction, cameraRay.normal));
+                        cameraRay.RGB.x += l.intensity.x * orientationAngle * scene.materials[cameraRay.material_id].diffuse.x / pow(lightDistance, 2);
+                        cameraRay.RGB.y += l.intensity.y * orientationAngle * scene.materials[cameraRay.material_id].diffuse.y / pow(lightDistance, 2);
+                        cameraRay.RGB.z += l.intensity.z * orientationAngle * scene.materials[cameraRay.material_id].diffuse.z / pow(lightDistance, 2);
+                    }
+                }
+
+                // TODO: calculate specular shading
+
+                // SHADING ENDS HERE
             }
             else {
                 cameraRay.intersection_exists = 0;
@@ -96,23 +157,7 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
 
     // Last step, write pixels from cameraRays to image
     
