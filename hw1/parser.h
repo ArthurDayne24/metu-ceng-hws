@@ -58,6 +58,9 @@ namespace parser
                 vec2.x * vec1.z - vec1.x * vec2.z,
                 vec1.x * vec2.y - vec2.x * vec1.y);
     }
+    inline bool is_same_direction(const Vec3f & vec1, const Vec3f & vec2){
+        return vec1.x == vec2.x && vec1.y == vec2.y && vec1.z == vec2.z;
+    }
 
     typedef struct Vec3i
     {

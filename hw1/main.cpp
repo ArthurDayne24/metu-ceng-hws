@@ -107,26 +107,41 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
                     float lightDistance = parser::distance(l.position, cameraRay.intersection); // found distance must be lesser than this distance for shadow occurrence
                     
                     for (const parser::Mesh & o: scene.meshes) {
+                        if (inShadow){
+                            break;
+                        } 
                         if (lightRay.intersects(o, scene.vertex_data, f_intersection,
                                     f_distance, f_normal)) {
-                            if (fabs(f_distance - lightDistance) < scene.shadow_ray_epsilon) {
+                            if (fabs(f_distance - lightDistance) > scene.shadow_ray_epsilon && 
+                                parser::is_same_direction(lightRay.ray_direction, f_intersection - cameraRay.intersection)) {
                                 inShadow = true;
+                                break;
                             }
                         }
                     }
                     for (const parser::Triangle & o: scene.triangles) {
+                        if (inShadow){
+                            break;
+                        } 
                         if (lightRay.intersects(o, scene.vertex_data, f_intersection,
                                     f_distance, f_normal)) {
-                            if (fabs(f_distance - lightDistance) < scene.shadow_ray_epsilon) {
+                            if (fabs(f_distance - lightDistance) > scene.shadow_ray_epsilon && 
+                                parser::is_same_direction(lightRay.ray_direction, f_intersection - cameraRay.intersection)) {
                                 inShadow = true;
+                                break;
                             }
                         }
                     }
                     for (const parser::Sphere & o: scene.spheres) {
+                        if (inShadow){
+                            break;
+                        } 
                         if (lightRay.intersects(o, scene.vertex_data, f_intersection,
                                     f_distance, f_normal)) {
-                            if (fabs(f_distance - lightDistance) < scene.shadow_ray_epsilon) {
+                            if (fabs(f_distance - lightDistance) > scene.shadow_ray_epsilon && 
+                                parser::is_same_direction(lightRay.ray_direction, f_intersection - cameraRay.intersection)) {
                                 inShadow = true;
+                                break;
                             }
                         }
                     }
@@ -146,6 +161,15 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
                 // TODO: calculate specular shading
 
                 // SHADING ENDS HERE
+                if (cameraRay.RGB.x > 255){
+                    cameraRay.RGB.x = 255;
+                }
+                if (cameraRay.RGB.y > 255){
+                    cameraRay.RGB.y = 255;
+                }
+                if (cameraRay.RGB.z > 255){
+                    cameraRay.RGB.z = 255;
+                }
             }
             else {
                 cameraRay.intersection_exists = 0;
