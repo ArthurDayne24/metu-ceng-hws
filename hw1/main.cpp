@@ -82,7 +82,7 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
                 }
             }
 
-            if (min_distance != std::numeric_limits<float>::max()) {
+            if (min_distance < std::numeric_limits<float>::max()) {
                 
                 // SHADING BEGINS HERE
 
@@ -93,9 +93,9 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
                 // FROM THIS POINT ON, WE HAVE TO HANDLE THE INTERSECTION
 
                 // add ambient shading values 
-                cameraRay.RGB.x = scene.ambient_light.x * scene.materials[cameraRay.material_id].ambient.x;
-                cameraRay.RGB.y = scene.ambient_light.y * scene.materials[cameraRay.material_id].ambient.y;
-                cameraRay.RGB.z = scene.ambient_light.z * scene.materials[cameraRay.material_id].ambient.z;
+                cameraRay.RGB.x = scene.ambient_light.x * scene.materials[cameraRay.material_id-1].ambient.x;
+                cameraRay.RGB.y = scene.ambient_light.y * scene.materials[cameraRay.material_id-1].ambient.y;
+                cameraRay.RGB.z = scene.ambient_light.z * scene.materials[cameraRay.material_id-1].ambient.z;
 
                 // calcuate diffuse shading value(s) by tracking the reflection of the cameraray with the intersection surface
                 
@@ -152,9 +152,14 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
                     else{
                         // point is not in shadow from this light source, calculate diffuse and specular shading
                         float orientationAngle = fmax(0, parser::dot(lightRay.ray_direction, cameraRay.normal));
-                        cameraRay.RGB.x += l.intensity.x * orientationAngle * scene.materials[cameraRay.material_id].diffuse.x / pow(lightDistance, 2);
-                        cameraRay.RGB.y += l.intensity.y * orientationAngle * scene.materials[cameraRay.material_id].diffuse.y / pow(lightDistance, 2);
-                        cameraRay.RGB.z += l.intensity.z * orientationAngle * scene.materials[cameraRay.material_id].diffuse.z / pow(lightDistance, 2);
+                        if (orientationAngle > 0){
+                            cameraRay.RGB.x += l.intensity.x * orientationAngle * scene.materials[cameraRay.material_id-1].diffuse.x / pow(lightDistance, 2);
+                            cameraRay.RGB.y += l.intensity.y * orientationAngle * scene.materials[cameraRay.material_id-1].diffuse.y / pow(lightDistance, 2);
+                            cameraRay.RGB.z += l.intensity.z * orientationAngle * scene.materials[cameraRay.material_id-1].diffuse.z / pow(lightDistance, 2);
+                        }
+                        
+                        std::cout << "color after diffuse shading: " << cameraRay.RGB.x << "," << cameraRay.RGB.y << "," << cameraRay.RGB.z << 
+                                    " / material id:" << cameraRay.material_id << " / orientation angle: " << orientationAngle << std::endl;
                     }
                 }
 
@@ -164,12 +169,21 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
                 if (cameraRay.RGB.x > 255){
                     cameraRay.RGB.x = 255;
                 }
+                else if (cameraRay.RGB.x < 1e-2){
+                    cameraRay.RGB.x = 0;
+                } 
                 if (cameraRay.RGB.y > 255){
                     cameraRay.RGB.y = 255;
                 }
+                else if (cameraRay.RGB.y < 1e-2){
+                    cameraRay.RGB.y = 0;
+                } 
                 if (cameraRay.RGB.z > 255){
                     cameraRay.RGB.z = 255;
                 }
+                else if (cameraRay.RGB.z < 1e-2){
+                    cameraRay.RGB.z = 0;
+                } 
             }
             else {
                 cameraRay.intersection_exists = 0;
@@ -193,9 +207,9 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
         auto cameraRayIt = (*cameraRaysCurHeightIt).begin();
 
         for (int x = 0; x < width; ++x, std::advance(cameraRayIt, 1)) {
-            image[imageIt++] = (*cameraRayIt).RGB.x;
-            image[imageIt++] = (*cameraRayIt).RGB.y;
-            image[imageIt++] = (*cameraRayIt).RGB.z;
+            image[imageIt++] = (int)(*cameraRayIt).RGB.x;
+            image[imageIt++] = (int)(*cameraRayIt).RGB.y;
+            image[imageIt++] = (int)(*cameraRayIt).RGB.z;
         }
 
     }
