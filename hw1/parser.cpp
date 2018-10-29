@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "tinyxml2.h"
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
@@ -85,10 +86,6 @@ bool parser::Ray::intersects(const Face & face,
     f_normal = scale(f_normal, 1 / parser::length(f_normal));
     // TODO f_normal = -scale(f_normal, parser::length(f_normal));
     // bu mu yoksa diğeri mi ya da burda check etmemiz mi lazım emin değilim
-/*
-    if (parser::is_equal_epsilon(ray_direction, parser::scale(f_intersection - ray_origin, 1 / f_distance))){
-        return 0;
-    }*/
 
     return 1;
 }
@@ -109,7 +106,6 @@ bool parser::Ray::intersects(const Mesh & mesh,
 
     float min_distance = std::numeric_limits<float>::max();
     parser::Vec3f min_dist_intersection;
-    int min_dist_mat_id;
     parser::Vec3f min_dist_normal;
 
     for (const Face & face: mesh.faces) {

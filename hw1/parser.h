@@ -69,6 +69,13 @@ namespace parser
             is_equal_epsilon(vec1.z, vec2.z);
     }
 
+    inline bool is_same_dir_epsilon(const Vec3f & vec1, const Vec3f & vec2)
+    {
+        return is_equal_epsilon(vec1.x / vec2.x, vec1.y / vec2.y) &&
+            is_equal_epsilon(vec1.x / vec2.x, vec1.z / vec2.z) &&
+            is_equal_epsilon(vec1.z / vec2.z, vec1.y / vec2.y);
+    }
+
     typedef struct Vec3i
     {
         int x, y, z;
