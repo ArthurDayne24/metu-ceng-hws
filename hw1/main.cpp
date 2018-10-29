@@ -86,6 +86,9 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
                 
                 // SHADING BEGINS HERE
 
+                std::cout << "intersection normal: " << min_dist_normal.x << "," << min_dist_normal.y << "," << min_dist_normal.z  
+                            << "intersection point: " << min_dist_intersection.x << "," << min_dist_intersection.y << "," << min_dist_intersection.z << "  ";
+
                 cameraRay.intersection_exists = 1;
                 cameraRay.register_intersection(min_dist_intersection, min_distance,
                         min_dist_mat_id, min_dist_normal);
@@ -113,7 +116,7 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
                         if (lightRay.intersects(o, scene.vertex_data, f_intersection,
                                     f_distance, f_normal)) {
                             if (fabs(f_distance - lightDistance) > scene.shadow_ray_epsilon && 
-                                parser::is_same_direction(lightRay.ray_direction, f_intersection - cameraRay.intersection)) {
+                                parser::is_equal_epsilon(lightRay.ray_direction, f_intersection - cameraRay.intersection)) {
                                 inShadow = true;
                                 break;
                             }
@@ -126,7 +129,7 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
                         if (lightRay.intersects(o, scene.vertex_data, f_intersection,
                                     f_distance, f_normal)) {
                             if (fabs(f_distance - lightDistance) > scene.shadow_ray_epsilon && 
-                                parser::is_same_direction(lightRay.ray_direction, f_intersection - cameraRay.intersection)) {
+                                parser::is_equal_epsilon(lightRay.ray_direction, f_intersection - cameraRay.intersection)) {
                                 inShadow = true;
                                 break;
                             }
@@ -139,7 +142,7 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
                         if (lightRay.intersects(o, scene.vertex_data, f_intersection,
                                     f_distance, f_normal)) {
                             if (fabs(f_distance - lightDistance) > scene.shadow_ray_epsilon && 
-                                parser::is_same_direction(lightRay.ray_direction, f_intersection - cameraRay.intersection)) {
+                                parser::is_equal_epsilon(lightRay.ray_direction, f_intersection - cameraRay.intersection)) {
                                 inShadow = true;
                                 break;
                             }

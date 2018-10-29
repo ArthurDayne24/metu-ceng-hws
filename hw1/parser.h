@@ -12,8 +12,6 @@ namespace parser
     // TODO to be determined later
     // Used to achieve precision loss due to floating points
     const float EqualityEpsilon = 1e-5;
-    inline bool is_equal_epsilon(float a, float b);
-    inline bool is_equal_epsilon(const Vec3f & vec1, const Vec3f & vec2);
 
     //Notice that all the structures are as simple as possible
     //so that you are not enforced to adopt any style or design.
@@ -58,8 +56,17 @@ namespace parser
                 vec2.x * vec1.z - vec1.x * vec2.z,
                 vec1.x * vec2.y - vec2.x * vec1.y);
     }
-    inline bool is_same_direction(const Vec3f & vec1, const Vec3f & vec2){
-        return vec1.x == vec2.x && vec1.y == vec2.y && vec1.z == vec2.z;
+    inline bool is_equal_epsilon(float a, float b)
+    {
+        if (a < b + parser::EqualityEpsilon && a > b - parser::EqualityEpsilon) {
+            return 1;
+        }
+        return 0;
+    }
+    inline bool is_equal_epsilon(const Vec3f & vec1, const Vec3f & vec2)
+    {
+        return is_equal_epsilon(vec1.x, vec2.x) && is_equal_epsilon(vec1.y, vec2.y) &&
+            is_equal_epsilon(vec1.z, vec2.z);
     }
 
     typedef struct Vec3i

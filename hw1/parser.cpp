@@ -72,6 +72,9 @@ bool parser::Ray::intersects(const Face & face,
     if (beta < 0 || beta > (1 - gamma)) {
         return 0;
     }
+    if (t < 0){
+        return 0;
+    }
 
     f_intersection = ray_origin + scale(ray_direction, t);
     f_distance = parser::distance(f_intersection, ray_origin);
@@ -82,6 +85,10 @@ bool parser::Ray::intersects(const Face & face,
     f_normal = scale(f_normal, 1 / parser::length(f_normal));
     // TODO f_normal = -scale(f_normal, parser::length(f_normal));
     // bu mu yoksa diğeri mi ya da burda check etmemiz mi lazım emin değilim
+/*
+    if (parser::is_equal_epsilon(ray_direction, parser::scale(f_intersection - ray_origin, 1 / f_distance))){
+        return 0;
+    }*/
 
     return 1;
 }
@@ -121,6 +128,10 @@ bool parser::Ray::intersects(const Sphere & sphere,
     if (is_equal_epsilon(discriminant, 0)) {
         float t = -dot(ray_direction, B) / C;
 
+        if (t < 0){
+            return 0;
+        }
+
         f_intersection = ray_origin + scale(ray_direction, t);
     }
     else if (discriminant < 0) {
@@ -132,6 +143,10 @@ bool parser::Ray::intersects(const Sphere & sphere,
 
         float t1 = (A + S) / C,
               t2 = (A - S) / C;
+
+        if (t1 < 0){
+            return 0;
+        }
 
         Vec3f intersection1 = ray_origin + scale(ray_direction, t1),
               intersection2 = ray_origin + scale(ray_direction, t2);
@@ -183,19 +198,6 @@ parser::Vec3f parser::LightRay::intensity_at(const Vec3f & point)
 
 parser::Vec3f::Vec3f(float x, float y, float z) : x(x), y(y), z(z)
 {
-}
-
-inline bool parser::is_equal_epsilon(float a, float b)
-{
-    if (a < b + parser::EqualityEpsilon && a > b - parser::EqualityEpsilon) {
-        return 1;
-    }
-    return 0;
-}
-inline bool parser::is_equal_epsilon(const Vec3f & vec1, const Vec3f & vec2)
-{
-    return is_equal_epsilon(vec1.x, vec2.x) && is_equal_epsilon(vec1.y, vec2.y) &&
-        is_equal_epsilon(vec1.z, vec2.z);
 }
 
 void parser::Scene::loadFromXml(const std::string& filepath)
