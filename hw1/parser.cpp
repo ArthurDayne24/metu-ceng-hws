@@ -98,12 +98,26 @@ bool parser::Ray::intersects(const Mesh & mesh,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
         float & f_distance, parser::Vec3f & f_normal)
 {
+    bool flag = 0;
+
+    float min_distance = std::numeric_limits<float>::max();
+    parser::Vec3f min_dist_intersection;
+    int min_dist_mat_id;
+    parser::Vec3f min_dist_normal;
+
     for (const Face & face: mesh.faces) {
         if (intersects(face, vertex_data, f_intersection, f_distance, f_normal)) {
-            return 1;            
+            if (f_distance < min_distance) {
+                min_distance = f_distance;
+                min_dist_intersection = f_intersection;
+                min_dist_normal = f_normal;
+            
+                flag = 1;
+            }
         }
     }
-    return 0;
+
+    return flag;
 }
 
 bool parser::Ray::intersects(const Sphere & sphere,
