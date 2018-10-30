@@ -11,7 +11,7 @@ namespace parser
 
     // TODO to be determined later
     // Used to achieve precision loss due to floating points
-    const float EqualityEpsilon = 1e-5;
+    const float EqualityEpsilon = 1e-10;
 
     //Notice that all the structures are as simple as possible
     //so that you are not enforced to adopt any style or design.
@@ -165,6 +165,13 @@ namespace parser
         float radius;
     } Sphere;
 
+    // For each view point, there exist a Ray
+    // It stores intersection point.
+    // Calculations for each pixel should be initialized by CameraRay objects
+    //  if CameraRay intersects an object, else RGB value in image is set to 
+    //  background_color
+    // It also stores normal vector and material_id of intersection point for further use
+
     typedef struct Ray
     {
         Vec3f ray_origin;
@@ -179,32 +186,23 @@ namespace parser
 
         // For sphere
         bool intersects(const Sphere & sphere, const std::vector<Vec3f> & vertex_data,
-                Vec3f & f_intersection, float & f_distance, Vec3f & f_normal);
+                Vec3f & f_intersection, float & f_distance, Vec3f & f_normal) const;
         // For triangle
         bool intersects(const Triangle & triangle, const std::vector<Vec3f> & vertex_data,
-                Vec3f & f_intersection, float & f_distance, Vec3f & f_normal);
+                Vec3f & f_intersection, float & f_distance, Vec3f & f_normal) const;
         // For mesh
         bool intersects(const Mesh & mesh, const std::vector<Vec3f> & vertex_data,
-                Vec3f & f_intersection, float & f_distance, Vec3f & f_normal);
+                Vec3f & f_intersection, float & f_distance, Vec3f & f_normal) const;
 
         private:
         // For face
         bool intersects(const Face & face, const std::vector<Vec3f> & vertex_data,
-                Vec3f & f_intersection, float & f_distance, Vec3f & f_normal);
+                Vec3f & f_intersection, float & f_distance, Vec3f & f_normal) const;
     } Ray;
 
-    // For each pixel, there exist a CameraRay
-    // It stores intersection point and """"RGB value represented by that pixel""""
-    // So calculations for each pixel should be stored in CameraRay objects' "RGB vector"
-    //  if CameraRay intersects an object, else intersection_exists is set to 0 RGB is
-    //  set to background_color
-    // It also stores normal vector and material_id of intersection point for further use
-    typedef struct CameraRay: public Ray
+    typedef struct ViewingRay: public Ray
     {
-        CameraRay(const Camera & camera, float pixeli, float pixelj);
-
-        Vec3f RGB;
-        bool intersection_exists = 0;
+        ViewingRay(const Vec3f & ray_origin, const Vec3f & ray_direction);
 
         // These are set in main/render_image by register_intersection!
         Vec3f intersection;
@@ -215,6 +213,12 @@ namespace parser
         // After intersecting object is found, this function should be called
         void register_intersection(const Vec3f & r_intersection,
                 float r_intersection_distance, int material_id, const Vec3f & r_normal);
+    } ViewingRay;
+
+    typedef struct CameraRay: public Ray
+    {
+        CameraRay(const Camera & camera, float pixeli, float pixelj);
+
     } CameraRay;
 
     typedef struct LightRay: public Ray
@@ -222,9 +226,6 @@ namespace parser
         Vec3f intensity;
     
         LightRay(const PointLight & point_light, const Vec3f & target_point);
-
-        // Point wise intersection up to an error of EqualityEpsilon
-        //bool intersects(const Vec3f & point);
 
     } LightRay;
 

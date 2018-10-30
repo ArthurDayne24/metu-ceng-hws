@@ -17,126 +17,195 @@ const RGB BAR_COLOR[8] =
     {   0,   0,   0 },  // Black
 };
 
-void apply_effects(int rem_depth, parser::CameraRay & cameraRay, 
-        parser::Vec3f viewing_ray_dir, const parser::Scene & scene)
+parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay, 
+        const parser::Scene & scene)
 {
-    if (rem_depth == 0) {
-        return;
+    if (rem_depth < 0) {
+        return parser::Vec3f(0, 0, 0);
     }
 
-    // FROM THIS POINT ON, WE HAVE TO HANDLE THE INTERSECTION
-    
-    const parser::Material & material = scene.materials[cameraRay.material_id-1];
-    
-    if (rem_depth == 6) {
+    parser::Vec3f accumulation(0, 0, 0);
+
+    float min_distance = std::numeric_limits<float>::max(), f_distance;
+    parser::Vec3f min_dist_intersection, f_intersection;
+    int min_dist_mat_id;
+    parser::Vec3f min_dist_normal, f_normal;
+
+    for (const parser::Mesh & o: scene.meshes) {
+        if (viewingRay.intersects(o, scene.vertex_data, f_intersection,
+                    f_distance, f_normal)) {
+            if (scene.shadow_ray_epsilon < min_distance - f_distance) {
+                min_distance = f_distance;
+                min_dist_intersection = f_intersection;
+                min_dist_mat_id = o.material_id;
+                min_dist_normal = f_normal;
+            }
+        }
+    }
+    for (const parser::Triangle & o: scene.triangles) {
+        if (viewingRay.intersects(o, scene.vertex_data, f_intersection,
+                    f_distance, f_normal)) {
+            if (scene.shadow_ray_epsilon < min_distance - f_distance) {
+                min_distance = f_distance;
+                min_dist_intersection = f_intersection;
+                min_dist_mat_id = o.material_id;
+                min_dist_normal = f_normal;
+            }
+        }
+    }
+    for (const parser::Sphere & o: scene.spheres) {
+        if (viewingRay.intersects(o, scene.vertex_data, f_intersection,
+                    f_distance, f_normal)) {
+            if (scene.shadow_ray_epsilon < min_distance - f_distance) {
+                min_distance = f_distance;
+                min_dist_intersection = f_intersection;
+                min_dist_mat_id = o.material_id;
+                min_dist_normal = f_normal;
+            }
+        }
+    }
+
+    if (min_distance < std::numeric_limits<float>::max()) {
+        
+        // SHADING BEGINS HERE
+
+        viewingRay.register_intersection(min_dist_intersection, min_distance,
+                min_dist_mat_id, min_dist_normal);
+        
+        // FROM THIS POINT ON, WE HAVE TO HANDLE THE INTERSECTION
+        
+        const parser::Material & material = scene.materials[viewingRay.material_id-1];
+        
         // add ambient shading values 
-        cameraRay.RGB += parser::element_mult(scene.ambient_light, material.ambient);
-    }
-    
-    float f_distance;
-    parser::Vec3f f_intersection;
-    parser::Vec3f f_normal;
-
-    for (const parser::PointLight & l : scene.point_lights) {
-        bool inShadow = false;
+        accumulation += parser::element_mult(scene.ambient_light, material.ambient);
         
-        // create a lightray from each point light source to the intersection point
-        parser::LightRay lightRay = parser::LightRay(l, cameraRay.intersection);
-        
-        // found distance must be less than this distance for shadow occurrence
-        float lightDistance = parser::distance(l.position, cameraRay.intersection);                    
-        for (const parser::Mesh & o: scene.meshes) {
-            if (inShadow){
-                break;
-            } 
-            if (lightRay.intersects(o, scene.vertex_data, f_intersection,
-                        f_distance, f_normal)) {
-                if (fabs(f_distance - lightDistance) > scene.shadow_ray_epsilon && 
-                    parser::is_same_dir_epsilon(lightRay.ray_direction, 
-                        f_intersection - cameraRay.intersection)) {
-                    inShadow = true;
+        for (const parser::PointLight & pointLight : scene.point_lights) {
+            bool inShadow = false;
+            
+            // create a lightray from each point light source to the intersection point
+            parser::LightRay lightRay = parser::LightRay(pointLight, viewingRay.intersection);
+            
+            // found distance must be less than this distance for shadow occurrence
+            float lightDistance = parser::distance(pointLight.position, viewingRay.intersection);                    
+            for (const parser::Mesh & o: scene.meshes) {
+                if (inShadow){
                     break;
+                } 
+                if (lightRay.intersects(o, scene.vertex_data, f_intersection,
+                            f_distance, f_normal)) {
+                    if (lightDistance - f_distance > scene.shadow_ray_epsilon && 
+                        parser::is_same_dir_epsilon(lightRay.ray_direction, 
+                            f_intersection - viewingRay.intersection)) {
+                        inShadow = true;
+                        break;
+                    }
                 }
             }
-        }
-        for (const parser::Triangle & o: scene.triangles) {
-            if (inShadow){
-                break;
-            } 
-            if (lightRay.intersects(o, scene.vertex_data, f_intersection,
-                        f_distance, f_normal)) {
-                if (fabs(f_distance - lightDistance) > scene.shadow_ray_epsilon && 
-                    parser::is_same_dir_epsilon(lightRay.ray_direction, 
-                        f_intersection - cameraRay.intersection)) {
-                    inShadow = true;
+            for (const parser::Triangle & o: scene.triangles) {
+                if (inShadow){
                     break;
+                } 
+                if (lightRay.intersects(o, scene.vertex_data, f_intersection,
+                            f_distance, f_normal)) {
+                    if (lightDistance - f_distance > scene.shadow_ray_epsilon && 
+                        parser::is_same_dir_epsilon(lightRay.ray_direction, 
+                            f_intersection - viewingRay.intersection)) {
+                        inShadow = true;
+                        break;
+                    }
                 }
             }
-        }
-        for (const parser::Sphere & o: scene.spheres) {
-            if (inShadow){
-                break;
-            } 
-            if (lightRay.intersects(o, scene.vertex_data, f_intersection,
-                        f_distance, f_normal)) {
-                if (fabs(f_distance - lightDistance) > scene.shadow_ray_epsilon && 
-                    parser::is_same_dir_epsilon(lightRay.ray_direction, 
-                        f_intersection - cameraRay.intersection)) {
-                    inShadow = true;
+            for (const parser::Sphere & o: scene.spheres) {
+                if (inShadow){
                     break;
+                } 
+                if (lightRay.intersects(o, scene.vertex_data, f_intersection,
+                            f_distance, f_normal)) {
+                    if (lightDistance - f_distance > scene.shadow_ray_epsilon && 
+                        parser::is_same_dir_epsilon(lightRay.ray_direction, 
+                            f_intersection - viewingRay.intersection)) {
+                        inShadow = true;
+                        break;
+                    }
                 }
             }
-        }
-        if (inShadow){
-            // point is in shadow for this light source, 
-            //  no diffuse or specular component, continue
-            continue;
-        }
-        
-        // else
+            if (inShadow){
+                // point is in shadow for this light source, 
+                //  no diffuse or specular component, continue
+                continue;
+            }
+            
+            // else
 
+            parser::Vec3f l = lightRay.ray_direction,
+                          n = viewingRay.normal;
 
-        // point is not in shadow from this light source, calculate diffuse shading
-        if (rem_depth == 6) {
+            // point is not in shadow from this light source, calculate diffuse shading
             float orientationAngle = 
-                fmax(0, parser::dot(lightRay.ray_direction, cameraRay.normal));
+                fmax(0, parser::dot(lightRay.ray_direction, viewingRay.normal));
             if (orientationAngle > 0){
-                cameraRay.RGB += parser::element_mult(parser::scale(l.intensity, 
+                accumulation += parser::element_mult(parser::scale(lightRay.intensity, 
                             orientationAngle / powf(lightDistance, 2)), 
                         material.diffuse);
             }
+            
+            // calculate specular shading
+
+            // viewing ray is from eye to object (initially from camera to intersection)
+            // hence reverse viewingRay and convert to unit vector here
+            parser::Vec3f v = parser::scale(viewingRay.ray_direction, -1 / parser::length(viewingRay.ray_direction));
+
+            parser::Vec3f half = v + l;
+            half = parser::scale(half, 1 / parser::length(half));
+
+            accumulation += parser::scale(parser::element_mult(material.specular, 
+                        lightRay.intensity), powf(fmax(0, parser::dot(n, half)), 
+                            material.phong_exponent) / powf(lightDistance, 2));
+            
+            // WARN: no epsilon wise equality check
+            if (!parser::is_zero(material.mirror)) {
+                
+                // do some recursion for specular in this function
+                parser::Vec3f d = parser::scale(v, -1);
+                parser::Vec3f r = d - parser::scale(n, parser::dot(d, n) * 2);
+
+                parser::ViewingRay bouncingRay(viewingRay.intersection, r);
+
+                accumulation += 
+                    parser::element_mult(apply_effects(rem_depth-1, bouncingRay, scene), 
+                            material.mirror);
+            }
+            
+            // SHADING ENDS HERE
+            if (accumulation.x > 255){
+                accumulation.x = 255;
+            }
+            else if (accumulation.x < 1e-2){
+                accumulation.x = 0;
+            } 
+            if (accumulation.y > 255){
+                accumulation.y = 255;
+            }
+            else if (accumulation.y < 1e-2){
+                accumulation.y = 0;
+            } 
+            if (accumulation.z > 255){
+                accumulation.z = 255;
+            }
+            else if (accumulation.z < 1e-2){
+                accumulation.z = 0;
+            } 
+
         }
-        
-        /*
-        std::cout << "color after diffuse shading: " << 
-            cameraRay.RGB.x << "," << cameraRay.RGB.y << 
-            "," << cameraRay.RGB.z << " / material id:" << 
-            cameraRay.material_id << " / orientation angle: " << 
-            orientationAngle << std::endl;
-        */
-
-        // calculate specular shading
-
-        // viewing ray is from eye to object (initially from camera to intersection)
-        // hence reverse viewing_ray_dir and convert to unit vector here
-        viewing_ray_dir = parser::scale(viewing_ray_dir,
-                -1 / parser::length(viewing_ray_dir));
-
-        parser::Vec3f specular(0, 0, 0);
-        parser::Vec3f half = viewing_ray_dir + lightRay.ray_direction;
-        half = parser::scale(half, 1 / parser::length(half));
-
-        specular += parser::scale(parser::element_mult(material.specular, 
-                    lightRay.intensity), powf(fmax(0, parser::dot(cameraRay.normal, 
-                                half)), material.phong_exponent) / powf(lightDistance, 2));
-
-        // WARN: no epsilon wise equality check
-        if (!parser::is_zero(material.mirror)) {
-            // TODO do some recursion for specular in this function
-        }
-
-        cameraRay.RGB += specular;
     }
+
+    else {
+        accumulation.x = scene.background_color.x;
+        accumulation.y = scene.background_color.y;
+        accumulation.z = scene.background_color.z;
+    }
+
+    return accumulation;
 }
 
 // Our main function for homework
@@ -146,130 +215,31 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
     unsigned char image[height * width * 3];
 
     // ***********************************************************************
-    // Store intersection points and "RGB" values for corresponding pixel
+    // Calculate intersection points and "RGB" values for corresponding pixel
     // ***********************************************************************
-    
-    std::vector<std::vector<parser::CameraRay> > cameraRays; // pixel sutunlarini tutan yapi
-    cameraRays.reserve(height);
-    
-    // Calculate "parser::CameraRay"s for each pixel
-    for (int y = 0; y < height; ++y) {
-
-        cameraRays.emplace_back(std::vector<parser::CameraRay>());
-        std::vector<parser::CameraRay> & cameraRaysCurHeight = cameraRays.back();
-        cameraRaysCurHeight.reserve(width);
-
-        for (int x = 0; x < width; ++x) {
-
-            cameraRaysCurHeight.emplace_back(parser::CameraRay(camera, x, y)); // bir pixel satiri
-            parser::CameraRay & cameraRay = cameraRaysCurHeight.back();
-            
-            float min_distance = std::numeric_limits<float>::max(), f_distance;
-            parser::Vec3f min_dist_intersection, f_intersection;
-            int min_dist_mat_id;
-            parser::Vec3f min_dist_normal, f_normal;
-
-            for (const parser::Mesh & o: scene.meshes) {
-                if (cameraRay.intersects(o, scene.vertex_data, f_intersection,
-                            f_distance, f_normal)) {
-                    if (f_distance < min_distance) {
-                        min_distance = f_distance;
-                        min_dist_intersection = f_intersection;
-                        min_dist_mat_id = o.material_id;
-                        min_dist_normal = f_normal;
-                    }
-                }
-            }
-            for (const parser::Triangle & o: scene.triangles) {
-                if (cameraRay.intersects(o, scene.vertex_data, f_intersection,
-                            f_distance, f_normal)) {
-                    if (f_distance < min_distance) {
-                        min_distance = f_distance;
-                        min_dist_intersection = f_intersection;
-                        min_dist_mat_id = o.material_id;
-                        min_dist_normal = f_normal;
-                    }
-                }
-            }
-            for (const parser::Sphere & o: scene.spheres) {
-                if (cameraRay.intersects(o, scene.vertex_data, f_intersection,
-                            f_distance, f_normal)) {
-                    if (f_distance < min_distance) {
-                        min_distance = f_distance;
-                        min_dist_intersection = f_intersection;
-                        min_dist_mat_id = o.material_id;
-                        min_dist_normal = f_normal;
-                    }
-                }
-            }
-
-            if (min_distance < std::numeric_limits<float>::max()) {
-                
-                // SHADING BEGINS HERE
-
-                /*
-                std::cout << "intersection normal: " << min_dist_normal.x << "," << 
-                    min_dist_normal.y << "," << min_dist_normal.z  
-                            << "intersection point: " << min_dist_intersection.x << 
-                            "," << min_dist_intersection.y << "," << 
-                            min_dist_intersection.z << "  ";
-                */
-
-                cameraRay.intersection_exists = 1;
-                cameraRay.register_intersection(min_dist_intersection, min_distance,
-                        min_dist_mat_id, min_dist_normal);
-                
-                
-                // depth, camera_ray, viewing ray direction, scene !
-                // viewing ray is initially cameraRay
-                //  hence viewing ray direction is its direction
-                apply_effects(6, cameraRay, cameraRay.ray_direction, scene);
-
-                // SHADING ENDS HERE
-                if (cameraRay.RGB.x > 255){
-                    cameraRay.RGB.x = 255;
-                }
-                else if (cameraRay.RGB.x < 1e-2){
-                    cameraRay.RGB.x = 0;
-                } 
-                if (cameraRay.RGB.y > 255){
-                    cameraRay.RGB.y = 255;
-                }
-                else if (cameraRay.RGB.y < 1e-2){
-                    cameraRay.RGB.y = 0;
-                } 
-                if (cameraRay.RGB.z > 255){
-                    cameraRay.RGB.z = 255;
-                }
-                else if (cameraRay.RGB.z < 1e-2){
-                    cameraRay.RGB.z = 0;
-                } 
-            }
-            else {
-                cameraRay.intersection_exists = 0;
-                cameraRay.RGB.x = scene.background_color.x;
-                cameraRay.RGB.y = scene.background_color.y;
-                cameraRay.RGB.z = scene.background_color.z;
-            }
-        }
-    }
-
-    // Last step, write pixels from cameraRays to image
     
     int imageIt = 0;
 
-    auto cameraRaysCurHeightIt = cameraRays.begin();
-    
-    for (int y = 0; y < height; ++y, std::advance(cameraRaysCurHeightIt, 1)) {
-        auto cameraRayIt = (*cameraRaysCurHeightIt).begin();
+    // Calculate "parser::CameraRay"s for each pixel
+    for (int y = 0; y < height; ++y) {
 
-        for (int x = 0; x < width; ++x, std::advance(cameraRayIt, 1)) {
-            image[imageIt++] = (int)(*cameraRayIt).RGB.x;
-            image[imageIt++] = (int)(*cameraRayIt).RGB.y;
-            image[imageIt++] = (int)(*cameraRayIt).RGB.z;
+        for (int x = 0; x < width; ++x) {
+                
+            parser::CameraRay cameraRay(camera, x, y);
+
+            // initially viewingRay (pure ray) is cameraRay
+            parser::ViewingRay viewingRay(cameraRay.ray_origin, cameraRay.ray_direction);
+
+            parser::Vec3f result = apply_effects(6, viewingRay, scene);
+
+            // Last step, write pixels from cameraRays to image
+            
+            image[imageIt++] = (int) (result.x);
+            image[imageIt++] = (int) (result.y);
+            image[imageIt++] = (int) (result.z);
         }
-
     }
+
     write_ppm(camera.image_name.c_str(), image, width, height);
 }
 

@@ -9,8 +9,14 @@ parser::Ray::Ray(const Vec3f & ray_origin) : ray_origin(ray_origin)
 {
 }
 
+parser::ViewingRay::ViewingRay(const Vec3f & ray_origin, const Vec3f & ray_direction) 
+    : Ray(ray_origin)
+{
+    this->ray_direction = ray_direction;
+}
+
 parser::CameraRay::CameraRay(const Camera & camera, float pixeli, float pixelj)
-    : Ray(camera.position), RGB(0, 0, 0)
+    : Ray(camera.position)
 {
     float l = camera.near_plane.x,
           t = camera.near_plane.w;
@@ -35,7 +41,7 @@ parser::LightRay::LightRay(const PointLight & point_light, const Vec3f & target_
 
 bool parser::Ray::intersects(const Face & face,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
-        float & f_distance, Vec3f & f_normal)
+        float & f_distance, Vec3f & f_normal) const
 {
     const Vec3f & vertex_a = vertex_data[face.v0_id - 1];
     const Vec3f & vertex_b = vertex_data[face.v1_id - 1];
@@ -92,7 +98,7 @@ bool parser::Ray::intersects(const Face & face,
 
 bool parser::Ray::intersects(const Triangle & triangle,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
-        float & f_distance, Vec3f & f_normal)
+        float & f_distance, Vec3f & f_normal) const
 {
     return intersects(triangle.indices, vertex_data, f_intersection, f_distance,
             f_normal);
@@ -100,7 +106,7 @@ bool parser::Ray::intersects(const Triangle & triangle,
 
 bool parser::Ray::intersects(const Mesh & mesh,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
-        float & f_distance, Vec3f & f_normal)
+        float & f_distance, Vec3f & f_normal) const
 {
     bool flag = 0;
 
@@ -125,7 +131,7 @@ bool parser::Ray::intersects(const Mesh & mesh,
 
 bool parser::Ray::intersects(const Sphere & sphere,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
-        float & f_distance, Vec3f & f_normal)
+        float & f_distance, Vec3f & f_normal) const
 {
     const Vec3f & sphere_center = vertex_data[sphere.center_vertex_id-1];
 
@@ -177,7 +183,7 @@ bool parser::Ray::intersects(const Sphere & sphere,
     return 1;
 }
 
-void parser::CameraRay::register_intersection(const Vec3f & r_intersection,
+void parser::ViewingRay::register_intersection(const Vec3f & r_intersection,
         float r_intersection_distance, int r_material_id, const Vec3f & r_normal)
 {
     intersection = r_intersection;
@@ -185,20 +191,6 @@ void parser::CameraRay::register_intersection(const Vec3f & r_intersection,
     material_id = r_material_id;
     normal = r_normal;
 }
-
-/*
-bool parser::LightRay::intersects(const Vec3f & point)
-{
-    Vec3f diff = point - ray_origin;
-
-    float ratio_x = diff.x / point.x,
-          ratio_y = diff.y / point.y,
-          ratio_z = diff.z / point.z;
-
-    return is_equal_epsilon(ratio_x, ratio_y) && is_equal_epsilon(ratio_y, ratio_z) &&
-        is_equal_epsilon(ratio_x, ratio_z);
-}
-*/
 
 parser::Vec3f::Vec3f(float x, float y, float z) : x(x), y(y), z(z)
 {
