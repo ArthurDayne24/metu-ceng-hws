@@ -90,8 +90,6 @@ bool parser::Ray::intersects(const Face & face,
     // B - A x C - A
     f_normal = cross_product(Vec3f(a, b, c), Vec3f(d, e, f));
     f_normal = scale(f_normal, 1 / length(f_normal));
-    // TODO f_normal = -scale(f_normal, length(f_normal));
-    // bu mu yoksa diğeri mi ya da burda check etmemiz mi lazım emin değilim
 
     return 1;
 }

@@ -45,12 +45,10 @@ namespace parser
 
     } Vec3f;
 
-    //inline float length(const Vec3f & vec);
     inline float length(const Vec3f & vec)
     {
         return sqrt(powf(vec.x, 2) + powf(vec.y, 2) + powf(vec.z, 2));
     }
-    //inline float distance(const Vec3f & vec1,const Vec3f & vec2);
     inline float distance(const Vec3f & vec1,const Vec3f & vec2)
     {
         return length(vec1 - vec2);

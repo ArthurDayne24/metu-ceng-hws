@@ -34,7 +34,7 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
     for (const parser::Mesh & o: scene.meshes) {
         if (viewingRay.intersects(o, scene.vertex_data, f_intersection,
                     f_distance, f_normal)) {
-            if (scene.shadow_ray_epsilon < min_distance - f_distance) {
+            if (f_distance < min_distance) {
                 min_distance = f_distance;
                 min_dist_intersection = f_intersection;
                 min_dist_mat_id = o.material_id;
@@ -45,7 +45,7 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
     for (const parser::Triangle & o: scene.triangles) {
         if (viewingRay.intersects(o, scene.vertex_data, f_intersection,
                     f_distance, f_normal)) {
-            if (scene.shadow_ray_epsilon < min_distance - f_distance) {
+            if (f_distance < min_distance) {
                 min_distance = f_distance;
                 min_dist_intersection = f_intersection;
                 min_dist_mat_id = o.material_id;
@@ -56,7 +56,7 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
     for (const parser::Sphere & o: scene.spheres) {
         if (viewingRay.intersects(o, scene.vertex_data, f_intersection,
                     f_distance, f_normal)) {
-            if (scene.shadow_ray_epsilon < min_distance - f_distance) {
+            if (f_distance < min_distance) {
                 min_distance = f_distance;
                 min_dist_intersection = f_intersection;
                 min_dist_mat_id = o.material_id;
@@ -169,7 +169,8 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                 parser::Vec3f d = parser::scale(v, -1);
                 parser::Vec3f r = d - parser::scale(n, parser::dot(d, n) * 2);
 
-                parser::ViewingRay bouncingRay(viewingRay.intersection, r);
+                parser::ViewingRay bouncingRay(viewingRay.intersection + 
+                        parser::scale(r, scene.shadow_ray_epsilon), r);
 
                 accumulation += 
                     parser::element_mult(apply_effects(rem_depth-1, bouncingRay, scene), 
