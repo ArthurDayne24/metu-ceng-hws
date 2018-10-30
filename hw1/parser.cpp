@@ -30,12 +30,12 @@ parser::LightRay::LightRay(const PointLight & point_light, const Vec3f & target_
     Vec3f diff = point_light.position - ray_origin;
 
     // unit vector
-    ray_direction = parser::scale(diff, 1 / parser::length(diff));
+    ray_direction = scale(diff, 1 / length(diff));
 }
 
 bool parser::Ray::intersects(const Face & face,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
-        float & f_distance, parser::Vec3f & f_normal)
+        float & f_distance, Vec3f & f_normal)
 {
     const Vec3f & vertex_a = vertex_data[face.v0_id - 1];
     const Vec3f & vertex_b = vertex_data[face.v1_id - 1];
@@ -78,13 +78,13 @@ bool parser::Ray::intersects(const Face & face,
     }
 
     f_intersection = ray_origin + scale(ray_direction, t);
-    f_distance = parser::distance(f_intersection, ray_origin);
+    f_distance = distance(f_intersection, ray_origin);
 
     // A - B x A - C
     // B - A x C - A
-    f_normal = cross_product(parser::Vec3f(a, b, c), parser::Vec3f(d, e, f));
-    f_normal = scale(f_normal, 1 / parser::length(f_normal));
-    // TODO f_normal = -scale(f_normal, parser::length(f_normal));
+    f_normal = cross_product(Vec3f(a, b, c), Vec3f(d, e, f));
+    f_normal = scale(f_normal, 1 / length(f_normal));
+    // TODO f_normal = -scale(f_normal, length(f_normal));
     // bu mu yoksa diğeri mi ya da burda check etmemiz mi lazım emin değilim
 
     return 1;
@@ -92,7 +92,7 @@ bool parser::Ray::intersects(const Face & face,
 
 bool parser::Ray::intersects(const Triangle & triangle,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
-        float & f_distance, parser::Vec3f & f_normal)
+        float & f_distance, Vec3f & f_normal)
 {
     return intersects(triangle.indices, vertex_data, f_intersection, f_distance,
             f_normal);
@@ -100,13 +100,13 @@ bool parser::Ray::intersects(const Triangle & triangle,
 
 bool parser::Ray::intersects(const Mesh & mesh,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
-        float & f_distance, parser::Vec3f & f_normal)
+        float & f_distance, Vec3f & f_normal)
 {
     bool flag = 0;
 
     float min_distance = std::numeric_limits<float>::max();
-    parser::Vec3f min_dist_intersection;
-    parser::Vec3f min_dist_normal;
+    Vec3f min_dist_intersection;
+    Vec3f min_dist_normal;
 
     for (const Face & face: mesh.faces) {
         if (intersects(face, vertex_data, f_intersection, f_distance, f_normal)) {
@@ -125,7 +125,7 @@ bool parser::Ray::intersects(const Mesh & mesh,
 
 bool parser::Ray::intersects(const Sphere & sphere,
         const std::vector<Vec3f> & vertex_data, Vec3f & f_intersection,
-        float & f_distance, parser::Vec3f & f_normal)
+        float & f_distance, Vec3f & f_normal)
 {
     const Vec3f & sphere_center = vertex_data[sphere.center_vertex_id-1];
 
@@ -169,16 +169,16 @@ bool parser::Ray::intersects(const Sphere & sphere,
         }
     }
 
-    f_distance = parser::distance(f_intersection, ray_origin);
+    f_distance = distance(f_intersection, ray_origin);
 
     f_normal = f_intersection - sphere_center;
-    f_normal = scale(f_normal, 1 / parser::length(f_normal));
+    f_normal = scale(f_normal, 1 / length(f_normal));
     
     return 1;
 }
 
-void parser::CameraRay::register_intersection(const parser::Vec3f & r_intersection,
-        float r_intersection_distance, int r_material_id, const parser::Vec3f & r_normal)
+void parser::CameraRay::register_intersection(const Vec3f & r_intersection,
+        float r_intersection_distance, int r_material_id, const Vec3f & r_normal)
 {
     intersection = r_intersection;
     intersection_distance = r_intersection_distance;
@@ -199,12 +199,6 @@ bool parser::LightRay::intersects(const Vec3f & point)
         is_equal_epsilon(ratio_x, ratio_z);
 }
 */
-parser::Vec3f parser::LightRay::intensity_at(const Vec3f & point)
-{
-    float d = distance(ray_origin, point);
-
-    return scale(intensity, 1 / powf(d, 2));
-}
 
 parser::Vec3f::Vec3f(float x, float y, float z) : x(x), y(y), z(z)
 {
@@ -294,7 +288,7 @@ void parser::Scene::loadFromXml(const std::string& filepath)
 
         // Additional initialization steps for camera
         
-        camera.cross = parser::cross_product(camera.up, parser::scale(camera.gaze, -1)) ;
+        camera.cross = cross_product(camera.up, scale(camera.gaze, -1)) ;
 
         camera.rminusl = camera.near_plane.y - camera.near_plane.x;
         camera.tminusb = camera.near_plane.w - camera.near_plane.z;

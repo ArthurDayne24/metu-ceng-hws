@@ -25,9 +25,22 @@ namespace parser
         friend Vec3f operator+(const Vec3f & vec1,const Vec3f & vec2) {
             return Vec3f(vec1.x + vec2.x, vec1.y + vec2.y, vec1.z + vec2.z);
         }
+        Vec3f& operator+=(const Vec3f & vec) {
+            x += vec.x;
+            y += vec.y; 
+            z += vec.z;
 
+            return *this;
+        }
         friend Vec3f operator-(const Vec3f & vec1,const Vec3f & vec2) {
             return Vec3f(vec1.x - vec2.x, vec1.y - vec2.y, vec1.z - vec2.z);
+        }
+        Vec3f& operator-=(const Vec3f & vec) {
+            x -= vec.x;
+            y -= vec.y; 
+            z -= vec.z;
+            
+            return *this;
         }
 
     } Vec3f;
@@ -42,13 +55,17 @@ namespace parser
     {
         return length(vec1 - vec2);
     }
-    inline float dot(const parser::Vec3f & vec1,const parser::Vec3f & vec2)
+    inline float dot(const Vec3f & vec1,const Vec3f & vec2)
     {
         return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
     }
-    inline Vec3f scale(const parser::Vec3f & vec, float k)
+    inline Vec3f scale(const Vec3f & vec, float k)
     {
         return Vec3f(vec.x * k, vec.y * k, vec.z * k);
+    }
+    inline Vec3f element_mult(const Vec3f & vec1, const Vec3f & vec2)
+    {
+        return Vec3f(vec1.x * vec2.x, vec1.y * vec2.y, vec1.z * vec2.z);
     }
     inline Vec3f cross_product(const Vec3f & vec1, const Vec3f & vec2)
     {
@@ -58,10 +75,15 @@ namespace parser
     }
     inline bool is_equal_epsilon(float a, float b)
     {
-        if (a < b + parser::EqualityEpsilon && a > b - parser::EqualityEpsilon) {
+        if (a < b + EqualityEpsilon && a > b - EqualityEpsilon) {
             return 1;
         }
         return 0;
+    }
+    // WARN: no epsilon wise equality check
+    inline bool is_zero(const Vec3f & vec)
+    {
+        return vec.x == 0  && vec.y == 0 && vec.z == 0;
     }
     inline bool is_equal_epsilon(const Vec3f & vec1, const Vec3f & vec2)
     {
@@ -150,12 +172,6 @@ namespace parser
 
         Ray(const Vec3f & ray_origin);
 
-        // These are set in main/render_image by register_intersection!
-        Vec3f intersection;
-        float intersection_distance;
-        int material_id;
-        Vec3f normal; // unit vector
-
         // Object-wise intersection
         // These functions also fill "f_intersection" with intersecting point,
         //  f_distance and f_normal and return True if intersection exists,
@@ -190,6 +206,12 @@ namespace parser
         Vec3f RGB;
         bool intersection_exists = 0;
 
+        // These are set in main/render_image by register_intersection!
+        Vec3f intersection;
+        float intersection_distance;
+        int material_id;
+        Vec3f normal; // unit vector
+
         // After intersecting object is found, this function should be called
         void register_intersection(const Vec3f & r_intersection,
                 float r_intersection_distance, int material_id, const Vec3f & r_normal);
@@ -204,7 +226,6 @@ namespace parser
         // Point wise intersection up to an error of EqualityEpsilon
         //bool intersects(const Vec3f & point);
 
-        Vec3f intensity_at(const Vec3f & point);
     } LightRay;
 
     typedef struct Scene
