@@ -86,18 +86,25 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
             parser::LightRay lightRay = parser::LightRay(pointLight, viewingRay.intersection);
             
             // found distance must be less than this distance for shadow occurrence
-            float lightDistance = parser::distance(pointLight.position, viewingRay.intersection);                    
+            float lightDistance = parser::distance(pointLight.position, viewingRay.intersection); 
+            //f_distance = std::numeric_limits<float>::max();                  
             for (const parser::Mesh & o: scene.meshes) {
                 if (inShadow){
                     break;
                 } 
                 if (lightRay.intersects(o, scene.vertex_data, f_intersection,
                             f_distance, f_normal)) {
-                    if (lightDistance - f_distance > scene.shadow_ray_epsilon && 
-                        parser::is_same_dir_epsilon(lightRay.ray_direction, 
-                            f_intersection - viewingRay.intersection)) {
-                        inShadow = true;
-                        break;
+                    if (fabs(f_distance - lightDistance) > scene.shadow_ray_epsilon &&
+                        f_distance < lightDistance &&
+                        f_distance > scene.shadow_ray_epsilon) {
+                        parser::Vec3f i2i = parser::scale(viewingRay.intersection - f_intersection , 
+                                                1 / parser::length(viewingRay.intersection - f_intersection));
+                        parser::Vec3f i2l = parser::scale(viewingRay.ray_origin - viewingRay.intersection , 
+                                                1 / parser::length(viewingRay.ray_origin - viewingRay.intersection));
+                        if (parser::dot(i2i, i2l) < 0){
+                            inShadow = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -107,11 +114,17 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                 } 
                 if (lightRay.intersects(o, scene.vertex_data, f_intersection,
                             f_distance, f_normal)) {
-                    if (lightDistance - f_distance > scene.shadow_ray_epsilon && 
-                        parser::is_same_dir_epsilon(lightRay.ray_direction, 
-                            f_intersection - viewingRay.intersection)) {
-                        inShadow = true;
-                        break;
+                    if (fabs(f_distance - lightDistance) > scene.shadow_ray_epsilon &&
+                        f_distance < lightDistance &&
+                        f_distance > scene.shadow_ray_epsilon) {
+                        parser::Vec3f i2i = parser::scale(viewingRay.intersection - f_intersection , 
+                                                1 / parser::length(viewingRay.intersection - f_intersection));
+                        parser::Vec3f i2l = parser::scale(viewingRay.ray_origin - viewingRay.intersection , 
+                                                1 / parser::length(viewingRay.ray_origin - viewingRay.intersection));
+                        if (parser::dot(i2i, i2l) < 0){
+                            inShadow = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -121,17 +134,24 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                 } 
                 if (lightRay.intersects(o, scene.vertex_data, f_intersection,
                             f_distance, f_normal)) {
-                    if (lightDistance - f_distance > scene.shadow_ray_epsilon && 
-                        parser::is_same_dir_epsilon(lightRay.ray_direction, 
-                            f_intersection - viewingRay.intersection)) {
-                        inShadow = true;
-                        break;
+                    if (fabs(f_distance - lightDistance) > scene.shadow_ray_epsilon &&
+                        f_distance < lightDistance &&
+                        f_distance > scene.shadow_ray_epsilon) {
+                        parser::Vec3f i2i = parser::scale(viewingRay.intersection - f_intersection , 
+                                                1 / parser::length(viewingRay.intersection - f_intersection));
+                        parser::Vec3f i2l = parser::scale(viewingRay.ray_origin - viewingRay.intersection , 
+                                                1 / parser::length(viewingRay.ray_origin - viewingRay.intersection));
+                        if (parser::dot(i2i, i2l) < 0){
+                            inShadow = true;
+                            break;
+                        }
                     }
                 }
             }
             if (inShadow){
                 // point is in shadow for this light source, 
                 //  no diffuse or specular component, continue
+                //std::cout << "IN SHADOW" << std::endl;
                 continue;
             }
             
@@ -158,9 +178,13 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
             parser::Vec3f half = v + l;
             half = parser::scale(half, 1 / parser::length(half));
 
-            accumulation += parser::scale(parser::element_mult(material.specular, 
-                        lightRay.intensity), powf(fmax(0, parser::dot(n, half)), 
-                            material.phong_exponent) / powf(lightDistance, 2));
+            orientationAngle = fmax(0, parser::dot(n, half));
+            if (orientationAngle > 0){
+                accumulation += parser::scale(parser::element_mult(material.specular, 
+                    lightRay.intensity), powf(fmax(0, parser::dot(n, half)), 
+                        material.phong_exponent) / powf(lightDistance, 2));
+            }
+            
             
             // WARN: no epsilon wise equality check
             if (!parser::is_zero(material.mirror)) {
@@ -176,27 +200,31 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                     parser::element_mult(apply_effects(rem_depth-1, bouncingRay, scene), 
                             material.mirror);
             }
+
+            // round float values to integer 
+            accumulation.x = round(accumulation.x);
+            accumulation.y = round(accumulation.y);
+            accumulation.z = round(accumulation.z);
             
             // SHADING ENDS HERE
             if (accumulation.x > 255){
                 accumulation.x = 255;
             }
-            else if (accumulation.x < 1e-2){
+            else if (accumulation.x < 1){
                 accumulation.x = 0;
-            } 
+            }
             if (accumulation.y > 255){
                 accumulation.y = 255;
             }
-            else if (accumulation.y < 1e-2){
+            else if (accumulation.y < 1){
                 accumulation.y = 0;
-            } 
+            }
             if (accumulation.z > 255){
                 accumulation.z = 255;
             }
-            else if (accumulation.z < 1e-2){
+            else if (accumulation.z < 1){
                 accumulation.z = 0;
-            } 
-
+            }
         }
     }
 
@@ -231,7 +259,7 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
             // initially viewingRay (pure ray) is cameraRay
             parser::ViewingRay viewingRay(cameraRay.ray_origin, cameraRay.ray_direction);
 
-            parser::Vec3f result = apply_effects(6, viewingRay, scene);
+            parser::Vec3f result = apply_effects(scene.max_recursion_depth, viewingRay, scene);
 
             // Last step, write pixels from cameraRays to image
             
