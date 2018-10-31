@@ -1,5 +1,7 @@
 #include <iostream>
 #include <limits>
+#include <thread>
+#include <vector>
 #include "parser.h"
 #include "ppm.h"
 
@@ -16,6 +18,8 @@ const RGB BAR_COLOR[8] =
     {   0,   0, 255 },  // Blue
     {   0,   0,   0 },  // Black
 };
+
+unsigned char *image;
 
 parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay, 
         const parser::Scene & scene)
@@ -237,24 +241,16 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
     return accumulation;
 }
 
-// Our main function for homework
-void render_image(const parser::Camera & camera, const parser::Scene & scene)
-{
-    int width = camera.image_width, height = camera.image_height;
-    unsigned char image[height * width * 3];
-
-    // ***********************************************************************
-    // Calculate intersection points and "RGB" values for corresponding pixel
-    // ***********************************************************************
+void rendering_thread(int height_start, int height_window, int width,
+                        const parser::Camera & camera, const parser::Scene scene){
     
-    int imageIt = 0;
-
-    // Calculate "parser::CameraRay"s for each pixel
-    for (int y = 0; y < height; ++y) {
-
+    int lim = height_start + height_window;
+    int threadImageIt = width * height_start * 3;
+    
+    for (int i = height_start; i < lim; i++){
         for (int x = 0; x < width; ++x) {
                 
-            parser::CameraRay cameraRay(camera, x, y);
+            parser::CameraRay cameraRay(camera, x, i);
 
             // initially viewingRay (pure ray) is cameraRay
             parser::ViewingRay viewingRay(cameraRay.ray_origin, cameraRay.ray_direction);
@@ -263,11 +259,35 @@ void render_image(const parser::Camera & camera, const parser::Scene & scene)
 
             // Last step, write pixels from cameraRays to image
             
-            image[imageIt++] = (int) (result.x);
-            image[imageIt++] = (int) (result.y);
-            image[imageIt++] = (int) (result.z);
+            image[threadImageIt++] = (int) (result.x);
+            image[threadImageIt++] = (int) (result.y);
+            image[threadImageIt++] = (int) (result.z);
         }
     }
+}
+
+// Our main function for homework
+void render_image(const parser::Camera & camera, const parser::Scene & scene)
+{
+    int width = camera.image_width, height = camera.image_height;
+
+    image = new unsigned char[height * width * 3];
+
+    // ***********************************************************************
+    // Calculate intersection points and "RGB" values for corresponding pixel
+    // ***********************************************************************
+    
+    // THREAD IMPLEMENTATION; 4 THREADS PARALLEL
+
+    std::thread t1 = std::thread(rendering_thread, 0, height / 4, width, camera, scene);
+    std::thread t2 = std::thread(rendering_thread, height / 4, height / 4, width, camera, scene);
+    std::thread t3 = std::thread(rendering_thread, height / 2, height / 4, width, camera, scene);
+    std::thread t4 = std::thread(rendering_thread, 3 * height / 4, height / 4, width, camera, scene);
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
 
     write_ppm(camera.image_name.c_str(), image, width, height);
 }
