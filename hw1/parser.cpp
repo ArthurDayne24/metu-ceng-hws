@@ -91,6 +91,10 @@ bool parser::Ray::intersects(const Face & face,
     f_normal = cross_product(Vec3f(a, b, c), Vec3f(d, e, f));
     f_normal = scale(f_normal, 1 / length(f_normal));
 
+    if (dot(f_normal, ray_direction) > 0) {
+        f_normal = scale(f_normal, -1);
+    }
+
     return 1;
 }
 
@@ -278,6 +282,9 @@ void parser::Scene::loadFromXml(const std::string& filepath)
 
         // Additional initialization steps for camera
         
+        camera.up = scale(camera.up, 1 / length(camera.up));
+        camera.gaze = scale(camera.gaze, 1 / length(camera.gaze));
+
         camera.cross = cross_product(camera.up, scale(camera.gaze, -1)) ;
 
         camera.rminusl = camera.near_plane.y - camera.near_plane.x;
