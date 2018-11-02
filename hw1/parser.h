@@ -11,7 +11,7 @@ namespace parser
 
     // TODO to be determined later
     // Used to achieve precision loss due to floating points
-    const float EqualityEpsilon = 1e-10;
+    const float EqualityEpsilon = 1e-6;
 
     //Notice that all the structures are as simple as possible
     //so that you are not enforced to adopt any style or design.
