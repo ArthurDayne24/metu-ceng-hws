@@ -128,6 +128,10 @@ bool parser::Ray::intersects(const Mesh & mesh,
         }
     }
 
+   f_distance = min_distance;
+   f_intersection = min_dist_intersection;
+   f_normal = min_dist_normal;
+
     return flag;
 }
 
