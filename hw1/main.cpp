@@ -34,6 +34,7 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
     parser::Vec3f min_dist_intersection, f_intersection;
     int min_dist_mat_id;
     parser::Vec3f min_dist_normal, f_normal;
+    int intersect_id = 0, i = 0, intersect_type = 0;
 
     for (const parser::Mesh & o: scene.meshes) {
         if (viewingRay.intersects(o, scene.vertex_data, f_intersection,
@@ -43,9 +44,13 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                 min_dist_intersection = f_intersection;
                 min_dist_mat_id = o.material_id;
                 min_dist_normal = f_normal;
+                intersect_id = i;
+                intersect_type = 1;
             }
         }
+        i++;
     }
+    i = 0;
     for (const parser::Triangle & o: scene.triangles) {
         if (viewingRay.intersects(o, scene.vertex_data, f_intersection,
                     f_distance, f_normal)) {
@@ -54,9 +59,13 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                 min_dist_intersection = f_intersection;
                 min_dist_mat_id = o.material_id;
                 min_dist_normal = f_normal;
+                intersect_id = i;
+                intersect_type = 2;
             }
         }
+        i++;
     }
+    i = 0;
     for (const parser::Sphere & o: scene.spheres) {
         if (viewingRay.intersects(o, scene.vertex_data, f_intersection,
                     f_distance, f_normal)) {
@@ -65,9 +74,13 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                 min_dist_intersection = f_intersection;
                 min_dist_mat_id = o.material_id;
                 min_dist_normal = f_normal;
+                intersect_id = i;
+                intersect_type = 3;
             }
         }
+        i++;
     }
+    i = 0;
 
     if (min_distance < std::numeric_limits<float>::max()) {
         
@@ -112,7 +125,9 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                         }
                     }
                 }
+                i++;
             }
+            i = 0;
             for (const parser::Triangle & o: scene.triangles) {
                 if (inShadow){
                     break;
@@ -133,7 +148,9 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                         }
                     }
                 }
+                i++;
             }
+            i = 0;
             for (const parser::Sphere & o: scene.spheres) {
                 if (inShadow){
                     break;
@@ -147,14 +164,16 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                                                 1 / parser::length(viewingRay.intersection - f_intersection));
                         parser::Vec3f i2l = parser::scale(pointLight.position - viewingRay.intersection , 
                                                 1 / parser::length(pointLight.position - viewingRay.intersection));
-                        if (parser::dot(i2i, i2l) < 0){
+                        if (parser::dot(i2i, i2l) < 0 && (intersect_type != 3 || intersect_id != i)){
                             std::cout << "dot product res shadow: " << parser::dot(i2i, i2l) << std::endl;
                             inShadow = true;
                             break;
                         }
                     }
                 }
+                i++;
             }
+            i = 0;
             if (inShadow){
                 // point is in shadow for this light source, 
                 //  no diffuse or specular component, continue
