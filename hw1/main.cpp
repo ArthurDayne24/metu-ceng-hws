@@ -103,9 +103,10 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                         f_distance > scene.shadow_ray_epsilon) {
                         parser::Vec3f i2i = parser::scale(viewingRay.intersection - f_intersection , 
                                                 1 / parser::length(viewingRay.intersection - f_intersection));
-                        parser::Vec3f i2l = parser::scale(viewingRay.ray_origin - viewingRay.intersection , 
-                                                1 / parser::length(viewingRay.ray_origin - viewingRay.intersection));
+                        parser::Vec3f i2l = parser::scale(pointLight.position - viewingRay.intersection , 
+                                                1 / parser::length(pointLight.position - viewingRay.intersection));
                         if (parser::dot(i2i, i2l) < 0){
+                            std::cout << "dot product res shadow: " << parser::dot(i2i, i2l) << std::endl;
                             inShadow = true;
                             break;
                         }
@@ -123,9 +124,10 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                         f_distance > scene.shadow_ray_epsilon) {
                         parser::Vec3f i2i = parser::scale(viewingRay.intersection - f_intersection , 
                                                 1 / parser::length(viewingRay.intersection - f_intersection));
-                        parser::Vec3f i2l = parser::scale(viewingRay.ray_origin - viewingRay.intersection , 
-                                                1 / parser::length(viewingRay.ray_origin - viewingRay.intersection));
+                        parser::Vec3f i2l = parser::scale(pointLight.position - viewingRay.intersection , 
+                                                1 / parser::length(pointLight.position - viewingRay.intersection));
                         if (parser::dot(i2i, i2l) < 0){
+                            std::cout << "dot product res shadow: " << parser::dot(i2i, i2l) << std::endl;
                             inShadow = true;
                             break;
                         }
@@ -143,9 +145,10 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                         f_distance > scene.shadow_ray_epsilon) {
                         parser::Vec3f i2i = parser::scale(viewingRay.intersection - f_intersection , 
                                                 1 / parser::length(viewingRay.intersection - f_intersection));
-                        parser::Vec3f i2l = parser::scale(viewingRay.ray_origin - viewingRay.intersection , 
-                                                1 / parser::length(viewingRay.ray_origin - viewingRay.intersection));
+                        parser::Vec3f i2l = parser::scale(pointLight.position - viewingRay.intersection , 
+                                                1 / parser::length(pointLight.position - viewingRay.intersection));
                         if (parser::dot(i2i, i2l) < 0){
+                            std::cout << "dot product res shadow: " << parser::dot(i2i, i2l) << std::endl;
                             inShadow = true;
                             break;
                         }
@@ -189,11 +192,10 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                         material.phong_exponent) / powf(lightDistance, 2));
             }
             
-            
+            // calculate reflection
+
             // WARN: no epsilon wise equality check
             if (!parser::is_zero(material.mirror)) {
-                
-                // do some recursion for specular in this function
                 parser::Vec3f d = parser::scale(v, -1);
                 parser::Vec3f r = d - parser::scale(n, parser::dot(d, n) * 2);
 
@@ -204,31 +206,7 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
                     parser::element_mult(apply_effects(rem_depth-1, bouncingRay, scene), 
                             material.mirror);
             }
-
-            // round float values to integer 
-            accumulation.x = round(accumulation.x);
-            accumulation.y = round(accumulation.y);
-            accumulation.z = round(accumulation.z);
-            
             // SHADING ENDS HERE
-            if (accumulation.x > 255){
-                accumulation.x = 255;
-            }
-            else if (accumulation.x < 1){
-                accumulation.x = 0;
-            }
-            if (accumulation.y > 255){
-                accumulation.y = 255;
-            }
-            else if (accumulation.y < 1){
-                accumulation.y = 0;
-            }
-            if (accumulation.z > 255){
-                accumulation.z = 255;
-            }
-            else if (accumulation.z < 1){
-                accumulation.z = 0;
-            }
         }
     }
 
@@ -236,6 +214,30 @@ parser::Vec3f apply_effects(int rem_depth, parser::ViewingRay viewingRay,
         accumulation.x = scene.background_color.x;
         accumulation.y = scene.background_color.y;
         accumulation.z = scene.background_color.z;
+    }
+
+    // round float values to integer 
+    accumulation.x = round(accumulation.x);
+    accumulation.y = round(accumulation.y);
+    accumulation.z = round(accumulation.z);
+
+    if (accumulation.x > 255){
+        accumulation.x = 255;
+    }
+    else if (accumulation.x < 1){
+        accumulation.x = 0;
+    }
+    if (accumulation.y > 255){
+        accumulation.y = 255;
+    }
+    else if (accumulation.y < 1){
+        accumulation.y = 0;
+    }
+    if (accumulation.z > 255){
+        accumulation.z = 255;
+    }
+    else if (accumulation.z < 1){
+        accumulation.z = 0;
     }
 
     return accumulation;

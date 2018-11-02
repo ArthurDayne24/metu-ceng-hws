@@ -35,6 +35,9 @@ namespace parser
         friend Vec3f operator-(const Vec3f & vec1,const Vec3f & vec2) {
             return Vec3f(vec1.x - vec2.x, vec1.y - vec2.y, vec1.z - vec2.z);
         }
+        friend Vec3f operator-(const Vec3f & vec1) {
+            return Vec3f(-vec1.x, -vec1.y, -vec1.z);
+        }
         Vec3f& operator-=(const Vec3f & vec) {
             x -= vec.x;
             y -= vec.y; 
