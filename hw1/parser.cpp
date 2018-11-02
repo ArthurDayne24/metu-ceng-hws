@@ -79,7 +79,7 @@ bool parser::Ray::intersects(const Face & face,
     if (beta < 0 || beta > (1 - gamma)) {
         return 0;
     }
-    if (t < 0){
+    if (t < EqualityEpsilon){
         return 0;
     }
 
@@ -150,7 +150,7 @@ bool parser::Ray::intersects(const Sphere & sphere,
     if (is_equal_epsilon(discriminant, 0)) {
         float t = -dot(ray_direction, B) / C;
 
-        if (t < 0){
+        if (t < EqualityEpsilon){
             return 0;
         }
 
@@ -166,7 +166,7 @@ bool parser::Ray::intersects(const Sphere & sphere,
         float t1 = (A + S) / C,
               t2 = (A - S) / C;
 
-        if (t1 < 0){
+        if (t1 < EqualityEpsilon){
             return 0;
         }
 
