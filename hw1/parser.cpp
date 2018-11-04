@@ -289,7 +289,16 @@ void parser::Scene::loadFromXml(const std::string& filepath)
         camera.up = scale(camera.up, 1 / length(camera.up));
         camera.gaze = scale(camera.gaze, 1 / length(camera.gaze));
 
-        camera.cross = cross_product(camera.up, scale(camera.gaze, -1)) ;
+        Vec3f w_ = scale(camera.gaze, -1 / length(camera.gaze));
+        Vec3f u_ = cross_product(camera.up, w_);
+        u_ = scale(u_, 1 / length(u_));
+        Vec3f v_ = cross_product(w_, u_);
+
+        camera.gaze = scale(w_, -1);
+        camera.up = v_;
+        camera.cross = u_;
+
+//        camera.cross = cross_product(camera.up, scale(camera.gaze, -1)) ;
 
         camera.rminusl = camera.near_plane.y - camera.near_plane.x;
         camera.tminusb = camera.near_plane.w - camera.near_plane.z;
