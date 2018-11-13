@@ -7,37 +7,37 @@
 #include <vector>
 
 Attack::Attack(const std::string & pCiphertextFname, const std::string & pPlaintextFname, 
-        const std::string & pWorddictFname) :
+        const std::string & pWorddictFname, bool pDebug) :
     mCiphertextFname(pCiphertextFname), 
     mPlaintextFname(pPlaintextFname), 
-    mWorddictFname(pWorddictFname)
+    mWorddictFname(pWorddictFname),
+    mDebug(pDebug)
 {
     std::memset(mCiphertext, 0, bufferSize);
     std::memset(mDecryptedtext, 0, bufferSize);
     std::memset(mIv, 0, bufferSize);
     std::memset(mPlaintext, 0, bufferSize);
 
-    mCiphertextLen = read_to_buffer(mCiphertextFname, mCiphertext, bufferSize);
-    mPlaintextLen = read_to_buffer(mPlaintextFname, mPlaintext, bufferSize);
+    mCiphertextLen = read_to_buffer(mCiphertextFname, mCiphertext);
+    mPlaintextLen = read_to_buffer(mPlaintextFname, mPlaintext);
 
     mWorddict.reserve(25600);
 
     read_word_dictionary();
 }
 
-int Attack::read_to_buffer(const std::string & pFname, unsigned char pBuff[], int pLen)
+int Attack::read_to_buffer(const std::string & pFname, unsigned char pBuff[])
 {
     std::ifstream infile(pFname);
     std::string line;
     
-    if (!std::getline(infile, line))
-    {
+    if (!std::getline(infile, line)) {
         notify_error("Could not read " + pFname);
     }
-    
+
     int read_length = line.length();
 
-    if (read_length > pLen) {
+    if (read_length > bufferSize) {
         notify_error("String read from " + pFname + " is too long");
     }
 
@@ -52,16 +52,22 @@ void Attack::read_word_dictionary()
     std::ifstream infile(mWorddictFname);
     std::string line;
     
-    while (std::getline(infile, line));
-    {
-        mWorddict.push_back(line);
+    if (!infile) {
+        notify_error("File does not exits");
     }
+    
+    do {
+        std::getline(infile, line);
+        mWorddict.push_back(line);
+    } while (line != "");
 }
 
 void Attack::notify_error(const std::string & error_message)
 {
-    std::cerr << "Unexpected error: "  << error_message << std::endl;
-    exit(1);
+    if (true == mDebug) {
+        std::cerr << "Unexpected error: "  << error_message << std::endl;
+        exit(1);
+    }
 }
 
 bool Attack::key_trial(const std::string & pKey)

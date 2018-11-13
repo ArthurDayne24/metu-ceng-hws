@@ -2,7 +2,7 @@
 
 int main()
 {
-    Attack("ciphertext", "plaintext.txt", "words.txt").solve();
+    Attack("ciphertext", "plaintext.txt", "words.txt", true).solve();
     
     return 0;
 }
