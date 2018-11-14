@@ -4,17 +4,19 @@
 #ifndef __ATTACK__H__
 #define __ATTACK__H__
 
-// Solve for key in aes-128-cbc
+/* Solve for key in aes-128-cbc
+ * -> at any size of plaintext
+ * -> IV is all zeros
+ * -> with a dictionary up to a size of 25600
+ * -> with keys up to 16 chars
+ */
+
+// TODO put constants
+
 class Attack {
 
 private:
-    const static int bufferSize = 128;
-
-    unsigned char
-        mCiphertext[bufferSize], 
-        mDecryptedtext[bufferSize],
-        mIv[bufferSize], 
-        mPlaintext[bufferSize];
+    unsigned char *mCiphertext, *rCiphertext, *mPlaintext, mIv[16];
 
     int mCiphertextLen, mPlaintextLen;
 
@@ -22,16 +24,12 @@ private:
     
     bool mDebug;
 
+    bool mPadding;
+
+    // number of times to call EVP_EncryptUpdate()
+    int mTours;
+
     std::vector<std::string> mWorddict;
-
-    // read file to buffer
-    // TODO assume one line input for now
-    // params: file name, buffer
-    // return: number of bytes read from file
-    int read_to_buffer(const std::string & , unsigned char[]);
-
-    // read word dictionary into string vector
-    void read_word_dictionary();
 
     // params: error message
     void notify_error(const std::string & );
@@ -47,6 +45,8 @@ public:
     // copy constructor and assignment operator is forbidden
     Attack(const Attack & ) = delete;
     Attack & operator=(const Attack & ) = delete;
+
+    ~Attack();
 
     void solve();
 };
