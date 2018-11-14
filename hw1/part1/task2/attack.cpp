@@ -6,76 +6,48 @@
 #include <string>
 #include <vector>
 
-Attack::Attack(const std::string  & pCiphertextFname, const std::string  & pPlaintextFname, 
-        const std::string  & pWorddictFname, bool pDebug) :
-    mCiphertextFname(pCiphertextFname), 
-    mPlaintextFname(pPlaintextFname), 
-    mWorddictFname(pWorddictFname),
-    mDebug(pDebug)
+Attack::Attack()
 {
-    std::memset(mIv, 0, 16);
-    // line iterator
-    std::string line, plaintextRead;
-
-    // read plaintext
-    std::ifstream infile_plain(mPlaintextFname);
-    while (std::getline(infile_plain, line)) {
-        // TODO newline ? 
-        plaintextRead += line;
-    }
-
-    mPlaintextLen = mCiphertextLen = line.length();
-
-    if (mCiphertextLen % 16) {
-        mCiphertextLen += 16 - (mCiphertextLen % 16);
-        mPadding = true;
-        mTours = (mCiphertextLen / 16) - 1;
-    }
-    else {
-        mPadding = false;
-        mTours = mCiphertextLen / 16;
-    }
+    std::memset(mCiphertext, 0, textBufferLen);
+    std::memset(rCiphertext, 0, textBufferLen);
+    std::memset(mPlaintext, 0, textBufferLen);
+    std::memset(mIv, 0, ivBufferLen);
     
-    mCiphertext = new unsigned char[mCiphertextLen*20];
-    rCiphertext = new unsigned char[mCiphertextLen*20];
-    mPlaintext = new unsigned char[mPlaintextLen*20];
+    char c;
 
-    std::memset(mCiphertext, 0, mCiphertextLen);
-    std::memset(rCiphertext, 0, mCiphertextLen);
-    std::memset(mPlaintext, 0, mPlaintextLen);
-
-    // write plaintext
-    std::copy(plaintextRead.begin(), plaintextRead.end(), mPlaintext);
+    // read/write plaintext
+    std::ifstream infile_plain(plaintextFname, std::ios::binary);
+    for (int i = 0; i < textBufferLen; i++) {
+        c = infile_plain.get();
+        mPlaintext[i] = c;
+    }
 
     // read/write ciphertext
-    std::ifstream infile_cipher(mCiphertextFname, std::ios::binary);
-    for (int i = 0; i < mCiphertextLen; i++) {
+    std::ifstream infile_cipher(ciphertextFname, std::ios::binary);
+    for (int i = 0; i < textBufferLen; i++) {
         c = infile_cipher.get();
         mCiphertext[i] = c;
     }
 
-    mWorddict.reserve(25600);
-
     // read words
-    std::ifstream infile_word(mWorddictFname);
+    std::ifstream infile_word(wordDictFname);
+    std::string line;
     
     while (std::getline(infile_word, line)) {
-        mWorddict.push_back(line);
+        mWordDict[mWordDictLen++] = line;
     }
 }
 
 void Attack::notify_error(const std::string & error_message)
 {
-    if (true == mDebug) {
-        std::cerr << "Unexpected error: " << error_message << std::endl;
-        exit(0);
-    }
+    std::cerr << "Unexpected error: " << error_message << std::endl;
+    exit(0);
 }
 
 bool Attack::key_trial(const std::string & pKey)
 {
-    static unsigned char key[16];
-    std::memset(key, 0, 16);
+    static unsigned char key[keyBufferLen];
+    std::memset(key, 0, keyBufferLen);
     
     std::copy(pKey.begin(), pKey.end(), key);
 
@@ -92,46 +64,35 @@ bool Attack::key_trial(const std::string & pKey)
 
     int cur_len, rCiphertext_len = 0;
     
-    for (int i = 0; i < mTours; i++) {
-        if (0 == EVP_EncryptUpdate(cipher_ctx, rCiphertext + rCiphertext_len, &cur_len, mPlaintext, mPlaintextLen)) {
-            notify_error("EVP_EncryptUpdate()");
-        }
-    
-        rCiphertext_len += cur_len;
+    if (0 == EVP_EncryptUpdate(cipher_ctx, rCiphertext, &cur_len, mPlaintext, realPlainttextLen)) {
+        notify_error("EVP_EncryptUpdate()");
     }
 
-    if (true == mPadding) {
-        if (0 == EVP_EncryptFinal_ex(cipher_ctx, rCiphertext + rCiphertext_len, &cur_len)) {
-            notify_error("EVP_EncryptFinal_ex()");
-        }
-    
-        rCiphertext_len += cur_len;
+    rCiphertext_len += cur_len;
+
+    if (0 == EVP_EncryptFinal_ex(cipher_ctx, rCiphertext + rCiphertext_len, &cur_len)) {
+        notify_error("EVP_EncryptFinal_ex()");
     }
+
+    rCiphertext_len += cur_len;
 
     /* Clean up */
     EVP_CIPHER_CTX_free(cipher_ctx);
 
-    return rCiphertext_len == mCiphertextLen &&
-        0 == std::memcmp(rCiphertext, mCiphertext, mCiphertextLen);
+    return rCiphertext_len == textBufferLen &&
+        0 == std::memcmp(rCiphertext, mCiphertext, textBufferLen);
 }
 
 void Attack::solve()
 {
-    for (const std::string & key: mWorddict) {
+    for (int i = 0; i < mWordDictLen; i++) {
+        const std::string & key = mWordDict[i];
         if (true == key_trial(key)) {
-            // TODO ask
             std::cout << key;
             return;
         }
     }
 
     notify_error("No solution exists");
-}
-
-Attack::~Attack()
-{
-    delete[] mPlaintext;
-    delete[] mCiphertext;
-    delete[] rCiphertext;
 }
 
