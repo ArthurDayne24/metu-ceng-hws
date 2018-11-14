@@ -34,6 +34,9 @@ Attack::Attack()
     std::string line;
     
     while (std::getline(infile_word, line)) {
+        if (line.length() > keyBufferLen) {
+            notify_error("Key is too long than expected")
+        }
         mWordDict[mWordDictLen++] = line;
     }
 }
@@ -41,7 +44,6 @@ Attack::Attack()
 void Attack::notify_error(const std::string & error_message)
 {
     std::cerr << "Unexpected error: " << error_message << std::endl;
-    exit(0);
 }
 
 bool Attack::key_trial(const std::string & pKey)
