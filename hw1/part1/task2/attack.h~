@@ -8,7 +8,7 @@
  * -> with plaintext size of 21
  * -> IV is all zeros
  * -> with a dictionary up to a size of 25600
- * -> with keys of length less than 16 chars
+ * -> with keys up to 16 chars
  */
 
 class Attack {

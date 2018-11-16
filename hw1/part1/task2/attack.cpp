@@ -17,7 +17,7 @@ Attack::Attack()
 
     // read/write plaintext
     std::ifstream infile_plain(plaintextFname, std::ios::binary);
-    for (int i = 0; i < textBufferLen; i++) {
+    for (int i = 0; i < realPlainttextLen; i++) {
         c = infile_plain.get();
         mPlaintext[i] = c;
     }
@@ -34,10 +34,9 @@ Attack::Attack()
     std::string line;
     
     while (std::getline(infile_word, line)) {
-        if (line.length() > keyBufferLen) {
-            notify_error("Key is too long than expected")
+        if (line.length() < keyBufferLen) {
+            mWordDict[mWordDictLen++] = line;
         }
-        mWordDict[mWordDictLen++] = line;
     }
 }
 
