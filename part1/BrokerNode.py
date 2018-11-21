@@ -34,7 +34,7 @@ class BrokerNode:
     def worker_forward_from_s():
         # Interface 1 (for s)
         self.sSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sSocket.bind((INTERFACE_B, PORT_B))
+        self.sSocket.bind((INTERFACE_1, PORT))
         self.sSocket.listen(1)
 
         self.sConnectionSocket, _ = self.sSocket.accept()
@@ -42,15 +42,13 @@ class BrokerNode:
         binaryCtr = 0
 
         # wait for other connections to be established
-        self.allConnectionsEstablished.wait()
+        self.allConnectionsEstablished.wait)
 
         while True:
             # transmit file from s to r1/r2
 
             # receive from s
             data = self.sConnectionSocket.recv(MAX_FILE_SIZE)
-            # convert to bytearray
-            data = self.get_binary_from_string(data)
 
             # TODO convert to UDP data
 
@@ -58,15 +56,15 @@ class BrokerNode:
 
             # r1's turn
             if binaryCtr == 0:
-                self.r1Socket.sendto(data, (INTERFACE_R1, PORT_R1))
+                self.r1Socket.sendto(data, (INTERFACE_2, PORT))
             # r2's turn
             else: 
-                self.r2Socket.sendto(data, (INTERFACE_R2, PORT_R2))
+                self.r2Socket.sendto(data, (INTERFACE_6, PORT))
     
     def worker_backward_from_r1():
         # Interface 2 (for r1)
         self.r1Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.r1Socket.bind((INTERFACE_R1, PORT_R1))
+        self.r1Socket.bind((INTERFACE_2, PORT))
 
         # wait for other connections to be established
         self.allConnectionsEstablished.wait()
@@ -76,8 +74,6 @@ class BrokerNode:
 
             # receive from r1
             data, _ = r1Socket.recvfrom(HEADER_SIZE)
-            # convert to bytearray
-            data = get_binary_from_string(data)
 
             # TODO convert to TCP data
             
@@ -87,7 +83,7 @@ class BrokerNode:
     def worker_backward_from_r2():
         # Interface 6 (for r2)
         self.r2Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.r2Socket.bind((INTERFACE_R2, PORT_R2))
+        self.r2Socket.bind((INTERFACE_6, PORT))
 
         # wait for other connections to be established
         self.allConnectionsEstablished.wait()
