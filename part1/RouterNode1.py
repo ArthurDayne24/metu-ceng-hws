@@ -1,6 +1,7 @@
 
-from RouterNode import RouterNode
+import RouterNode
+from commons import *
 
 if __name__ == '__main__':
-    RouterNode(INTERFACE_2, INTERFACE_3, INTERFACE_4, INTERFACE_5)
+    RouterNode.RouterNode(INTERFACE_2, INTERFACE_3, INTERFACE_4, INTERFACE_5)
 

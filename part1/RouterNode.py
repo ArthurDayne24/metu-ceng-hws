@@ -1,6 +1,6 @@
 
 import socket
-import Threading
+import threading
 from commons import *
 
 class RouterNode:
@@ -16,10 +16,10 @@ class RouterNode:
         self.bSocket = self.dSocket = None
 
         # init threads
-        self.brokerThread = threading.Thread(target=self.worker_to_broker, args=(,))
+        self.brokerThread = threading.Thread(target=self.worker_to_broker)
         self.brokerThread.start()
 
-        self.destinationThread = threading.Thread(target=self.worker_to_destination, args=(,))
+        self.destinationThread = threading.Thread(target=self.worker_to_destination)
         self.destinationThread.start()
 
         # end
@@ -29,7 +29,7 @@ class RouterNode:
         self.bSocket.close()
         self.dSocket.close()
 
-    def worker_to_broker():
+    def worker_to_broker(self):
         self.bSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.bSocket.bind((self.rLeftInterface, PORT))
 
@@ -40,12 +40,14 @@ class RouterNode:
             # get data from b and transmit to d
 
             # receive from b
-            data, _ = bSocket.recvfrom(MAX_FILE_SIZE)
+            data, _ = self.bSocket.recvfrom(MAX_FILE_SIZE)
+            # TODO debug
+            print("Received from broker", data.decode('utf-8'))
 
             # send to d
-            self.dSocket.sendto(data, (self.bInterface, PORT))
+            self.dSocket.sendto(data, (self.dInterface, PORT))
 
-    def worker_to_destination():
+    def worker_to_destination(self):
         self.dSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.dSocket.bind((self.rRightInterface, PORT))
 
@@ -56,8 +58,11 @@ class RouterNode:
             # get (n)ack from d and transmit to b
 
             # receive from d
-            data, _ = dSocket.recvfrom(HEADER_SIZE)
+            data, _ = self.dSocket.recvfrom(HEADER_SIZE)
+            # TODO debug
+            print("Received ACK from destination", data.decode('utf-8'))
 
             # send to b
-            self.bSocket.sendto(data, (self.dInterface, PORT))
+            self.bSocket.sendto(data, (self.bInterface, PORT))
 
+            print("r2 Sent to broker")
