@@ -11,6 +11,8 @@ class BrokerNode:
         self.sSocket = self.r1Socket = self.r2Socket = None
         self.sConnectionSocket = None
 
+        self.exitStatus = False
+
         # init threads
         self.sForwardThread = threading.Thread(target=self.worker_forward_from_s)
         self.sForwardThread.start()
@@ -44,25 +46,36 @@ class BrokerNode:
         # wait for other connections to be established
         self.allConnectionsEstablished.wait()
 
+        data = bytearray()
+
         while True:
             # transmit file from s to r1/r2
 
             # receive from s
-            data = self.sConnectionSocket.recv(MAX_FILE_SIZE)
+            get_data = self.sConnectionSocket.recv(PACKET_SIZE)
 
-            # TODO debug
-            print(data.decode('utf-8'))
+            if get_data == 0:
+                print("Connection is closed by SourceNone")
+                self.exitStatus = True
+                return
 
-            # TODO convert to UDP data
+            data.extend(get_data)
+
+            if len(data) < PACKET_SIZE:
+                continue
 
             binaryCtr = (binaryCtr + 1) % 2
 
+            send_data = data[:PACKET_SIZE]
             # r1's turn
             if binaryCtr == 0:
-                self.r1Socket.sendto(data, (INTERFACE_3, PORT))
+                self.r1Socket.sendto(send_data, (INTERFACE_3, PORT))
             # r2's turn
             else: 
-                self.r2Socket.sendto(data, (INTERFACE_7, PORT))
+                self.r2Socket.sendto(send_data, (INTERFACE_7, PORT))
+           
+            print("Broker got from Source", data[:PACKET_SIZE]) 
+            data = data[PACKET_SIZE:]
     
     def worker_backward_from_r1(self):
         # Interface 2 (for r1)
@@ -72,16 +85,12 @@ class BrokerNode:
         # wait for other connections to be established
         self.allConnectionsEstablished.wait()
         
-        while True:
+        while not self.exitStatus:
             # get (n)ack from r1 and transmit to s
 
-            print("Hello before recv r1")
             # receive from r1
-            data, _ = self.r1Socket.recvfrom(HEADER_SIZE)
-            print("Received ACK from router 1", data.decode('utf-8'))
+            data, _ = self.r1Socket.recvfrom(ACK_SIZE)
 
-            # TODO convert to TCP data
-            
             # send to s
             self.sConnectionSocket.send(data)
 
@@ -93,15 +102,11 @@ class BrokerNode:
         # wait for other connections to be established
         self.allConnectionsEstablished.wait()
         
-        while True:
+        while not self.exitStatus:
             # get (n)ack from r2 and transmit to s
 
-            print("Hello before recv r2")
             # receive from r2
-            data, _ = self.r2Socket.recvfrom(HEADER_SIZE)
-            print("Received ACK from router 2", data.decode('utf-8'))
-
-            # TODO convert to TCP data
+            data, _ = self.r2Socket.recvfrom(ACK_SIZE)
 
             # send to s
             self.sConnectionSocket.send(data)

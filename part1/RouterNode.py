@@ -35,17 +35,23 @@ class RouterNode:
 
         # wait for other connections to be established
         self.allConnectionsEstablished.wait()
-        
+
+        data = bytearray()
+       
         while True:
             # get data from b and transmit to d
 
             # receive from b
-            data, _ = self.bSocket.recvfrom(MAX_FILE_SIZE)
-            # TODO debug
-            print("Received from broker", data.decode('utf-8'))
+            get_data, _ = self.bSocket.recvfrom(PACKET_SIZE)
+            
+            data.extend(get_data)
+            if len(data) < PACKET_SIZE:
+                continue
 
             # send to d
-            self.dSocket.sendto(data, (self.dInterface, PORT))
+            self.dSocket.sendto(data[:PACKET_SIZE], (self.dInterface, PORT))
+            print("R1 Sent to Broker", data.decode("utf-8")[:PACKET_SIZE])
+            data = data[PACKET_SIZE:]
 
     def worker_to_destination(self):
         self.dSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -58,11 +64,11 @@ class RouterNode:
             # get (n)ack from d and transmit to b
 
             # receive from d
-            data, _ = self.dSocket.recvfrom(HEADER_SIZE)
+            data, _ = self.dSocket.recvfrom(ACK_SIZE)
             # TODO debug
-            print("Received ACK from destination", data.decode('utf-8'))
+            #print("Received ACK from destination")
 
             # send to b
             self.bSocket.sendto(data, (self.bInterface, PORT))
 
-            print("r2 Sent to broker")
+            #print("ACK sent to broker")
