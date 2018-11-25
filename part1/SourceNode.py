@@ -2,6 +2,7 @@
 import socket
 import random
 import threading
+import datetime
 from commons import *
 
 def get_random_message():
@@ -12,32 +13,25 @@ class SourceNode:
         self.bSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.bSocket.connect((INTERFACE_1, PORT))
 
-        senderThread = threading.Thread(target=self.worker_sender)
-        senderThread.start()
-
-        #receiverThread = threading.Thread(target=self.worker_receiver)
-        #receiverThread.start()
-
-        senderThread.join()
-        #receiverThread.join()
-
-        # end
-        self.bSocket.close()
-
-    def worker_sender(self):
-        for _ in range(10000):
+        while True:
             # read file
             message = get_random_message()
             print("Sent", message)
-        
+
             # send to broker
             self.bSocket.send(message)
-
-    def worker_receiver(self):
-        while True:
+            start = datetime.datetime.now()
             # get (n)ack
             data = self.bSocket.recv(ACK_SIZE)
-#            print("Receive", data.decode('utf-8'))
+            end = datetime.datetime.now()
+
+            delta_time = end - start
+
+            passed_time_seconds = delta_time.seconds + delta_time.microseconds * 1e-6
+            print("Received. Elapsed:", passed_time_seconds, "seconds")
+
+        # end
+        self.bSocket.close()
 
 if __name__ == '__main__':
     SourceNode()
