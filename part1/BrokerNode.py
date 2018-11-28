@@ -1,4 +1,3 @@
-
 import socket
 import threading
 from commons import *
@@ -11,9 +10,7 @@ class BrokerNode:
         self.sSocket = self.r1Socket = self.r2Socket = None
         self.sConnectionSocket = None
 
-        self.exitStatus = False
-
-        # init threads
+        # initialize and start threads
         self.sForwardThread = threading.Thread(target=self.worker_forward_from_s)
         self.sForwardThread.start()
 
@@ -23,7 +20,7 @@ class BrokerNode:
         self.r2BackwardThread = threading.Thread(target=self.worker_backward_from_r2)
         self.r2BackwardThread.start()
 
-        # end
+        # join the threads and close them after
         self.sForwardThread.join()
         self.r1BackwardThread.join()
         self.r2BackwardThread.join()
@@ -36,37 +33,32 @@ class BrokerNode:
     def worker_forward_from_s(self):
         # Interface 1 (for s)
         self.sSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sSocket.bind((INTERFACE_1, PORT))
-        self.sSocket.listen(1)
+        self.sSocket.bind((INTERFACE_1, PORT)) 
+        self.sSocket.listen(1) #Behaves like a server
 
-        self.sConnectionSocket, _ = self.sSocket.accept()
+        self.sConnectionSocket, _ = self.sSocket.accept() #Accept and connect to a client
         
-        binaryCtr = 0
 
         # wait for other connections to be established
         self.allConnectionsEstablished.wait()
 
-        data = bytearray()
-
+        data = bytearray() 
+        
+        binaryCtr = 0
         while True:
             # transmit file from s to r1/r2
 
-            # receive from s
-            get_data = self.sConnectionSocket.recv(PACKET_SIZE)
-
-            if get_data == 0:
-                #print("Connection is closed by SourceNone")
-                self.exitStatus = True
-                return
+            get_data = self.sConnectionSocket.recv(PACKET_SIZE)# receive from s
 
             data.extend(get_data)
-
-            if len(data) < PACKET_SIZE:
+            
+            #If the incoming data less than packet size, do not send it
+            if len(data) < PACKET_SIZE: 
                 continue
-
-            binaryCtr = (binaryCtr + 1) % 2
-
-            send_data = data[:PACKET_SIZE]
+            
+            send_data = data[:PACKET_SIZE] #Make sure to send data with only packet size
+            
+            binaryCtr = (binaryCtr + 1) % 2 #choose the router to receive
             # r1's turn
             if binaryCtr == 0:
                 self.r1Socket.sendto(send_data, (INTERFACE_3, PORT))
@@ -74,7 +66,6 @@ class BrokerNode:
             else: 
                 self.r2Socket.sendto(send_data, (INTERFACE_7, PORT))
            
-            #print("Broker got from Source", data[:PACKET_SIZE]) 
             data = data[PACKET_SIZE:]
     
     def worker_backward_from_r1(self):
@@ -85,7 +76,7 @@ class BrokerNode:
         # wait for other connections to be established
         self.allConnectionsEstablished.wait()
         
-        while not self.exitStatus:
+        while True:
             # get (n)ack from r1 and transmit to s
 
             # receive from r1
@@ -102,7 +93,7 @@ class BrokerNode:
         # wait for other connections to be established
         self.allConnectionsEstablished.wait()
         
-        while not self.exitStatus:
+        while True:
             # get (n)ack from r2 and transmit to s
 
             # receive from r2

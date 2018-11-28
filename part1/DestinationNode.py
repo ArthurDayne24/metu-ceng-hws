@@ -32,11 +32,8 @@ class DestinationNode:
             # convert to bytearray
             data = data.decode('utf-8')
 
-            #print("Dest sent to r1", data,)
             # send to s
             self.r1Socket.sendto(get_binary_from_string(ACK_MESSAGE), (INTERFACE_4, PORT))
-            
-            #print("ACK sent to r1")
 
     def worker_r2(self):
         # Interface 9 (for r2)
@@ -48,12 +45,10 @@ class DestinationNode:
             data, _ = self.r2Socket.recvfrom(PACKET_SIZE)
             # convert to bytearray
             data = data.decode('utf-8')
-            #print("Dest sent to r2", data)
 
             # send to s
             self.r2Socket.sendto(get_binary_from_string(ACK_MESSAGE), (INTERFACE_8, PORT))
 
-            #print("ACK sent to r2")
 
 if __name__ == '__main__':
     DestinationNode()

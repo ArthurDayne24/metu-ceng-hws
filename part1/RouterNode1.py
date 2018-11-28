@@ -1,4 +1,3 @@
-
 import RouterNode
 from commons import *
 
