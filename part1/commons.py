@@ -15,7 +15,7 @@ INTERFACE_7 = "10.10.4.2"
 INTERFACE_8 = "10.10.5.1"
 INTERFACE_9 = "10.10.5.2"
 
-PORT = 8091
+PORT = 8100
 
 def get_int_from_binary(byte):
     return int(byte.decode('utf-8'))

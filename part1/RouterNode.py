@@ -50,7 +50,7 @@ class RouterNode:
 
             # send to d
             self.dSocket.sendto(data[:PACKET_SIZE], (self.dInterface, PORT))
-            print("R1 Sent to Broker", data.decode("utf-8")[:PACKET_SIZE])
+            #print("R1 Sent to Broker", data.decode("utf-8")[:PACKET_SIZE])
             data = data[PACKET_SIZE:]
 
     def worker_to_destination(self):

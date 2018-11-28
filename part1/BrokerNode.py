@@ -55,7 +55,7 @@ class BrokerNode:
             get_data = self.sConnectionSocket.recv(PACKET_SIZE)
 
             if get_data == 0:
-                print("Connection is closed by SourceNone")
+                #print("Connection is closed by SourceNone")
                 self.exitStatus = True
                 return
 
@@ -74,7 +74,7 @@ class BrokerNode:
             else: 
                 self.r2Socket.sendto(send_data, (INTERFACE_7, PORT))
            
-            print("Broker got from Source", data[:PACKET_SIZE]) 
+            #print("Broker got from Source", data[:PACKET_SIZE]) 
             data = data[PACKET_SIZE:]
     
     def worker_backward_from_r1(self):

@@ -27,8 +27,8 @@ class SourceNode:
 
             delta_time = end - start
 
-            passed_time_seconds = delta_time.seconds + delta_time.microseconds * 1e-6
-            print("Received. Elapsed:", passed_time_seconds, "seconds")
+            passed_time_miliseconds = (delta_time.seconds + delta_time.microseconds * 1e-6) * 1e3
+            print("Received. Elapsed: {:.6f} miliseconds".format(passed_time_miliseconds))
 
         # end
         self.bSocket.close()
