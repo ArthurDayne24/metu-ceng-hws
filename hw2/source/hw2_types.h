@@ -63,12 +63,14 @@ typedef struct Matrix_4_4 {
     void makeScale(const Scaling & s);
     void makeRotationArbitrary(const Rotation & r);
     void makeFrom3Vec3(const Vec3 & u, const Vec3 & v, const Vec3 & w);
+
+    Matrix_4_4 multiplyBy(const Matrix_4_4 & rhs) const;
+    Matrix_4_4 getTranspose() const;
+private:
     // for rotation, helpers, not for explicit use
     void makeM(const Rotation & r);
     void makeRotationAroundX(const Rotation & r);
-    Matrix_4_4 multiplyBy(const Matrix_4_4 & rhs) const;
 
-    Matrix_4_4 getTranspose() const;
 } Matrix_4_4;
 
 #endif //HW2_TYPES_H

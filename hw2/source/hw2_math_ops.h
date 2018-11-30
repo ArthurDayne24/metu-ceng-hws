@@ -50,39 +50,4 @@ void printVec3(Vec3 v);
  */
 int areEqualVec3(Vec3 a, Vec3 b);
 
-/*
- * Makes matrix m (double[4][4]) an identity matrix (values on the diagonal are 1, others are 0).
-*/
-void makeIdentityMatrix(double m[4][4]);
-
-/*
- * Multiply matrices m1 (double[4][4]) and m2 (double[4][4]) and store the result in result matrix r (double[4][4]).
- */
-void multiplyMatrixWithMatrix(double r[4][4], double m1[4][4], double m2[4][4]);
-
-/*
- * Multiply matrix m (double[4][4]) with vector v (double[4]) and store the result in vector r (double[4]).
- */
-void multiplyMatrixWithVec4d(double r[4], double m[4][4], double v[4]);
-
-// Make a translation matrix
-void makeTranslation(double r[4][4], const Translation & t);
-
-// Make a scale matrix
-void makeScale(double r[4][4], const Scaling & s);
-
-/* Rotation related functions */
-
-// M matrix for rotation
-void makeM(double data[4][4], const Rotation & rotation);
-
-// compute transpose from rotation to r
-void makeTranpose(double r[4][4], double m[4][4]);
-
-// rotate "angle" degrees around x-axis
-void makeRotationAroundX(double data[4][4], const Rotation & rotation);
-
-// rotate "angle" degrees around arbitrary axis
-void makeRotationArbitrary(double r[4][4], const Rotation & rotation);
-
 #endif //HW2_MATH_OPS_H

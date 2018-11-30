@@ -125,7 +125,9 @@ Matrix_4_4 calculate_M_per(const Camera & cam) {
 Matrix_4_4 calculate_M_vp(const Camera & cam) {
     Matrix_4_4 M_vp;
 
+    // TODO implement me
 
+    return M_vp;
 }
 /*
 	Transformations, culling, rasterization are done here.
@@ -198,8 +200,6 @@ int main(int argc, char **argv) {
         initializeImage(cameras[i]);
 
         /* do forward rendering pipeline operations */
-
-        // Other steps are here
         forwardRenderingPipeline(cameras[i], M_model);
 
         // generate PPM file
@@ -212,5 +212,4 @@ int main(int argc, char **argv) {
     }
 
     return 0;
-
 }

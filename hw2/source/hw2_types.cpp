@@ -5,13 +5,13 @@
 void Matrix_4_4::makeIdentity() {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            if (i == j) {
-                data[i][j] = 1.0;
-            } else {
-                data[i][j] = 0.0;
-            }
+            data[i][j] = 0.0;
         }
     }
+    data[0][0] = 1;
+    data[1][1] = 1;
+    data[2][2] = 1;
+    data[3][3] = 1;
 }
 
 Matrix_4_4 Matrix_4_4::multiplyBy(const Matrix_4_4 & rhs) const {
@@ -22,8 +22,9 @@ Matrix_4_4 Matrix_4_4::multiplyBy(const Matrix_4_4 & rhs) const {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             total = 0;
-            for (int k = 0; k < 4; k++)
+            for (int k = 0; k < 4; k++) {
                 total += data[i][k] * rhs.data[k][j];
+            }
             result.data[i][j] = total;
         }
     }
@@ -145,4 +146,3 @@ void Matrix_4_4::makeFrom3Vec3(const Vec3 & u, const Vec3 & v, const Vec3 & w) {
     data[3][2] = 0;
     data[3][3] = 0;
 }
-
