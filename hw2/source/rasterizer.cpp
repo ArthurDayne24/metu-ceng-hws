@@ -96,6 +96,37 @@ Matrix_4_4 calculate_M_Cam(const Camera & cam) {
     return M.multiplyBy(T);
 }
 
+Matrix_4_4 calculate_M_per(const Camera & cam) {
+    Matrix_4_4 M_per;
+
+    M_per.data[0][0] = 2 * cam.n / (cam.r - cam.l);
+    M_per.data[0][1] = 0;
+    M_per.data[0][2] = (cam.r + cam.l) / (cam.r - cam.l);
+    M_per.data[0][3] = 0;
+
+    M_per.data[1][0] = 0;
+    M_per.data[1][1] = 2 * cam.n / (cam.t - cam.b);
+    M_per.data[1][2] = (cam.t + cam.b) / (cam.t - cam.b);
+    M_per.data[1][3] = 0;
+
+    M_per.data[2][0] = 0;
+    M_per.data[2][1] = 0;
+    M_per.data[2][2] = -(cam.f + cam.n) / (cam.f - cam.n);
+    M_per.data[2][3] = -2 * cam.f * cam.n / (cam.f - cam.n);
+
+    M_per.data[3][0] = 0;
+    M_per.data[3][1] = 0;
+    M_per.data[3][2] = -1;
+    M_per.data[3][3] = 0;
+
+    return M_per;
+}
+
+Matrix_4_4 calculate_M_vp(const Camera & cam) {
+    Matrix_4_4 M_vp;
+
+
+}
 /*
 	Transformations, culling, rasterization are done here.
 	You can define helper functions inside this file (rasterizer.cpp) only.
@@ -104,9 +135,21 @@ Matrix_4_4 calculate_M_Cam(const Camera & cam) {
 void forwardRenderingPipeline(const Camera & cam, const Matrix_4_4 & M_model) {
     // TODO: IMPLEMENT HERE
 
-    // Step - 2: Calculate camera transformations - M_cam
+    // Step - 1: Calculate modeling transformations - M_model
+    // > M_model is ready as argument
+    // Step - 3: Calculate camera transformations - M_cam
     Matrix_4_4 M_cam = calculate_M_Cam(cam);
+    // Step - 4: Calculate perspective projection - M_per
+    Matrix_4_4 M_per = calculate_M_per(cam);
+    // Step - 5: Apply perspective divide
+    // TODO
 
+
+    // Intermediate things like backface culling etc .. TODO
+
+
+    // Step - 6: Calculate viewport transformations - M_vp
+    Matrix_4_4 M_vp = calculate_M_vp(cam);
 }
 
 int main(int argc, char **argv) {
@@ -120,7 +163,10 @@ int main(int argc, char **argv) {
     readSceneFile(argv[1]);
     readCameraFile(argv[2]);
 
-    image = 0;
+    // Step - 1 : Calculate M_model
+    Matrix_4_4 M_model = calculate_M_Model();
+
+    image = NULL;
 
     for (int i = 0; i < numberOfCameras; i++) {
 
@@ -136,14 +182,14 @@ int main(int argc, char **argv) {
         image = new Color*[cameras[i].sizeX];
 
         if (image == NULL) {
-            std::cout << "ERROR: Cannot allocate memory for image." << std::endl;
+            std::cerr << "ERROR: Cannot allocate memory for image." << std::endl;
             exit(1);
         }
 
         for (int j = 0; j < cameras[i].sizeX; j++) {
             image[j] = new Color[cameras[i].sizeY];
             if (image[j] == NULL) {
-                std::cout << "ERROR: Cannot allocate memory for image." << std::endl;
+                std::cerr << "ERROR: Cannot allocate memory for image." << std::endl;
                 exit(1);
             }
         }
@@ -152,9 +198,6 @@ int main(int argc, char **argv) {
         initializeImage(cameras[i]);
 
         /* do forward rendering pipeline operations */
-
-        // Step - 1 : Calculate M_model
-        Matrix_4_4 M_model = calculate_M_Model();
 
         // Other steps are here
         forwardRenderingPipeline(cameras[i], M_model);

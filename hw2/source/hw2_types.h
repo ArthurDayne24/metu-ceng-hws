@@ -53,13 +53,9 @@ typedef struct {
     Triangle triangles[25000];
 } Model;
 
-typedef class Matrix_4_4 {
-private:
+typedef struct Matrix_4_4 {
     double data[4][4];
-public:
-    double & getset(size_t ix, size_t iy) {
-        return data[ix][iy];
-    }
+
     // XXX One of them should be called just after constructor and ONLY
     // XXX one of them should be used for a Matrix_4_4
     void makeIdentity();
