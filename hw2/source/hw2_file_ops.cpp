@@ -3,7 +3,6 @@
 #include "hw2_file_ops.h"
 #include "hw2_math_ops.h"
 
-
 extern Camera cameras[100];
 extern int numberOfCameras;
 
@@ -22,7 +21,7 @@ extern int numberOfRotations;
 extern Scaling scalings[1000];
 extern int numberOfScalings;
 
-extern Vec3 vertices[100000];
+extern Vec3 a_vertices[100000];
 extern int numberOfVertices;
 
 extern Color backgroundColor;
@@ -39,7 +38,7 @@ void readCameraFile(char *camFileName) {
     char line[80] = {};
     fp = fopen(camFileName, "r");
 
-    if (fp == NULL) {
+    if (fp == nullptr) {
         printf("ERROR: Can't open %s\n", camFileName);
         exit(1);
     }
@@ -85,7 +84,7 @@ void readSceneFile(char *sceneFileName) {
 
     fp = fopen(sceneFileName, "r");
 
-    if (fp == NULL) {
+    if (fp == nullptr) {
         printf("ERROR: Can't open %s\n", sceneFileName);
         exit(1);
     }
@@ -114,8 +113,8 @@ void readSceneFile(char *sceneFileName) {
     fscanf(fp, "%s", line);
 
     for (i = 1; i <= numberOfVertices; i++) {
-        fscanf(fp, "%lf %lf %lf", &(vertices[i].x), &(vertices[i].y), &(vertices[i].z));
-        vertices[i].colorId = i;
+        fscanf(fp, "%lf %lf %lf", &(a_vertices[i].x), &(a_vertices[i].y), &(a_vertices[i].z));
+        a_vertices[i].colorId = i;
     }
 
     /* skip line "#Translations" */

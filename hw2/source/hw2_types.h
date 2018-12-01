@@ -3,10 +3,26 @@
 
 #include <cstring>
 
-typedef struct {
+class Vec4;
+
+class Vec3 {
+public:
+    Vec3(int x=0, int y=0, int z=0, int colorId=0);
+    // ignore last dimension
+    explicit Vec3(const Vec4 & rhs);
     double x, y, z;
     int colorId;
-} Vec3;
+};
+
+class Vec4 {
+public:
+    // pad 1 to last dimention
+    explicit Vec4(const Vec3 & rhs);
+    Vec4(int x=0, int y=0, int z=0, int w=0, int colorId=0);
+    void make_homogenous();
+    double x, y, z, w;
+    int colorId;
+};
 
 typedef struct {
     double tx, ty, tz;
@@ -33,6 +49,7 @@ typedef struct {
     int sizeX;
     int sizeY;
     char outputFileName[80];
+    void bringtToOrigin();
 } Camera;
 
 typedef struct {
@@ -41,6 +58,7 @@ typedef struct {
 
 typedef struct {
     int vertexIds[3];
+    bool backface_passed = false;
 } Triangle;
 
 typedef struct {
@@ -65,7 +83,11 @@ typedef struct Matrix_4_4 {
     void makeFrom3Vec3(const Vec3 & u, const Vec3 & v, const Vec3 & w);
 
     Matrix_4_4 multiplyBy(const Matrix_4_4 & rhs) const;
+    Vec4 multiplyBy(const Vec4 & rhs) const;
     Matrix_4_4 getTranspose() const;
+
+    void makeZeros();
+
 private:
     // for rotation, helpers, not for explicit use
     void makeM(const Rotation & r);

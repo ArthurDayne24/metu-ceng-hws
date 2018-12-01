@@ -1,13 +1,12 @@
 #include <cstdio>
 #include <cmath>
-#include <cstring>
 #include "hw2_math_ops.h"
 #define ABS(a) ((a)>0?(a):-1*(a))
 
 /*
  * Calculate cross product of vec3 a, vec3 b and return resulting vec3.
  */
-Vec3 crossProductVec3(Vec3 a, Vec3 b) {
+Vec3 crossProductVec3(const Vec3 & a, const Vec3 & b) {
     Vec3 result;
 
     result.x = a.y * b.z - b.y * a.z;
@@ -20,21 +19,21 @@ Vec3 crossProductVec3(Vec3 a, Vec3 b) {
 /*
  * Calculate dot product of vec3 a, vec3 b and return resulting value.
  */
-double dotProductVec3(Vec3 a, Vec3 b) {
+double dotProductVec3(const Vec3 & a, const Vec3 & b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 /*
  * Find length (|v|) of vec3 v.
  */
-double lengthOfVec3(Vec3 v) {
+double lengthOfVec3(const Vec3 & v) {
     return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
 /*
  * Normalize the vec3 to make it unit vec3.
  */
-Vec3 normalizeVec3(Vec3 v) {
+Vec3 normalizeVec3(const Vec3 & v) {
     Vec3 result;
     double d;
 
@@ -49,7 +48,7 @@ Vec3 normalizeVec3(Vec3 v) {
 /*
  * Add vec3 a to vec3 b and return resulting vec3 (a+b).
  */
-Vec3 addVec3(Vec3 a, Vec3 b) {
+Vec3 addVec3(const Vec3 & a, const Vec3 & b) {
     Vec3 result;
     result.x = a.x + b.x;
     result.y = a.y + b.y;
@@ -61,7 +60,7 @@ Vec3 addVec3(Vec3 a, Vec3 b) {
 /*
  * Subtract vec3 b from vec3 a and return resulting vec3 (a-b).
  */
-Vec3 subtractVec3(Vec3 a, Vec3 b) {
+Vec3 subtractVec3(const Vec3 & a, const Vec3 & b) {
     Vec3 result;
     result.x = a.x - b.x;
     result.y = a.y - b.y;
@@ -73,7 +72,7 @@ Vec3 subtractVec3(Vec3 a, Vec3 b) {
 /*
  * Multiply each element of vec3 with scalar.
  */
-Vec3 multiplyVec3WithScalar(Vec3 v, double c) {
+Vec3 multiplyVec3WithScalar(const Vec3 & v, double c) {
     Vec3 result;
     result.x = v.x * c;
     result.y = v.y * c;
@@ -85,7 +84,7 @@ Vec3 multiplyVec3WithScalar(Vec3 v, double c) {
 /*
  * Prints elements in a vec3. Can be used for debugging purposes.
  */
-void printVec3(Vec3 v) {
+void printVec3(const Vec3 & v) {
     printf("(%lf,%lf,%lf)\n", v.x, v.y, v.z);
 }
 
@@ -94,7 +93,7 @@ void printVec3(Vec3 v) {
  * In case of equality, returns 1.
  * Otherwise, returns 0.
  */
-int areEqualVec3(Vec3 a, Vec3 b) {
+int areEqualVec3(const Vec3 & a, const Vec3 & b) {
     double e = 0.000000001;
 
     /* if x difference, y difference and z difference is smaller than threshold, then they are equal */
