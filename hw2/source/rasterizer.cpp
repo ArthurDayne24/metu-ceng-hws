@@ -7,6 +7,10 @@
 #include "hw2_file_ops.h"
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <set>
+
+#define __DEBUG__ true
 
 Camera cameras[100];
 int numberOfCameras = 0;
@@ -36,6 +40,12 @@ int backfaceCullingSetting = 0;
 
 Color **image;
 
+void debug_print(const std::string & error_message) {
+    if (true == __DEBUG__) {
+        std::cerr << error_message << std::endl;
+    }
+}
+
 /*
 	Initializes image with background color
 */
@@ -49,42 +59,51 @@ void initializeImage(Camera cam) {
     }
 }
 
-Matrix_4_4 calculate_M_Model() {
-    Matrix_4_4 M_model;
-    M_model.makeIdentity();
+void apply_M_model(Model &model) {
+    std::set<int> model_vertexIds;
 
-    for (int m = 0; m < numberOfModels; m++) {
-        Model & model = models[m];
+    for (int t = 0; t < model.numberOfTriangles; t++) {
+        Triangle & triangle = model.triangles[t];
 
-        for (int t = 0; t < model.numberOfTransformations; t++) {
+        for (int v = 0; v < 3; v++) {
+            int vertexId = triangle.vertexIds[v];
 
-            Matrix_4_4 transformation;
-
-            char transformationType = model.transformationTypes[t];
-            int transformationId = model.transformationIDs[t];
-
-            // scaling
-            if ('s' == transformationType) {
-                transformation.makeScale(scalings[transformationId]);
-            }
-                // rotating
-            else if ('r' == transformationType) {
-                transformation.makeRotationArbitrary(rotations[transformationId]);
-            }
-                // translation
-            else if ('t' == transformationType) {
-                transformation.makeTranslation(translations[transformationId]);
-            }
-            else {
-                std::cerr << "ERROR: Unexpected transformation." << std::endl;
-                exit(1);
-            }
-
-            M_model = transformation.multiplyBy(M_model);
+            model_vertexIds.insert(vertexId);
         }
     }
 
-    return M_model;
+    Matrix_4_4 M_model;
+    M_model.makeIdentity();
+
+    for (int t = 0; t < model.numberOfTransformations; t++) {
+
+        Matrix_4_4 transformation;
+
+        char transformationType = model.transformationTypes[t];
+        int transformationId = model.transformationIDs[t];
+
+        // scaling
+        if ('s' == transformationType) {
+            transformation.makeScale(scalings[transformationId]);
+        }
+            // rotating
+        else if ('r' == transformationType) {
+            transformation.makeRotationArbitrary(rotations[transformationId]);
+        }
+            // translation
+        else if ('t' == transformationType) {
+            transformation.makeTranslation(translations[transformationId]);
+        }
+        else {
+            debug_print("Unexpected transformation type.");
+        }
+
+        M_model = transformation.multiplyBy(M_model);
+    }
+
+    for (const int & vertexId : model_vertexIds) {
+        a_vertices[vertexId] = M_model.multiplyBy(a_vertices[vertexId]);
+    }
 }
 
 Matrix_4_4 calculate_M_Cam(const Camera & cam) {
@@ -92,7 +111,7 @@ Matrix_4_4 calculate_M_Cam(const Camera & cam) {
     M.makeFrom3Vec3(cam.u, cam.v, cam.w);
 
     Matrix_4_4 T;
-    T.makeTranslation(Translation{-cam.pos.x, -cam.pos.y, -cam.pos.z});
+    T.makeTranslation(-cam.pos.x, -cam.pos.y, -cam.pos.z);
 
     return M.multiplyBy(T);
 }
@@ -101,24 +120,15 @@ Matrix_4_4 calculate_M_per(const Camera & cam) {
     Matrix_4_4 M_per;
 
     M_per.data[0][0] = 2 * cam.n / (cam.r - cam.l);
-    M_per.data[0][1] = 0;
     M_per.data[0][2] = (cam.r + cam.l) / (cam.r - cam.l);
-    M_per.data[0][3] = 0;
 
-    M_per.data[1][0] = 0;
     M_per.data[1][1] = 2 * cam.n / (cam.t - cam.b);
     M_per.data[1][2] = (cam.t + cam.b) / (cam.t - cam.b);
-    M_per.data[1][3] = 0;
 
-    M_per.data[2][0] = 0;
-    M_per.data[2][1] = 0;
     M_per.data[2][2] = -(cam.f + cam.n) / (cam.f - cam.n);
     M_per.data[2][3] = -2 * cam.f * cam.n / (cam.f - cam.n);
 
-    M_per.data[3][0] = 0;
-    M_per.data[3][1] = 0;
     M_per.data[3][2] = -1;
-    M_per.data[3][3] = 0;
 
     return M_per;
 }
@@ -126,8 +136,6 @@ Matrix_4_4 calculate_M_per(const Camera & cam) {
 // M_vp is actually a 3 x 4 matrix. Hence last row will be zeros for multiplication
 Matrix_4_4 calculate_M_vp(const Camera & cam) {
     Matrix_4_4 M_vp;
-
-    M_vp.makeZeros();
 
     M_vp.data[0][0] = cam.sizeX / 2;
     M_vp.data[0][3] = (cam.sizeX - 1) / 2;
@@ -140,12 +148,13 @@ Matrix_4_4 calculate_M_vp(const Camera & cam) {
 
     return M_vp;
 }
+
 /*
 	Transformations, culling, rasterization are done here.
 	You can define helper functions inside this file (rasterizer.cpp) only.
 	Using types in "hw2_types.h" and functions in "hw2_math_ops.cpp" will speed you up while working.
 */
-void forwardRenderingPipeline(Camera & cam, const Matrix_4_4 & M_model, std::vector<Vec4> & v_vertices) {
+void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
     // TODO: IMPLEMENT HERE
 
     // Calculate camera transformations - M_cam
@@ -154,54 +163,103 @@ void forwardRenderingPipeline(Camera & cam, const Matrix_4_4 & M_model, std::vec
     // Calculate perspective projection - M_per
     Matrix_4_4 M_per = calculate_M_per(cam);
 
-    Matrix_4_4 M_accumulation = M_per.multiplyBy(M_cam.multiplyBy(M_model));
+    Matrix_4_4 M_accumulation = M_per.multiplyBy(M_cam);
 
     // Apply first part of matrix transformations
     for (Vec4 & vertex : v_vertices) {
+        // TODO burdan önce bi yerlerde bug var ama nerde ?
+        std::cout << "OLD:";
+        printVec3((Vec3) vertex);
+
         vertex = M_accumulation.multiplyBy(vertex);
+
+        std::cout << "AFTER:";
+        printVec3((Vec3) vertex);
+
         // Apply perspective divide
         vertex.make_homogenous();
+
+        std::cout << "THEN:";
+        printVec3((Vec3) vertex);
     }
 
     // Make camera origin centered and align its vectors etc.
-    cam.bringtToOrigin();
+    //cam.bringToOrigin();
 
     // Calculate viewport transformations - M_vp
     Matrix_4_4 M_vp = calculate_M_vp(cam);
 
-    // Apply backface test and apply viewport transformation on triangle's vertices if triangle passes test
+    // Apply backface test and, apply viewport transformation and rasterization
+    //  on triangle's vertices if triangle passes test
     for (int m = 0; m < numberOfModels; m++) {
         Model & model = models[m];
 
         for (int t = 0; t < model.numberOfTriangles; t++) {
             Triangle & triangle = model.triangles[t];
 
-            const Vec3 & vertex0_v3 = (Vec3) v_vertices[triangle.vertexIds[0]];
-            const Vec3 & vertex1_v3 = (Vec3) v_vertices[triangle.vertexIds[1]];
+            const Vec3 & v0_3 = (Vec3) v_vertices[triangle.vertexIds[0]];
+            const Vec3 & v1_3 = (Vec3) v_vertices[triangle.vertexIds[1]];
 
-            Vec3 normal = crossProductVec3(vertex0_v3, vertex1_v3);
+            Vec3 normal = crossProductVec3(v0_3, v1_3);
 
-            double dot = dotProductVec3(vertex0_v3, normal);
+            double dot = dotProductVec3(v0_3, normal);
 
             // TODO care precision
-            triangle.backface_passed = !(dot > 0 && backfaceCullingSetting != 0);
+            bool backface_passed = !(dot > 0 && backfaceCullingSetting != 0);
 
-            // Apply viewport transformation
-            if (true == triangle.backface_passed) {
-                Vec4 & vertex0_v4 = v_vertices[triangle.vertexIds[0]];
-                Vec4 & vertex1_v4 = v_vertices[triangle.vertexIds[1]];
-                Vec4 & vertex2_v4 = v_vertices[triangle.vertexIds[2]];
+            // Apply viewport transformation and rasterization
+            if (true == backface_passed) {
+                Vec4 & v0 = v_vertices[triangle.vertexIds[0]];
+                Vec4 & v1 = v_vertices[triangle.vertexIds[1]];
+                Vec4 & v2 = v_vertices[triangle.vertexIds[2]];
 
-                vertex0_v4 = M_vp.multiplyBy(vertex0_v4);
-                vertex1_v4 = M_vp.multiplyBy(vertex1_v4);
-                vertex2_v4 = M_vp.multiplyBy(vertex2_v4);
+                v0 = M_vp.multiplyBy(v0);
+                v1 = M_vp.multiplyBy(v1);
+                v2 = M_vp.multiplyBy(v2);
+
+                // Apply rasterization
+                // Now we have vertices in Vec4 form but last dimension will be ignored
+
+                // wireframe mode
+                if (model.type == 0) {
+                    // TODO implement me
+                }
+                // solid mode
+                else { // if (model.type == 1)
+
+                    LineEquation f01(v0, v1), f12(v1, v2), f20(v2, v0);
+
+                    int ymin = std::min(std::min(v0.y, v1.y), v2.y),
+                        ymax = std::max(std::max(v0.y, v1.y), v2.y),
+                        xmin = std::min(std::min(v0.x, v1.x), v2.x),
+                        xmax = std::max(std::max(v0.x, v1.x), v2.x);
+
+                    for (int y = ymin; y <= ymax; y++) {
+                        for (int x = xmin; x <= xmax; x++) {
+
+                            double alpha = f12(x, y) / f12(v0.x, v0.y),
+                                   beta  = f20(x, y) / f20(v1.x, v1.y),
+                                   gamma = f01(x, y) / f01(v2.x, v2.y);
+
+                            if (alpha >= 0 && beta >= 0 && gamma >= 0) {
+
+                                const Color & c0 = colors[v0.colorId];
+                                const Color & c1 = colors[v1.colorId];
+                                const Color & c2 = colors[v2.colorId];
+
+                                image[(int) (x+0.5)][(int) (y+0.5)].r = c0.r * alpha + c1.r * beta + c2.r * gamma;
+                                image[(int) (x+0.5)][(int) (y+0.5)].g = c0.g * alpha + c1.g * beta + c2.g * gamma;
+                                image[(int) (x+0.5)][(int) (y+0.5)].b = c0.b * alpha + c1.b * beta + c2.b * gamma;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
-
-    // Apply rasterization
-    // TODO
 }
+
+// TODO check application wise precision things
 
 int main(int argc, char **argv) {
 
@@ -214,58 +272,62 @@ int main(int argc, char **argv) {
     readSceneFile(argv[1]);
     readCameraFile(argv[2]);
 
-    // Calculate M_model
-    Matrix_4_4 M_model = calculate_M_Model();
+    for (int m = 0; m < numberOfModels; m++) {
+        apply_M_model(models[m]);
+    }
 
     image = nullptr;
 
-    for (int i = 0; i < numberOfCameras; i++) {
+    for (int c = 0; c < numberOfCameras; c++) {
 
         // allocate memory for image
         if (image) {
-			for (int j = 0; j < cameras[i].sizeX; j++) {
-		        delete image[j];
+			for (int row = 0; row < cameras[c].sizeX; row++) {
+		        delete image[row];
 		    }
 
 			delete[] image;
 		}
 
-        image = new Color*[cameras[i].sizeX];
+        image = new Color*[cameras[c].sizeX];
 
         if (image == nullptr) {
             std::cerr << "ERROR: Cannot allocate memory for image." << std::endl;
             exit(1);
         }
 
-        for (int j = 0; j < cameras[i].sizeX; j++) {
-            image[j] = new Color[cameras[i].sizeY];
-            if (image[j] == nullptr) {
+        for (int row = 0; row < cameras[c].sizeX; row++) {
+            image[row] = new Color[cameras[c].sizeY];
+            if (image[row] == nullptr) {
                 std::cerr << "ERROR: Cannot allocate memory for image." << std::endl;
                 exit(1);
             }
         }
 
         // initialize image with basic values
-        initializeImage(cameras[i]);
+        initializeImage(cameras[c]);
 
         // copy a_vertices to v_vertices as they are global and they will be modified separately for each camera
         std::vector<Vec4> v_vertices;
-        v_vertices.reserve(numberOfVertices);
+        //TODO v_vertices.reserve(numberOfVertices);
 
-        for (int v = 0; v < numberOfVertices; v++) {
-            v_vertices.emplace_back(Vec4(a_vertices[i]));
+        // dummy
+        v_vertices.push_back(Vec4());
+
+        for (int v = 1; v <= numberOfVertices; v++) {
+            v_vertices.push_back(Vec4(a_vertices[v]));
         }
 
         /* do forward rendering pipeline operations */
-        forwardRenderingPipeline(cameras[i], M_model, v_vertices);
+        forwardRenderingPipeline(cameras[c], v_vertices);
 
         // generate PPM file
-        writeImageToPPMFile(cameras[i]);
+        writeImageToPPMFile(cameras[c]);
 
         // Converts PPM image in given path to PNG file, by calling ImageMagick's 'convert' command.
         // Notice that os_type is not given as 1 (Ubuntu) or 2 (Windows), below call doesn't do conversion.
         // Change os_type to 1 or 2, after being sure that you have ImageMagick installed.
-        convertPPMToPNG(cameras[i].outputFileName, 99);
+        convertPPMToPNG(cameras[c].outputFileName, 99);
     }
 
     return 0;

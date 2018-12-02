@@ -103,18 +103,3 @@ int areEqualVec3(const Vec3 & a, const Vec3 & b) {
         return 0;
     }
 }
-
-/*
- * Multiply matrix m (double[4][4]) with vector v (double[4]) and store the result in vector r (double[4]).
- *
-void multiplyMatrixWithVec4d(double r[4], double m[4][4], double v[4]) {
-    int i, j;
-    double total;
-    for (i = 0; i < 4; i++) {
-        total = 0;
-        for (j = 0; j < 4; j++)
-            total += m[i][j] * v[j];
-        r[i] = total;
-    }
-}
-*/

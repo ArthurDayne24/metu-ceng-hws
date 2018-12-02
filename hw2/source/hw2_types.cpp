@@ -1,11 +1,9 @@
-
 #include <cmath>
+#include <iostream>
 #include "hw2_types.h"
 #include "hw2_math_ops.h"
 
 void Matrix_4_4::makeIdentity() {
-    makeZeros();
-
     data[0][0] = 1;
     data[1][1] = 1;
     data[2][2] = 1;
@@ -38,6 +36,14 @@ void Matrix_4_4::makeTranslation(const Translation & t) {
     data[2][3] = t.tz;
 }
 
+void Matrix_4_4::makeTranslation(double x, double y, double z) {
+    makeIdentity();
+
+    data[0][3] = x;
+    data[1][3] = y;
+    data[2][3] = z;
+}
+
 void Matrix_4_4::makeScale(const Scaling & s) {
     makeIdentity();
 
@@ -50,12 +56,9 @@ void Matrix_4_4::makeM(const Rotation & r) {
     data[0][0] = r.ux;
     data[0][1] = r.uy;
     data[0][2] = r.uz;
-    data[0][3] = 0;
 
     data[1][0] = -r.uy;
     data[1][1] = r.ux;
-    data[1][2] = 0;
-    data[1][3] = r.uz;
 
     Vec3 u, v, w;
 
@@ -72,11 +75,7 @@ void Matrix_4_4::makeM(const Rotation & r) {
     data[2][0] = w.x;
     data[2][1] = w.y;
     data[2][2] = w.z;
-    data[2][3] = 0;
 
-    data[3][0] = 0;
-    data[3][1] = 0;
-    data[3][2] = 0;
     data[3][3] = 1;
 }
 
@@ -93,23 +92,29 @@ Matrix_4_4 Matrix_4_4::getTranspose() const {
 }
 
 void Matrix_4_4::makeRotationAroundX(const Rotation & r) {
-    makeIdentity();
+    double angle_radian = r.angle * M_PI / 180;
 
-    double d = sqrt(r.uy*r.uy + r.uz*r.uz);
+    double cosine = cos(angle_radian);
+    double sine = sin(angle_radian);
 
     data[0][0] = 1;
 
-    data[1][1] = r.uz / d;
-    data[1][2] = -r.uy / d;
+    data[1][1] = cosine;
+    data[1][2] = -sine;
 
-    data[2][1] = r.uy / d;
-    data[2][2] = r.uz / d;
+    data[2][1] = sine;
+    data[2][2] = cosine;
 
     data[3][3] = 1;
 }
 
 // rotate "angle" degrees around arbitrary axis
 void Matrix_4_4::makeRotationArbitrary(const Rotation & r) {
+    Matrix_4_4 T;
+    T.makeTranslation(-r.ux, -r.uy, -r.uz);
+    Matrix_4_4 T_inv;
+    T_inv.makeTranslation(r.ux, r.uy, r.uz);
+
     Matrix_4_4 M;
     M.makeM(r);
 
@@ -118,7 +123,7 @@ void Matrix_4_4::makeRotationArbitrary(const Rotation & r) {
     Matrix_4_4 rotX;
     rotX.makeRotationAroundX(r);
 
-    Matrix_4_4 result = M_inv.multiplyBy(rotX.multiplyBy(M));
+    Matrix_4_4 result = T_inv.multiplyBy(M_inv.multiplyBy(rotX.multiplyBy(M.multiplyBy(T))));
 
     memcpy(data, result.data, 16 * sizeof(double));
 }
@@ -127,22 +132,16 @@ void Matrix_4_4::makeFrom3Vec3(const Vec3 & u, const Vec3 & v, const Vec3 & w) {
     data[0][0] = u.x;
     data[0][1] = u.y;
     data[0][2] = u.z;
-    data[0][3] = 0;
 
     data[1][0] = v.x;
     data[1][1] = v.y;
     data[1][2] = v.z;
-    data[1][3] = 0;
 
     data[2][0] = w.x;
     data[2][1] = w.y;
     data[2][2] = w.z;
-    data[2][3] = 0;
 
-    data[3][0] = 0;
-    data[3][1] = 0;
-    data[3][2] = 0;
-    data[3][3] = 0;
+    data[3][3] = 1;
 }
 
 Vec4 Matrix_4_4::multiplyBy(const Vec4 & rhs) const {
@@ -158,8 +157,24 @@ Vec4 Matrix_4_4::multiplyBy(const Vec4 & rhs) const {
     return result;
 }
 
-void Matrix_4_4::makeZeros() {
+Matrix_4_4::Matrix_4_4() {
     memset(data, 0, sizeof(double) * 16);
+}
+
+Vec3 Matrix_4_4::multiplyBy(const Vec3 &rhs) const {
+    Vec3 result;
+
+    result.x = data[0][0] * rhs.x + data[0][1] * rhs.y + data[0][2] * rhs.z;
+    result.y = data[1][0] * rhs.x + data[1][1] * rhs.y + data[1][2] * rhs.z;
+    result.z = data[2][0] * rhs.x + data[2][1] * rhs.y + data[2][2] * rhs.z;
+
+    result.colorId = rhs.colorId;
+
+    return result;
+}
+
+Matrix_4_4::Matrix_4_4(const Matrix_4_4 & rhs) {
+    memcpy(data, rhs.data, 16 * sizeof(double));
 }
 
 Vec4::Vec4(const Vec3 & rhs) {
@@ -172,6 +187,13 @@ Vec4::Vec4(const Vec3 & rhs) {
 }
 
 void Vec4::make_homogenous() {
+    if (w == 0) {
+        if (x != 0 || y != 0 || z != 0 || w != 0) {
+            std::cout << "Real error, sorry" << std::endl;
+        }
+        return;
+
+    }
     x /= w;
     y /= w;
     z /= w;
@@ -179,26 +201,6 @@ void Vec4::make_homogenous() {
 }
 
 Vec4::Vec4(int x, int y, int z, int w, int colorId) : x(x), y(y), z(z), w(w), colorId(colorId) {
-}
-
-void Camera::bringtToOrigin() {
-    // TODO not sure xd
-
-    pos = Vec3(0, 0, 0);
-
-    gaze = Vec3(0, 0, -1);
-
-    v = Vec3(0, 1, 0);
-    u = Vec3(1, 0, 0);
-    w = Vec3(0, 0, 1);
-
-    l = -1;
-    r = 1;
-    b = -1;
-    t = 1;
-
-    n = -1;
-    f = 1;
 }
 
 Vec3::Vec3(const Vec4 &rhs) {
@@ -210,4 +212,14 @@ Vec3::Vec3(const Vec4 &rhs) {
 }
 
 Vec3::Vec3(int x, int y, int z, int colorId) : x(x), y(y), z(z), colorId(colorId) {
+}
+
+LineEquation::LineEquation(const Vec4 & v0, const Vec4 & v1) {
+    y0_y1 = v0.y - v1.y;
+    x1_x0 = v1.x - v0.x;
+    x0y1_y0x1 = v0.x * v1.y - v0.y * v1.x;
+}
+
+double LineEquation::operator()(double x, double y) {
+    return x * y0_y1 + y * x1_x0 + x0y1_y0x1;
 }
