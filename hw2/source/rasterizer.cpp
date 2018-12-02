@@ -166,21 +166,15 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
     Matrix_4_4 M_accumulation = M_per.multiplyBy(M_cam);
 
     // Apply first part of matrix transformations
-    for (Vec4 & vertex : v_vertices) {
+    for (int v = 1; v < v_vertices.size(); v++) {
+        Vec4 & vertex = v_vertices[v];
+
         // TODO burdan önce bi yerlerde bug var ama nerde ?
-        std::cout << "OLD:";
-        printVec3((Vec3) vertex);
 
         vertex = M_accumulation.multiplyBy(vertex);
 
-        std::cout << "AFTER:";
-        printVec3((Vec3) vertex);
-
         // Apply perspective divide
         vertex.make_homogenous();
-
-        std::cout << "THEN:";
-        printVec3((Vec3) vertex);
     }
 
     // Make camera origin centered and align its vectors etc.
@@ -241,6 +235,7 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
                                    beta  = f20(x, y) / f20(v1.x, v1.y),
                                    gamma = f01(x, y) / f01(v2.x, v2.y);
 
+                            // TODO precision ?
                             if (alpha >= 0 && beta >= 0 && gamma >= 0) {
 
                                 const Color & c0 = colors[v0.colorId];
@@ -281,14 +276,6 @@ int main(int argc, char **argv) {
     for (int c = 0; c < numberOfCameras; c++) {
 
         // allocate memory for image
-        if (image) {
-			for (int row = 0; row < cameras[c].sizeX; row++) {
-		        delete image[row];
-		    }
-
-			delete[] image;
-		}
-
         image = new Color*[cameras[c].sizeX];
 
         if (image == nullptr) {
@@ -328,6 +315,15 @@ int main(int argc, char **argv) {
         // Notice that os_type is not given as 1 (Ubuntu) or 2 (Windows), below call doesn't do conversion.
         // Change os_type to 1 or 2, after being sure that you have ImageMagick installed.
         convertPPMToPNG(cameras[c].outputFileName, 99);
+
+        // deallocate memory in the end
+        if (image) {
+            for (int row = 0; row < cameras[c].sizeX; row++) {
+                delete image[row];
+            }
+
+            delete[] image;
+        }
     }
 
     return 0;

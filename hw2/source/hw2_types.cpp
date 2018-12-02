@@ -188,12 +188,10 @@ Vec4::Vec4(const Vec3 & rhs) {
 
 void Vec4::make_homogenous() {
     if (w == 0) {
-        if (x != 0 || y != 0 || z != 0 || w != 0) {
-            std::cout << "Real error, sorry" << std::endl;
-        }
-        return;
-
+        // TODO I do not know if this is an error (and its solution) or not
+        // Maybe we can add a small epsilon if it is in not an error but is machine precision related
     }
+
     x /= w;
     y /= w;
     z /= w;
@@ -203,7 +201,7 @@ void Vec4::make_homogenous() {
 Vec4::Vec4(int x, int y, int z, int w, int colorId) : x(x), y(y), z(z), w(w), colorId(colorId) {
 }
 
-Vec3::Vec3(const Vec4 &rhs) {
+Vec3::Vec3(const Vec4 & rhs) {
     x = rhs.x;
     y = rhs.y;
     z = rhs.z;
