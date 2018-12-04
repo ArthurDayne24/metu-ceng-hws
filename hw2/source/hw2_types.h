@@ -7,7 +7,7 @@ class Vec4;
 
 class Vec3 {
 public:
-    Vec3(int x=0, int y=0, int z=0, int colorId=0);
+    Vec3(double x=0, double y=0, double z=0, int colorId=0);
     // ignore last dimension
     explicit Vec3(const Vec4 & rhs);
     double x, y, z;
@@ -16,7 +16,7 @@ public:
 
 class Vec4 {
 public:
-    Vec4(int x=0, int y=0, int z=0, int w=0, int colorId=0);
+    Vec4(double x=0, double y=0, double z=0, double w=0, int colorId=0);
     // pad 1 to last dimension
     explicit Vec4(const Vec3 & rhs);
     void make_homogenous();
@@ -40,7 +40,7 @@ typedef struct {
     int cameraId;
     Vec3 pos;
     Vec3 gaze;
-    Vec3 v;
+    Vec3 v; // up
     Vec3 u;
     Vec3 w;
     double l, r, b, t;

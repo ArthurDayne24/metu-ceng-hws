@@ -198,7 +198,7 @@ void Vec4::make_homogenous() {
     w = 1;
 }
 
-Vec4::Vec4(int x, int y, int z, int w, int colorId) : x(x), y(y), z(z), w(w), colorId(colorId) {
+Vec4::Vec4(double x, double y, double z, double w, int colorId) : x(x), y(y), z(z), w(w), colorId(colorId) {
 }
 
 Vec3::Vec3(const Vec4 & rhs) {
@@ -209,7 +209,7 @@ Vec3::Vec3(const Vec4 & rhs) {
     colorId = rhs.colorId;
 }
 
-Vec3::Vec3(int x, int y, int z, int colorId) : x(x), y(y), z(z), colorId(colorId) {
+Vec3::Vec3(double x, double y, double z, int colorId) : x(x), y(y), z(z), colorId(colorId) {
 }
 
 LineEquation::LineEquation(const Vec4 & v0, const Vec4 & v1) {

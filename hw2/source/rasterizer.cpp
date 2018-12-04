@@ -106,9 +106,14 @@ void apply_M_model(Model &model) {
     }
 }
 
+// bugfix XXX
 Matrix_4_4 calculate_M_Cam(const Camera & cam) {
+    Vec3 corrected_u = crossProductVec3(cam.gaze, cam.v);
+    Vec3 corrected_v = crossProductVec3(cam.gaze, corrected_u);
+
     Matrix_4_4 M;
-    M.makeFrom3Vec3(cam.u, cam.v, cam.w);
+    M.makeFrom3Vec3(corrected_u, corrected_v, cam.w);
+//    M = M.getTranspose();
 
     Matrix_4_4 T;
     T.makeTranslation(-cam.pos.x, -cam.pos.y, -cam.pos.z);
@@ -163,7 +168,7 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
     // Calculate perspective projection - M_per
     Matrix_4_4 M_per = calculate_M_per(cam);
 
-    Matrix_4_4 M_accumulation = M_per.multiplyBy(M_cam);
+    //Matrix_4_4 M_accumulation = M_per.multiplyBy(M_cam);
 
     // Apply first part of matrix transformations
     for (int v = 1; v < v_vertices.size(); v++) {
@@ -171,14 +176,27 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
 
         // TODO burdan önce bi yerlerde bug var ama nerde ?
 
-        vertex = M_accumulation.multiplyBy(vertex);
+        std::cout << "Before camera\n";
+        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
+
+        vertex = M_cam.multiplyBy(vertex);
+
+        std::cout << "After camera\n";
+        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
+
+        vertex = M_per.multiplyBy(vertex);
+
+        std::cout << "After per\n";
+        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
+
+        //vertex = M_accumulation.multiplyBy(vertex);
 
         // Apply perspective divide
         vertex.make_homogenous();
-    }
 
-    // Make camera origin centered and align its vectors etc.
-    //cam.bringToOrigin();
+        std::cout << "After homo xd\n";
+        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
+    }
 
     // Calculate viewport transformations - M_vp
     Matrix_4_4 M_vp = calculate_M_vp(cam);
@@ -203,9 +221,10 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
 
             // Apply viewport transformation and rasterization
             if (true == backface_passed) {
-                Vec4 & v0 = v_vertices[triangle.vertexIds[0]];
-                Vec4 & v1 = v_vertices[triangle.vertexIds[1]];
-                Vec4 & v2 = v_vertices[triangle.vertexIds[2]];
+                // bugfix XXX
+                Vec4 v0 = v_vertices[triangle.vertexIds[0]];
+                Vec4 v1 = v_vertices[triangle.vertexIds[1]];
+                Vec4 v2 = v_vertices[triangle.vertexIds[2]];
 
                 v0 = M_vp.multiplyBy(v0);
                 v1 = M_vp.multiplyBy(v1);
@@ -228,6 +247,10 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
                         xmin = std::min(std::min(v0.x, v1.x), v2.x),
                         xmax = std::max(std::max(v0.x, v1.x), v2.x);
 
+                    std::cout << "xmin " << xmin << std::endl;
+                    std::cout << "ymin " << ymin << std::endl;
+
+                    // TODO possible problem with pixel coordinate to image array
                     for (int y = ymin; y <= ymax; y++) {
                         for (int x = xmin; x <= xmax; x++) {
 
