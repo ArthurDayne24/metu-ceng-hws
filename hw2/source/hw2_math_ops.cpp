@@ -13,6 +13,11 @@ Vec3 crossProductVec3(const Vec3 & a, const Vec3 & b) {
     result.y = b.x * a.z - a.x * b.z;
     result.z = a.x * b.y - b.x * a.y;
 
+    // epsilon 10^-6, make values zero if smaller than that
+    if (fabs(result.x) < 1E-6) result.x = 0;
+    if (fabs(result.y) < 1E-6) result.y = 0;
+    if (fabs(result.z) < 1E-6) result.z = 0;
+
     return result;
 }
 
@@ -20,7 +25,7 @@ Vec3 crossProductVec3(const Vec3 & a, const Vec3 & b) {
  * Calculate dot product of vec3 a, vec3 b and return resulting value.
  */
 double dotProductVec3(const Vec3 & a, const Vec3 & b) {
-    return a.x * b.x + a.y * b.y + a.z * b.z;
+    return a.x * b.x + a.y * b.y + a.z * b.z < 1E-6 ? 0 : a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 /*

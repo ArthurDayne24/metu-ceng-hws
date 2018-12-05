@@ -109,7 +109,7 @@ void apply_M_model(Model &model) {
 // bugfix XXX
 Matrix_4_4 calculate_M_Cam(const Camera & cam) {
     Vec3 corrected_u = crossProductVec3(cam.gaze, cam.v);
-    Vec3 corrected_v = crossProductVec3(cam.gaze, corrected_u);
+    Vec3 corrected_v = crossProductVec3(corrected_u, cam.gaze); // changed in order to keep sign same as in camera
 
     Matrix_4_4 M;
     M.makeFrom3Vec3(corrected_u, corrected_v, cam.w);
@@ -168,7 +168,7 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
     // Calculate perspective projection - M_per
     Matrix_4_4 M_per = calculate_M_per(cam);
 
-    //Matrix_4_4 M_accumulation = M_per.multiplyBy(M_cam);
+    Matrix_4_4 M_accumulation = M_per.multiplyBy(M_cam);
 
     // Apply first part of matrix transformations
     for (int v = 1; v < v_vertices.size(); v++) {
