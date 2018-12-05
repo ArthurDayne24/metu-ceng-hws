@@ -109,11 +109,10 @@ void apply_M_model(Model &model) {
 // bugfix XXX
 Matrix_4_4 calculate_M_Cam(const Camera & cam) {
     Vec3 corrected_u = crossProductVec3(cam.gaze, cam.v);
-    Vec3 corrected_v = crossProductVec3(cam.gaze, corrected_u);
+    Vec3 corrected_v = crossProductVec3(corrected_u, cam.gaze);
 
     Matrix_4_4 M;
-    M.makeFrom3Vec3(corrected_u, corrected_v, cam.w);
-//    M = M.getTranspose();
+    M.makeFrom3Vec3(normalizeVec3(corrected_u), normalizeVec3(corrected_v), normalizeVec3(cam.w));
 
     Matrix_4_4 T;
     T.makeTranslation(-cam.pos.x, -cam.pos.y, -cam.pos.z);
