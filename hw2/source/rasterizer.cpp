@@ -9,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <map>
 
 #define __DEBUG__ true
 
@@ -59,17 +60,19 @@ void initializeImage(Camera cam) {
     }
 }
 
-void apply_M_model(Model &model) {
-    std::set<int> model_vertexIds;
+void apply_M_model(Model &model, std::map<int, std::vector<Vec3> *> *modelTriangleMap) {
 
     for (int t = 0; t < model.numberOfTriangles; t++) {
         Triangle & triangle = model.triangles[t];
+        std::vector<Vec3> *vertexVect = new std::vector<Vec3>();
 
         for (int v = 0; v < 3; v++) {
             int vertexId = triangle.vertexIds[v];
 
-            model_vertexIds.insert(vertexId);
+            vertexVect->push_back(a_vertices[vertexId]);    
         }
+    
+        modelTriangleMap->insert(std::pair<int, std::vector<Vec3> *>(t, vertexVect));
     }
 
     Matrix_4_4 M_model;
@@ -101,8 +104,10 @@ void apply_M_model(Model &model) {
         M_model = transformation.multiplyBy(M_model);
     }
 
-    for (const int & vertexId : model_vertexIds) {
-        a_vertices[vertexId] = M_model.multiplyBy(a_vertices[vertexId]);
+    for (std::pair <int, std::vector<Vec3> *> triangleVertexPair : *modelTriangleMap){
+        for(Vec3 vect : *triangleVertexPair.second){
+            vect = M_model.multiplyBy(vect);
+        }
     }
 }
 
@@ -158,8 +163,12 @@ Matrix_4_4 calculate_M_vp(const Camera & cam) {
 	You can define helper functions inside this file (rasterizer.cpp) only.
 	Using types in "hw2_types.h" and functions in "hw2_math_ops.cpp" will speed you up while working.
 */
-void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
+void forwardRenderingPipeline(Camera & cam, std::map<int, std::map<int, std::vector<Vec3> *> > *modelMap) {
     // TODO: IMPLEMENT HERE
+
+    // TODO: make all the translating, scaling and rotating on models before viewport transformations
+
+
 
     // Calculate camera transformations - M_cam
     Matrix_4_4 M_cam = calculate_M_Cam(cam);
@@ -170,6 +179,7 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
     Matrix_4_4 M_accumulation = M_per.multiplyBy(M_cam);
 
     // Apply first part of matrix transformations
+    /*
     for (int v = 1; v < v_vertices.size(); v++) {
         Vec4 & vertex = v_vertices[v];
 
@@ -188,14 +198,14 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
         std::cout << "After per\n";
         std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
 
-        //vertex = M_accumulation.multiplyBy(vertex);
+        vertex = M_accumulation.multiplyBy(vertex);
 
         // Apply perspective divide
         vertex.make_homogenous();
 
-        std::cout << "After homo xd\n";
-        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
-    }
+        //std::cout << "After homo xd\n";
+        //std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
+    }*/
 
     // Calculate viewport transformations - M_vp
     Matrix_4_4 M_vp = calculate_M_vp(cam);
@@ -207,13 +217,19 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
 
         for (int t = 0; t < model.numberOfTriangles; t++) {
             Triangle & triangle = model.triangles[t];
+            std::vector<Vec3> &triangleVertexVector = *(modelMap->at(m).at(t));
 
-            const Vec3 & v0_3 = (Vec3) v_vertices[triangle.vertexIds[0]];
-            const Vec3 & v1_3 = (Vec3) v_vertices[triangle.vertexIds[1]];
+            Vec4 v0 = M_accumulation.multiplyBy(Vec4(modelMap->at(m).at(t)->at(0)));
+            Vec4 v1 = M_accumulation.multiplyBy(Vec4(modelMap->at(m).at(t)->at(1)));
+            Vec4 v2 = M_accumulation.multiplyBy(Vec4(modelMap->at(m).at(t)->at(2)));
 
-            Vec3 normal = crossProductVec3(v0_3, v1_3);
+            v0.make_homogenous();
+            v1.make_homogenous();
+            v2.make_homogenous();
 
-            double dot = dotProductVec3(v0_3, normal);
+            Vec3 normal = crossProductVec3((Vec3) v0, (Vec3) v1);
+
+            double dot = dotProductVec3((Vec3) v0, normal);
 
             // TODO care precision
             bool backface_passed = !(dot > 0 && backfaceCullingSetting != 0);
@@ -221,9 +237,6 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
             // Apply viewport transformation and rasterization
             if (true == backface_passed) {
                 // bugfix XXX
-                Vec4 v0 = v_vertices[triangle.vertexIds[0]];
-                Vec4 v1 = v_vertices[triangle.vertexIds[1]];
-                Vec4 v2 = v_vertices[triangle.vertexIds[2]];
 
                 v0 = M_vp.multiplyBy(v0);
                 v1 = M_vp.multiplyBy(v1);
@@ -248,6 +261,8 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
 
                     std::cout << "xmin " << xmin << std::endl;
                     std::cout << "ymin " << ymin << std::endl;
+
+                    if(xmin < 0 || xmax > cam.sizeX || ymin < 0 || ymax > cam.sizeY) continue;
 
                     // TODO possible problem with pixel coordinate to image array
                     for (int y = ymin; y <= ymax; y++) {
@@ -288,9 +303,13 @@ int main(int argc, char **argv) {
     // read camera and scene files
     readSceneFile(argv[1]);
     readCameraFile(argv[2]);
+    // map holding the transformed values of each model's vertices
+    std::map<int, std::map<int, std::vector<Vec3> *> > modelMap;
 
     for (int m = 0; m < numberOfModels; m++) {
-        apply_M_model(models[m]);
+        modelMap.insert(std::pair<int, std::map<int, std::vector<Vec3> *> >(m, std::map<int, std::vector<Vec3> *>()));
+        std::map<int, std::vector<Vec3> *> &modelTriangleMap = modelMap[m];
+        apply_M_model(models[m], &modelTriangleMap);
     }
 
     image = nullptr;
@@ -317,18 +336,27 @@ int main(int argc, char **argv) {
         initializeImage(cameras[c]);
 
         // copy a_vertices to v_vertices as they are global and they will be modified separately for each camera
-        std::vector<Vec4> v_vertices;
+        //std::vector<Vec4> v_vertices;
         //TODO v_vertices.reserve(numberOfVertices);
 
         // dummy
-        v_vertices.push_back(Vec4());
+        //v_vertices.push_back(Vec4());
 
-        for (int v = 1; v <= numberOfVertices; v++) {
-            v_vertices.push_back(Vec4(a_vertices[v]));
+        //for (int v = 1; v <= numberOfVertices; v++) {
+            //v_vertices.push_back(Vec4(a_vertices[v]));
+        //}
+
+        for(std::pair <int, std::map<int, std::vector<Vec3> *> > modelTrianglePair : modelMap){
+            for (std::pair <int, std::vector<Vec3> *> triangleVertexPair : modelTrianglePair.second){
+                for(Vec3 vect : *triangleVertexPair.second){
+                    std::cout << "Vertex coords:(" << vect.x << "," << vect.y << "," << vect.z << ")" << std::endl;
+                }
+                std::cout << "-------" << std::endl;
+            }
         }
 
         /* do forward rendering pipeline operations */
-        forwardRenderingPipeline(cameras[c], v_vertices);
+        forwardRenderingPipeline(cameras[c], &modelMap);
 
         // generate PPM file
         writeImageToPPMFile(cameras[c]);
