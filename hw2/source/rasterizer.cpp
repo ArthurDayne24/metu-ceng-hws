@@ -59,11 +59,11 @@ void initializeImage(Camera cam) {
     }
 }
 
-void apply_M_model(Model &model) {
+void apply_M_model(const Model & model, std::vector<Vec4> & v_vertices) {
     std::set<int> model_vertexIds;
 
     for (int t = 0; t < model.numberOfTriangles; t++) {
-        Triangle & triangle = model.triangles[t];
+        const Triangle & triangle = model.triangles[t];
 
         for (int v = 0; v < 3; v++) {
             int vertexId = triangle.vertexIds[v];
@@ -102,7 +102,7 @@ void apply_M_model(Model &model) {
     }
 
     for (const int & vertexId : model_vertexIds) {
-        a_vertices[vertexId] = M_model.multiplyBy(a_vertices[vertexId]);
+        v_vertices[vertexId] = M_model.multiplyBy(v_vertices[vertexId]);
     }
 }
 
@@ -158,7 +158,7 @@ Matrix_4_4 calculate_M_vp(const Camera & cam) {
 	You can define helper functions inside this file (rasterizer.cpp) only.
 	Using types in "hw2_types.h" and functions in "hw2_math_ops.cpp" will speed you up while working.
 */
-void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
+void forwardRenderingPipeline(const Camera & cam, std::vector<Vec4> & v_vertices) {
     // TODO: IMPLEMENT HERE
 
     // Calculate camera transformations - M_cam
@@ -173,28 +173,10 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
     for (int v = 1; v < v_vertices.size(); v++) {
         Vec4 & vertex = v_vertices[v];
 
-        // TODO burdan önce bi yerlerde bug var ama nerde ?
-
-        std::cout << "Before camera\n";
-        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
-
-        vertex = M_cam.multiplyBy(vertex);
-
-        std::cout << "After camera\n";
-        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
-
-        vertex = M_per.multiplyBy(vertex);
-
-        std::cout << "After per\n";
-        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
-
-        //vertex = M_accumulation.multiplyBy(vertex);
+        vertex = M_accumulation.multiplyBy(vertex);
 
         // Apply perspective divide
         vertex.make_homogenous();
-
-        std::cout << "After homo xd\n";
-        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
     }
 
     // Calculate viewport transformations - M_vp
@@ -203,15 +185,16 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
     // Apply backface test and, apply viewport transformation and rasterization
     //  on triangle's vertices if triangle passes test
     for (int m = 0; m < numberOfModels; m++) {
-        Model & model = models[m];
+        const Model & model = models[m];
 
         for (int t = 0; t < model.numberOfTriangles; t++) {
-            Triangle & triangle = model.triangles[t];
+            const Triangle & triangle = model.triangles[t];
 
-            const Vec3 & v0_3 = (Vec3) v_vertices[triangle.vertexIds[0]];
-            const Vec3 & v1_3 = (Vec3) v_vertices[triangle.vertexIds[1]];
+            Vec3 v0_3 = (Vec3) v_vertices[triangle.vertexIds[0]];
+            Vec3 v1_3 = (Vec3) v_vertices[triangle.vertexIds[1]];
+            Vec3 v2_3 = (Vec3) v_vertices[triangle.vertexIds[2]];
 
-            Vec3 normal = crossProductVec3(v0_3, v1_3);
+            Vec3 normal = crossProductVec3(subtractVec3(v1_3, v0_3), subtractVec3(v2_3, v0_3));
 
             double dot = dotProductVec3(v0_3, normal);
 
@@ -241,17 +224,45 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
 
                     LineEquation f01(v0, v1), f12(v1, v2), f20(v2, v0);
 
-                    int ymin = std::min(std::min(v0.y, v1.y), v2.y),
-                        ymax = std::max(std::max(v0.y, v1.y), v2.y),
-                        xmin = std::min(std::min(v0.x, v1.x), v2.x),
-                        xmax = std::max(std::max(v0.x, v1.x), v2.x);
+                    double ymin = std::min(std::min(v0.y, v1.y), v2.y),
+                           ymax = std::max(std::max(v0.y, v1.y), v2.y),
+                           xmin = std::min(std::min(v0.x, v1.x), v2.x),
+                           xmax = std::max(std::max(v0.x, v1.x), v2.x);
 
-                    std::cout << "xmin " << xmin << std::endl;
-                    std::cout << "ymin " << ymin << std::endl;
+                    int ymin_int = std::round(ymin),
+                        ymax_int = std::round(ymax),
+                        xmin_int = std::round(xmin),
+                        xmax_int = std::round(xmax);
+
+                    if (ymin_int == -1) {
+                        ymin_int = 0;
+                    }
+                    if (ymax_int == cam.sizeY) {
+                        ymax_int = cam.sizeY - 1;
+                    }
+                    if (xmin_int == -1) {
+                        xmin_int = 0;
+                    }
+                    if (xmax_int == cam.sizeX) {
+                        xmax_int = cam.sizeX - 1;
+                    }
+
+                    if (xmin < 0 || xmin > cam.sizeX-1) {
+                        debug_print("xmin: " + std::to_string(xmin) + " error");
+                    }
+                    if (ymin < 0 || ymin > cam.sizeY-1) {
+                        debug_print("ymin: " + std::to_string(ymin) + " error");
+                    }
+                    if (xmax < 0 || xmax > cam.sizeX-1) {
+                        debug_print("xmax: " + std::to_string(xmax) + " error");
+                    }
+                    if (ymax < 0 || ymax > cam.sizeY-1) {
+                        debug_print("ymax: " + std::to_string(ymax) + " error");
+                    }
 
                     // TODO possible problem with pixel coordinate to image array
-                    for (int y = ymin; y <= ymax; y++) {
-                        for (int x = xmin; x <= xmax; x++) {
+                    for (int y = ymin_int; y <= ymax_int; y++) {
+                        for (int x = xmin_int; x <= xmax_int; x++) {
 
                             double alpha = f12(x, y) / f12(v0.x, v0.y),
                                    beta  = f20(x, y) / f20(v1.x, v1.y),
@@ -264,9 +275,9 @@ void forwardRenderingPipeline(Camera & cam, std::vector<Vec4> & v_vertices) {
                                 const Color & c1 = colors[v1.colorId];
                                 const Color & c2 = colors[v2.colorId];
 
-                                image[(int) (x+0.5)][(int) (y+0.5)].r = c0.r * alpha + c1.r * beta + c2.r * gamma;
-                                image[(int) (x+0.5)][(int) (y+0.5)].g = c0.g * alpha + c1.g * beta + c2.g * gamma;
-                                image[(int) (x+0.5)][(int) (y+0.5)].b = c0.b * alpha + c1.b * beta + c2.b * gamma;
+                                image[x][y].r = c0.r * alpha + c1.r * beta + c2.r * gamma;
+                                image[x][y].g = c0.g * alpha + c1.g * beta + c2.g * gamma;
+                                image[x][y].b = c0.b * alpha + c1.b * beta + c2.b * gamma;
                             }
                         }
                     }
@@ -288,10 +299,6 @@ int main(int argc, char **argv) {
     // read camera and scene files
     readSceneFile(argv[1]);
     readCameraFile(argv[2]);
-
-    for (int m = 0; m < numberOfModels; m++) {
-        apply_M_model(models[m]);
-    }
 
     image = nullptr;
 
@@ -325,6 +332,11 @@ int main(int argc, char **argv) {
 
         for (int v = 1; v <= numberOfVertices; v++) {
             v_vertices.push_back(Vec4(a_vertices[v]));
+        }
+
+
+        for (int m = 0; m < numberOfModels; m++) {
+            apply_M_model(models[m], v_vertices);
         }
 
         /* do forward rendering pipeline operations */
