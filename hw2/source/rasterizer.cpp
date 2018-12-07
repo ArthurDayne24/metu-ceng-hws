@@ -170,7 +170,7 @@ void forwardRenderingPipeline(const Camera & cam, std::vector<Vec4> & v_vertices
     Matrix_4_4 M_accumulation = M_per.multiplyBy(M_cam);
 
     // Apply first part of matrix transformations
-    for (int v = 1; v < v_vertices.size(); v++) {
+    for (unsigned int v = 1; v < v_vertices.size(); v++) {
         Vec4 & vertex = v_vertices[v];
 
         vertex = M_accumulation.multiplyBy(vertex);
@@ -194,7 +194,7 @@ void forwardRenderingPipeline(const Camera & cam, std::vector<Vec4> & v_vertices
             Vec3 v1_3 = (Vec3) v_vertices[triangle.vertexIds[1]];
             Vec3 v2_3 = (Vec3) v_vertices[triangle.vertexIds[2]];
 
-            Vec3 normal = crossProductVec3(subtractVec3(v1_3, v0_3), subtractVec3(v2_3, v0_3));
+            Vec3 normal = crossProductVec3(subtractVec3(v2_3, v0_3), subtractVec3(v1_3, v0_3));
 
             double dot = dotProductVec3(v0_3, normal);
 
