@@ -161,18 +161,6 @@ Matrix_4_4::Matrix_4_4() {
     memset(data, 0, sizeof(double) * 16);
 }
 
-Vec3 Matrix_4_4::multiplyBy(const Vec3 &rhs) const {
-    Vec3 result;
-
-    result.x = data[0][0] * rhs.x + data[0][1] * rhs.y + data[0][2] * rhs.z;
-    result.y = data[1][0] * rhs.x + data[1][1] * rhs.y + data[1][2] * rhs.z;
-    result.z = data[2][0] * rhs.x + data[2][1] * rhs.y + data[2][2] * rhs.z;
-
-    result.colorId = rhs.colorId;
-
-    return result;
-}
-
 Matrix_4_4::Matrix_4_4(const Matrix_4_4 & rhs) {
     memcpy(data, rhs.data, 16 * sizeof(double));
 }

@@ -60,19 +60,19 @@ void initializeImage(Camera cam) {
     }
 }
 
-void apply_M_model(Model &model, std::map<int, std::vector<Vec3> *> *modelTriangleMap) {
+void apply_M_model(Model &model, std::map<int, std::vector<Vec4> *> *modelTriangleMap) {
 
     for (int t = 0; t < model.numberOfTriangles; t++) {
         Triangle & triangle = model.triangles[t];
-        std::vector<Vec3> *vertexVect = new std::vector<Vec3>();
+        std::vector<Vec4> *vertexVect = new std::vector<Vec4>();
 
         for (int v = 0; v < 3; v++) {
             int vertexId = triangle.vertexIds[v];
 
-            vertexVect->push_back(a_vertices[vertexId]);    
+            vertexVect->push_back(Vec4(a_vertices[vertexId]));    
         }
     
-        modelTriangleMap->insert(std::pair<int, std::vector<Vec3> *>(t, vertexVect));
+        modelTriangleMap->insert(std::pair<int, std::vector<Vec4> *>(t, vertexVect));
     }
 
     Matrix_4_4 M_model;
@@ -104,11 +104,16 @@ void apply_M_model(Model &model, std::map<int, std::vector<Vec3> *> *modelTriang
         M_model = transformation.multiplyBy(M_model);
     }
 
-    for (std::pair <int, std::vector<Vec3> *> triangleVertexPair : *modelTriangleMap){
-        for(Vec3 vect : *triangleVertexPair.second){
+    for (std::pair <int, std::vector<Vec4> *> triangleVertexPair : *modelTriangleMap){
+        for(Vec4 &vect : *triangleVertexPair.second){
             vect = M_model.multiplyBy(vect);
         }
-    }
+    }/*
+    for (std::pair <int, std::vector<Vec4> *> triangleVertexPair : *modelTriangleMap){
+        for(int i = 0; i < 3; i++){
+            triangleVertexPair.second[i] = M_model.multiplyBy(triangleVertexPair.second->at(i));
+        }
+    }*/
 }
 
 // bugfix XXX
@@ -163,12 +168,10 @@ Matrix_4_4 calculate_M_vp(const Camera & cam) {
 	You can define helper functions inside this file (rasterizer.cpp) only.
 	Using types in "hw2_types.h" and functions in "hw2_math_ops.cpp" will speed you up while working.
 */
-void forwardRenderingPipeline(Camera & cam, std::map<int, std::map<int, std::vector<Vec3> *> > *modelMap) {
+void forwardRenderingPipeline(Camera & cam, std::map<int, std::map<int, std::vector<Vec4> *> > *modelMap) {
     // TODO: IMPLEMENT HERE
 
     // TODO: make all the translating, scaling and rotating on models before viewport transformations
-
-
 
     // Calculate camera transformations - M_cam
     Matrix_4_4 M_cam = calculate_M_Cam(cam);
@@ -178,34 +181,6 @@ void forwardRenderingPipeline(Camera & cam, std::map<int, std::map<int, std::vec
 
     Matrix_4_4 M_accumulation = M_per.multiplyBy(M_cam);
 
-    // Apply first part of matrix transformations
-    /*
-    for (int v = 1; v < v_vertices.size(); v++) {
-        Vec4 & vertex = v_vertices[v];
-
-        // TODO burdan önce bi yerlerde bug var ama nerde ?
-
-        std::cout << "Before camera\n";
-        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
-
-        vertex = M_cam.multiplyBy(vertex);
-
-        std::cout << "After camera\n";
-        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
-
-        vertex = M_per.multiplyBy(vertex);
-
-        std::cout << "After per\n";
-        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
-
-        vertex = M_accumulation.multiplyBy(vertex);
-
-        // Apply perspective divide
-        vertex.make_homogenous();
-
-        //std::cout << "After homo xd\n";
-        //std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
-    }*/
 
     // Calculate viewport transformations - M_vp
     Matrix_4_4 M_vp = calculate_M_vp(cam);
@@ -213,23 +188,27 @@ void forwardRenderingPipeline(Camera & cam, std::map<int, std::map<int, std::vec
     // Apply backface test and, apply viewport transformation and rasterization
     //  on triangle's vertices if triangle passes test
     for (int m = 0; m < numberOfModels; m++) {
-        Model & model = models[m];
+        const Model & model = models[m];
 
         for (int t = 0; t < model.numberOfTriangles; t++) {
-            Triangle & triangle = model.triangles[t];
-            std::vector<Vec3> &triangleVertexVector = *(modelMap->at(m).at(t));
+            //std::vector<Vec3> &triangleVertexVector = *(modelMap->at(m).at(t));
 
-            Vec4 v0 = M_accumulation.multiplyBy(Vec4(modelMap->at(m).at(t)->at(0)));
-            Vec4 v1 = M_accumulation.multiplyBy(Vec4(modelMap->at(m).at(t)->at(1)));
-            Vec4 v2 = M_accumulation.multiplyBy(Vec4(modelMap->at(m).at(t)->at(2)));
+            // Apply first part of matrix transformations
+            Vec4 v0 = M_accumulation.multiplyBy(modelMap->at(m).at(t)->at(0));
+            Vec4 v1 = M_accumulation.multiplyBy(modelMap->at(m).at(t)->at(1));
+            Vec4 v2 = M_accumulation.multiplyBy(modelMap->at(m).at(t)->at(2));
 
             v0.make_homogenous();
             v1.make_homogenous();
             v2.make_homogenous();
 
-            Vec3 normal = crossProductVec3((Vec3) v0, (Vec3) v1);
+            Vec3 v0_3 = (Vec3) v0;
+            Vec3 v1_3 = (Vec3) v1;
+            Vec3 v2_3 = (Vec3) v2;
 
-            double dot = dotProductVec3((Vec3) v0, normal);
+            Vec3 normal = crossProductVec3(subtractVec3(v2_3, v0_3), subtractVec3(v1_3, v0_3));
+
+            double dot = dotProductVec3(v0_3, normal);
 
             // TODO care precision
             bool backface_passed = !(dot > 0 && backfaceCullingSetting != 0);
@@ -254,19 +233,47 @@ void forwardRenderingPipeline(Camera & cam, std::map<int, std::map<int, std::vec
 
                     LineEquation f01(v0, v1), f12(v1, v2), f20(v2, v0);
 
-                    int ymin = std::min(std::min(v0.y, v1.y), v2.y),
-                        ymax = std::max(std::max(v0.y, v1.y), v2.y),
-                        xmin = std::min(std::min(v0.x, v1.x), v2.x),
-                        xmax = std::max(std::max(v0.x, v1.x), v2.x);
+                    double ymin = std::min(std::min(v0.y, v1.y), v2.y),
+                           ymax = std::max(std::max(v0.y, v1.y), v2.y),
+                           xmin = std::min(std::min(v0.x, v1.x), v2.x),
+                           xmax = std::max(std::max(v0.x, v1.x), v2.x);
 
-                    std::cout << "xmin " << xmin << std::endl;
-                    std::cout << "ymin " << ymin << std::endl;
+                    int ymin_int = std::round(ymin),
+                        ymax_int = std::round(ymax),
+                        xmin_int = std::round(xmin),
+                        xmax_int = std::round(xmax);
 
-                    if(xmin < 0 || xmax > cam.sizeX || ymin < 0 || ymax > cam.sizeY) continue;
+                    if (ymin_int == -1) {
+                        ymin_int = 0;
+                    }
+                    if (ymax_int == cam.sizeY) {
+                        ymax_int = cam.sizeY - 1;
+                    }
+                    if (xmin_int == -1) {
+                        xmin_int = 0;
+                    }
+                    if (xmax_int == cam.sizeX) {
+                        xmax_int = cam.sizeX - 1;
+                    }
+
+                    if (xmin < 0 || xmin > cam.sizeX-1) {
+                        debug_print("xmin: " + std::to_string(xmin) + " error");
+                    }
+                    if (ymin < 0 || ymin > cam.sizeY-1) {
+                        debug_print("ymin: " + std::to_string(ymin) + " error");
+                    }
+                    if (xmax < 0 || xmax > cam.sizeX-1) {
+                        debug_print("xmax: " + std::to_string(xmax) + " error");
+                    }
+                    if (ymax < 0 || ymax > cam.sizeY-1) {
+                        debug_print("ymax: " + std::to_string(ymax) + " error");
+                    }
+
+                    //if(xmin < 0 || xmax > cam.sizeX || ymin < 0 || ymax > cam.sizeY) continue;
 
                     // TODO possible problem with pixel coordinate to image array
-                    for (int y = ymin; y <= ymax; y++) {
-                        for (int x = xmin; x <= xmax; x++) {
+                    for (int y = ymin_int; y <= ymax_int; y++) {
+                        for (int x = xmin_int; x <= xmax_int; x++) {
 
                             double alpha = f12(x, y) / f12(v0.x, v0.y),
                                    beta  = f20(x, y) / f20(v1.x, v1.y),
@@ -279,9 +286,9 @@ void forwardRenderingPipeline(Camera & cam, std::map<int, std::map<int, std::vec
                                 const Color & c1 = colors[v1.colorId];
                                 const Color & c2 = colors[v2.colorId];
 
-                                image[(int) (x+0.5)][(int) (y+0.5)].r = c0.r * alpha + c1.r * beta + c2.r * gamma;
-                                image[(int) (x+0.5)][(int) (y+0.5)].g = c0.g * alpha + c1.g * beta + c2.g * gamma;
-                                image[(int) (x+0.5)][(int) (y+0.5)].b = c0.b * alpha + c1.b * beta + c2.b * gamma;
+                                image[x][y].r = c0.r * alpha + c1.r * beta + c2.r * gamma;
+                                image[x][y].g = c0.g * alpha + c1.g * beta + c2.g * gamma;
+                                image[x][y].b = c0.b * alpha + c1.b * beta + c2.b * gamma;
                             }
                         }
                     }
@@ -304,11 +311,11 @@ int main(int argc, char **argv) {
     readSceneFile(argv[1]);
     readCameraFile(argv[2]);
     // map holding the transformed values of each model's vertices
-    std::map<int, std::map<int, std::vector<Vec3> *> > modelMap;
+    std::map<int, std::map<int, std::vector<Vec4> *> > modelMap;
 
     for (int m = 0; m < numberOfModels; m++) {
-        modelMap.insert(std::pair<int, std::map<int, std::vector<Vec3> *> >(m, std::map<int, std::vector<Vec3> *>()));
-        std::map<int, std::vector<Vec3> *> &modelTriangleMap = modelMap[m];
+        modelMap.insert(std::pair<int, std::map<int, std::vector<Vec4> *> >(m, std::map<int, std::vector<Vec4> *>()));
+        std::map<int, std::vector<Vec4> *> &modelTriangleMap = modelMap[m];
         apply_M_model(models[m], &modelTriangleMap);
     }
 
@@ -346,9 +353,9 @@ int main(int argc, char **argv) {
             //v_vertices.push_back(Vec4(a_vertices[v]));
         //}
 
-        for(std::pair <int, std::map<int, std::vector<Vec3> *> > modelTrianglePair : modelMap){
-            for (std::pair <int, std::vector<Vec3> *> triangleVertexPair : modelTrianglePair.second){
-                for(Vec3 vect : *triangleVertexPair.second){
+        for(std::pair <int, std::map<int, std::vector<Vec4> *> > modelTrianglePair : modelMap){
+            for (std::pair <int, std::vector<Vec4> *> triangleVertexPair : modelTrianglePair.second){
+                for(Vec4 vect : *triangleVertexPair.second){
                     std::cout << "Vertex coords:(" << vect.x << "," << vect.y << "," << vect.z << ")" << std::endl;
                 }
                 std::cout << "-------" << std::endl;
