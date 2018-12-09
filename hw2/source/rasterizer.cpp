@@ -163,6 +163,126 @@ Matrix_4_4 calculate_M_vp(const Camera & cam) {
     return M_vp;
 }
 
+// determines the vertex order for wireframe drawing
+void determineSmaller(Vec4 v0, Vec4 v1, Vec4 *smaller, Vec4 *larger, bool x){
+    if (x){
+        if(v0.x > v1.x){
+            *smaller = v1;
+            *larger = v0;
+        }
+        else{ 
+            *smaller = v0;
+            *larger = v1;
+        }
+    }
+    else{
+        if(v0.y > v1.y){
+            *smaller = v1;
+            *larger = v0;
+        }
+        else{ 
+            *smaller = v0;
+            *larger = v1;
+        }
+    }
+}
+
+// adds two colors, used for color increment in midpoint algorithm
+Color addColor(Color old, Color incr){
+    Color ret;
+    ret.r = old.r + incr.r;
+    ret.g = old.g + incr.g;
+    ret.b = old.b + incr.b;
+    return ret;
+}
+
+// midpoint algorithm implementation for 1 > m > -1 cases, sign determines y direction
+void midpointX(Vec4 v0, Vec4 v1, bool sign){
+    int y = v0.y;
+    int ydif = v0.y - v1.y; // y0 - y1
+    int xdif = v1.x - v0.x; // x1 - x0
+    Color c = colors[v0.colorId];
+
+    Color dc; 
+    dc.r = (colors[v1.colorId].r - colors[v0.colorId].r) / xdif;
+    dc.g = (colors[v1.colorId].g - colors[v0.colorId].g) / xdif;
+    dc.b = (colors[v1.colorId].b - colors[v0.colorId].b) / xdif;
+    
+    double d = ydif + 0.5 * xdif;
+    for (int i = v0.x; i <= v1.x; i++){
+        // TODO: draw the pixel x,y with color c
+        image[i][y].r = std::round(c.r);
+        image[i][y].g = std::round(c.g);
+        image[i][y].b = std::round(c.b);
+
+        if (sign){
+            if (d < 0){
+                y++;
+                d += ydif + xdif;
+            }
+            else{
+                // go E
+                d += ydif;
+            }
+        }
+        else{
+            if (d > 0){
+                y--;
+                d += ydif - xdif;
+            }
+            else{
+                // go E
+                d += ydif;
+            }
+        }
+        
+        c = addColor(c,dc);
+    }
+}
+
+// midpoint algorithm implementation for m > 1 and m < -1 cases, sign determines x direction
+void midpointY(Vec4 v0, Vec4 v1, bool sign){
+    int x = v0.x;
+    int ydif = v1.y - v0.y; // y0 - y1
+    int xdif = v0.x - v1.x; // x1 - x0
+    Color c = colors[v0.colorId];
+
+    Color dc; 
+    dc.r = (colors[v1.colorId].r - colors[v0.colorId].r) / ydif;
+    dc.g = (colors[v1.colorId].g - colors[v0.colorId].g) / ydif;
+    dc.b = (colors[v1.colorId].b - colors[v0.colorId].b) / ydif;
+    
+    double d = xdif + 0.5 * ydif;
+    for (int i = v0.y; i <= v1.y; i++){
+        // TODO: draw the pixel x,y with color c
+        image[x][i].r = std::round(c.r);
+        image[x][i].g = std::round(c.g);
+        image[x][i].b = std::round(c.b);
+
+        if (sign){
+            if (d < 0){
+                x++;
+                d += ydif + xdif;
+            }
+            else{
+                // go E
+                d += xdif;
+            }
+        }
+        else{
+            if (d > 0){
+                x--;
+                d += xdif - ydif;
+            }
+            else{
+                // go E
+                d += xdif;
+            }
+        }
+        c = addColor(c,dc);
+    }
+}
+
 /*
 	Transformations, culling, rasterization are done here.
 	You can define helper functions inside this file (rasterizer.cpp) only.
@@ -226,7 +346,91 @@ void forwardRenderingPipeline(Camera & cam, std::map<int, std::map<int, std::vec
 
                 // wireframe mode
                 if (model.type == 0) {
-                    // TODO implement me
+                    // get the vertices of the triangles and draw the lines between them
+                    // interpolate the color between two vertices
+                    // JUST DRAW THE LINES
+
+                    Vec4 sm, la;
+                    double m;
+                    
+                    // draw v0-v1 line
+                    determineSmaller(v0, v1, &sm, &la, true); // determine which x is smaller
+                    m = (la.y - sm.y) / (la.x - sm.x); // find slope 
+                    if (1 > m && m >= 0){
+                        // CASE 1
+                        // standard case, lower half of 1st quadrant
+                        midpointX(sm, la, true);
+                    }
+                    else if (m > 1){
+                        // CASE 2
+                        // upper half of 1st quadrant,switch x and y
+                        determineSmaller(v0, v1, &sm, &la, false); // determine which x is smaller
+                        midpointY(sm, la, true);
+                    }
+                    else if (-1 < m && m < 0){
+                        // CASE 3
+                        // upper half of 4th quadrant, inverse of case 1
+                        midpointX(sm, la, false);
+                    }
+                    else{
+                        // CASE 4
+                        // lower half of 4th quadrant, inverse of case 2
+                        determineSmaller(v0, v1, &sm, &la, false); // determine which x is smaller
+                        midpointY(sm, la, false);
+                    }
+
+                    // draw v1-v2 line
+                    determineSmaller(v1, v2, &sm, &la, true); // determine which x is smaller
+                    m = (la.y - sm.y) / (la.x - sm.x); // find slope 
+                    if (1 > m && m >= 0){
+                        // CASE 1
+                        // standard case, lower half of 1st quadrant
+                        midpointX(sm, la, true);
+                    }
+                    else if (m > 1){
+                        // CASE 2
+                        // upper half of 1st quadrant,switch x and y
+                        determineSmaller(v1, v2, &sm, &la, false); // determine which x is smaller
+                        midpointY(sm, la, true);
+                    }
+                    else if (-1 < m && m < 0){
+                        // CASE 3
+                        // upper half of 4th quadrant, inverse of case 1
+                        midpointX(sm, la, false);
+                    }
+                    else{
+                        // CASE 4
+                        // lower half of 4th quadrant, inverse of case 2
+                        determineSmaller(v1, v2, &sm, &la, false); // determine which x is smaller
+                        midpointY(sm, la, false);
+                    }
+
+                    // draw v2-v0 line
+                    determineSmaller(v2, v0, &sm, &la, true); // determine which x is smaller
+                    m = (la.y - sm.y) / (la.x - sm.x); // find slope 
+                    if (1 > m && m >= 0){
+                        // CASE 1
+                        // standard case, lower half of 1st quadrant
+                        midpointX(sm, la, true);
+                    }
+                    else if (m > 1){
+                        // CASE 2
+                        // upper half of 1st quadrant,switch x and y
+                        determineSmaller(v2, v0, &sm, &la, false); // determine which x is smaller
+                        midpointY(sm, la, true);
+                    }
+                    else if (-1 < m && m < 0){
+                        // CASE 3
+                        // upper half of 4th quadrant, inverse of case 1
+                        midpointX(sm, la, false);
+                    }
+                    else{
+                        // CASE 4
+                        // lower half of 4th quadrant, inverse of case 2
+                        determineSmaller(v2, v0, &sm, &la, false); // determine which x is smaller
+                        midpointY(sm, la, false);
+                    }
+
                 }
                 // solid mode
                 else { // if (model.type == 1)
