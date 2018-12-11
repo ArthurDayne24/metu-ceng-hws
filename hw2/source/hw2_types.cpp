@@ -176,6 +176,7 @@ Vec4::Vec4(const Vec3 & rhs) {
 
 void Vec4::make_homogenous() {
     if (w == 0) {
+        std::cerr << "+++++++++++++++++OPPPS 0++++++++++++++++++\n";
         // TODO I do not know if this is an error (and its solution) or not
         // Maybe we can add a small epsilon if it is in not an error but is machine precision related
     }

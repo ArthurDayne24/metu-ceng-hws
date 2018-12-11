@@ -151,11 +151,11 @@ Matrix_4_4 calculate_M_per(const Camera & cam) {
 Matrix_4_4 calculate_M_vp(const Camera & cam) {
     Matrix_4_4 M_vp;
 
-    M_vp.data[0][0] = cam.sizeX / 2;
-    M_vp.data[0][3] = (cam.sizeX - 1) / 2;
+    M_vp.data[0][0] = (double) cam.sizeX / 2;
+    M_vp.data[0][3] = ((double) cam.sizeX - 1) / 2;
 
-    M_vp.data[1][1] = cam.sizeY / 2;
-    M_vp.data[1][3] = (cam.sizeY - 1) / 2;
+    M_vp.data[1][1] = (double) cam.sizeY / 2;
+    M_vp.data[1][3] = ((double) cam.sizeY - 1) / 2;
 
     M_vp.data[2][2] = 0.5;
     M_vp.data[2][3] = 0.5;
@@ -299,9 +299,6 @@ void forwardRenderingPipeline(Camera & cam, std::map<int, std::map<int, std::vec
     // Calculate perspective projection - M_per
     Matrix_4_4 M_per = calculate_M_per(cam);
 
-    Matrix_4_4 M_accumulation = M_per.multiplyBy(M_cam);
-
-
     // Calculate viewport transformations - M_vp
     Matrix_4_4 M_vp = calculate_M_vp(cam);
 
@@ -314,28 +311,39 @@ void forwardRenderingPipeline(Camera & cam, std::map<int, std::map<int, std::vec
             //std::vector<Vec3> &triangleVertexVector = *(modelMap->at(m).at(t));
 
             // Apply first part of matrix transformations
-            Vec4 v0 = M_accumulation.multiplyBy(modelMap->at(m).at(t)->at(0));
-            Vec4 v1 = M_accumulation.multiplyBy(modelMap->at(m).at(t)->at(1));
-            Vec4 v2 = M_accumulation.multiplyBy(modelMap->at(m).at(t)->at(2));
+            Vec4 v0 = M_cam.multiplyBy(modelMap->at(m).at(t)->at(0));
+            Vec4 v1 = M_cam.multiplyBy(modelMap->at(m).at(t)->at(1));
+            Vec4 v2 = M_cam.multiplyBy(modelMap->at(m).at(t)->at(2));
 
             v0.make_homogenous();
             v1.make_homogenous();
             v2.make_homogenous();
 
-            Vec3 v0_3 = (Vec3) v0;
-            Vec3 v1_3 = (Vec3) v1;
-            Vec3 v2_3 = (Vec3) v2;
+            Vec3 v0_3(v0);
+            Vec3 v1_3(v1);
+            Vec3 v2_3(v2);
 
-            Vec3 normal = crossProductVec3(subtractVec3(v2_3, v0_3), subtractVec3(v1_3, v0_3));
+            Vec3 normal = crossProductVec3(subtractVec3(v1_3, v0_3), subtractVec3(v2_3, v0_3));
 
             double dot = dotProductVec3(v0_3, normal);
 
             // TODO care precision
-            bool backface_passed = !(dot > 0 && backfaceCullingSetting != 0);
+
+            bool backface_passed = backfaceCullingSetting == 0 || dot < 0;
+            //bool backface_passed = !(dot > 0 && backfaceCullingSetting != 0);
 
             // Apply viewport transformation and rasterization
             if (true == backface_passed) {
                 // bugfix XXX
+
+                // Apply first part of matrix transformations
+                v0 = M_per.multiplyBy(v0);
+                v1 = M_per.multiplyBy(v1);
+                v2 = M_per.multiplyBy(v2);
+
+                v0.make_homogenous();
+                v1.make_homogenous();
+                v2.make_homogenous();
 
                 v0 = M_vp.multiplyBy(v0);
                 v1 = M_vp.multiplyBy(v1);
