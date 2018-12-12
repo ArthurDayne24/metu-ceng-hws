@@ -78,7 +78,7 @@ void apply_M_model(Model &model, std::map<int, std::vector<Vec4> *> *modelTriang
     Matrix_4_4 M_model;
     M_model.makeIdentity();
 
-    for (int t = 0; t < model.numberOfTransformations; t++) {
+    for (int t = 0; t < model.numberOfTransformations ; t++) {
 
         Matrix_4_4 transformation;
 
@@ -315,21 +315,21 @@ void forwardRenderingPipeline(Camera & cam, std::map<int, std::map<int, std::vec
             Vec4 v1 = M_cam.multiplyBy(modelMap->at(m).at(t)->at(1));
             Vec4 v2 = M_cam.multiplyBy(modelMap->at(m).at(t)->at(2));
 
-            v0.make_homogenous();
-            v1.make_homogenous();
-            v2.make_homogenous();
+//            v0.make_homogenous();
+//            v1.make_homogenous();
+//            v2.make_homogenous();
 
             Vec3 v0_3(v0);
             Vec3 v1_3(v1);
             Vec3 v2_3(v2);
 
-            Vec3 normal = crossProductVec3(subtractVec3(v1_3, v0_3), subtractVec3(v2_3, v0_3));
-
-            double dot = dotProductVec3(v0_3, normal);
+            Vec3 normal = crossProductVec3(normalizeVec3(subtractVec3(v1_3, v0_3)), normalizeVec3(subtractVec3(v2_3, v0_3)));
+            normal = normalizeVec3(normal);
+            double dot = dotProductVec3(normalizeVec3(v2_3), normal);
 
             // TODO care precision
 
-            bool backface_passed = backfaceCullingSetting == 0 || dot < 0;
+            bool backface_passed = (backfaceCullingSetting == 1 && dot < 0) || backfaceCullingSetting == 0;
             //bool backface_passed = !(dot > 0 && backfaceCullingSetting != 0);
 
             // Apply viewport transformation and rasterization

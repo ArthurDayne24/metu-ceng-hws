@@ -52,26 +52,56 @@ void Matrix_4_4::makeScale(const Scaling & s) {
     data[2][2] = s.sz;
 }
 
+void findV(Vec3 &u, Vec3 &v) {
+
+    double arr[3] = {u.x, u.y, u.z};
+    double minVal = fabs(arr[0]);
+    int minIndex = 0;
+    for(int i=1; i<3; i++){
+        if(fabs(arr[i]) < minVal){
+            minVal = fabs(arr[i]);
+            minIndex = i;
+        }
+    }
+
+    if(minIndex == 0){
+        v.x = 0;
+        v.y = -u.z;
+        v.z = u.y;
+    }
+    else if (minIndex == 1) {
+        v.y = 0;
+        v.x = -u.z;
+        v.z = u.x;
+    }
+    else {
+        v.z = 0;
+        v.x = -u.y;
+        v.y = u.x;
+    }
+}
+
 void Matrix_4_4::makeM(const Rotation & r) {
-    data[0][0] = r.ux;
-    data[0][1] = r.uy;
-    data[0][2] = r.uz;
-
-    data[1][0] = -r.uy;
-    data[1][1] = r.ux;
-
     Vec3 u, v, w;
 
-    u.x = data[0][0];
-    u.y = data[0][1];
-    u.z = data[0][2];
+    u.x = r.ux;
+     u.y= r.uy;
+    u.z = r.uz;
 
-    v.x = data[1][0];
-    v.y = data[1][1];
-    v.z = data[1][2];
+    u = normalizeVec3(u);
+
+    data[0][0] = u.x;
+    data[0][1] = u.y;
+    data[0][2] = u.z;
+
+    findV(u, v);
+    v = normalizeVec3(v);
+    data[1][0] = v.x;
+    data[1][1] = v.y;
+    data[1][2] = v.z;
 
     w = crossProductVec3(u, v);
-
+    w = normalizeVec3(w);
     data[2][0] = w.x;
     data[2][1] = w.y;
     data[2][2] = w.z;
@@ -111,9 +141,9 @@ void Matrix_4_4::makeRotationAroundX(const Rotation & r) {
 // rotate "angle" degrees around arbitrary axis
 void Matrix_4_4::makeRotationArbitrary(const Rotation & r) {
     Matrix_4_4 T;
-    T.makeTranslation(-r.ux, -r.uy, -r.uz);
+//    T.makeTranslation(-r.ux, -r.uy, -r.uz);
     Matrix_4_4 T_inv;
-    T_inv.makeTranslation(r.ux, r.uy, r.uz);
+//    T_inv.makeTranslation(r.ux, r.uy, r.uz);
 
     Matrix_4_4 M;
     M.makeM(r);
@@ -123,7 +153,7 @@ void Matrix_4_4::makeRotationArbitrary(const Rotation & r) {
     Matrix_4_4 rotX;
     rotX.makeRotationAroundX(r);
 
-    Matrix_4_4 result = T_inv.multiplyBy(M_inv.multiplyBy(rotX.multiplyBy(M.multiplyBy(T))));
+    Matrix_4_4 result = M_inv.multiplyBy(rotX.multiplyBy(M));
 
     memcpy(data, result.data, 16 * sizeof(double));
 }
