@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <cstring>
 
-#define __DEBUG__ true
+#define __DEBUG__ false
 
 void debug_print(const std::string & msg) {
     if (true == __DEBUG__) {
@@ -43,6 +43,19 @@ unsigned short checksum(const char *buf, unsigned size)
 typedef struct iphdr IP_HEADER;
 typedef struct tcphdr TCP_HEADER;
 
+// http://www.tcpipguide.com/free/t_TCPChecksumCalculationandtheTCPPseudoHeader-2.htm
+typedef struct PSEUDO_HEADER {
+    // pseudo header
+    unsigned source_addr;
+    unsigned dest_addr;
+    unsigned char reserved;
+    unsigned char protocol;
+    unsigned short tcp_length;
+    // tcp header
+    TCP_HEADER tcp_header;
+
+} PSEUDO_HEADER;
+
 int main() {
 
     unsigned IP_HEADER_SIZE = sizeof(IP_HEADER);
@@ -59,26 +72,26 @@ int main() {
 
     ip_header->version = 4; // IPv4
     ip_header->ihl = 5; // (5 words * 4 = 20 bytes excluding options etc)
-    ip_header->tos = 0; // I think we do not care QOS's as we send datagrams continuously
     ip_header->tot_len = static_cast<u_int16_t>(DATAGRAM_SIZE);
-    ip_header->id = 0; // TODO initially
-    ip_header->frag_off = 0; // I think we do not care fragmentation
-    ip_header->ttl = 1; // TODO 1 hop is enough ?
+    ip_header->ttl = 0xFF; // set to max
     ip_header->protocol = 6; // TCP
-    ip_header->check = 0;
     ip_header->daddr = inet_addr("10.0.0.2");
-	ip_header->saddr = 0;
 
     // TCP header
     auto *tcp_header = reinterpret_cast<TCP_HEADER *>(datagram + IP_HEADER_SIZE);
 
     tcp_header->dest = htons(8080);
-	tcp_header->source = htons(8080);
-    tcp_header->seq = 0;
+    tcp_header->source = htons(8080);
     tcp_header->doff = 0; // TODO ?
     tcp_header->syn = 1;
-    tcp_header->window = 1; // TODO ?
-    tcp_header->check = 0;
+    tcp_header->window = 255; // TODO ?
+
+    // prepare pseudo header for tcp checksum, by rfc
+    PSEUDO_HEADER pseudo_header{};
+
+    pseudo_header.dest_addr = inet_addr("10.0.0.2");
+    pseudo_header.protocol = 6;
+    pseudo_header.tcp_length = static_cast<unsigned short>(TCP_HEADER_SIZE);
 
     const int OPTION_SET = 1;
     int s = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
@@ -95,18 +108,26 @@ int main() {
     dest_address.sin_port = htons(8080);
     dest_address.sin_addr.s_addr = inet_addr("10.0.0.2");
 
-	
-
     for (;;) {
 
-		ip_header->id = (ip_header->id + 1) % (0xFFFF);
-		ip_header->saddr = (ip_header->saddr + 1) % (0xFFFFFFFF);
-		ip_header->check = checksum((const char*)ip_header, IP_HEADER_SIZE);
+        ip_header->check = 0;
 
-		tcp_header->check = 0; // TODO
+        ip_header->id = static_cast<u_int16_t>((ip_header->id + 1) % (0xFFFF));
+        ip_header->saddr = (ip_header->saddr + 1) % (0xFFFFFFFF);
+        ip_header->check = checksum((const char*)ip_header, IP_HEADER_SIZE);
+
+        tcp_header->check = 0;
+
+        pseudo_header.source_addr = (pseudo_header.source_addr + 1) % (0xFFFFFFFF);
+
+        memcpy(&pseudo_header.tcp_header, tcp_header, TCP_HEADER_SIZE);
+
+        // Ready for tcp checksum
+
+        tcp_header->check = checksum((const char*) &pseudo_header, sizeof(PSEUDO_HEADER));
 
         //Send the packet
-        ssize_t bytes_sent = sendto(s, datagram, ip_header->tot_len, 0, (struct sockaddr *) &dest_address, sizeof (dest_address));
+        ssize_t bytes_sent = sendto(s, datagram, ip_header->tot_len, 0, (struct sockaddr *) &dest_address, sizeof(dest_address));
 
         if (bytes_sent < 0) {
             debug_print("sendto could not send any bytes!");
