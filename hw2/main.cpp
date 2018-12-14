@@ -66,20 +66,22 @@ int main() {
     ip_header->ttl = 1; // TODO 1 hop is enough ?
     ip_header->protocol = 6; // TCP
     ip_header->check = 0;
-    //ip_header->saddr TODO set each time, spoofing
-    ip_header->daddr = inet_addr("I do not remember xd"); // TODO convert string to bytes
+    ip_header->daddr = inet_addr("10.0.0.2");
 
+    ip_header->saddr = inet_addr("10.0.0.3"); //TODO set each time, spoofing
     ip_header->check = checksum((const char*)ip_header, IP_HEADER_SIZE);
 
     // TCP header
     auto *tcp_header = reinterpret_cast<TCP_HEADER *>(datagram + IP_HEADER_SIZE);
 
-    tcp_header->source = 0; // TODO source port no!
-    tcp_header->dest = 0; // TODO dest port no
+    tcp_header->dest = htons(8080);
     tcp_header->seq = 0;
     tcp_header->doff = 0; // TODO ?
     tcp_header->syn = 1;
     tcp_header->window = 1; // TODO ?
+    tcp_header->check = 0;
+
+    tcp_header->source = htons(8080); // TODO source port no!
     tcp_header->check = 0; // TODO
 
     const int OPTION_SET = 1;
@@ -94,8 +96,8 @@ int main() {
 
     struct sockaddr_in dest_address{};
     dest_address.sin_family = AF_INET;
-    dest_address.sin_port = htons(80); // TODO
-    dest_address.sin_addr.s_addr = inet_addr("set me xs"); //TODO
+    dest_address.sin_port = htons(8080);
+    dest_address.sin_addr.s_addr = inet_addr("10.0.0.2");
 
     for (;;) {
 
