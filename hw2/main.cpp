@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <cstring>
 
-#define __DEBUG__ true
+#define __DEBUG__ false
 
 // https://github.com/seifzadeh/c-network-programming-best-snipts/blob/master/SYN%20Flood%20DOS%20Attack%20with%20C%20Source%20Code%20(Linux)
 // "Bogus TCP length" problem is fixed thanks to implementation at above link
