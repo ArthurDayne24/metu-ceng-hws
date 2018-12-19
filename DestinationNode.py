@@ -24,7 +24,7 @@ class DestinationNode:
     def worker_r1(self):
         # Interface 5 (for r1)
         self.r1Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.r1Socket.bind((INTERFACE_5, PORT))
+        self.r1Socket.bind((INTERFACE_5, PORT_5))
 
         while True:
             # receive from r1
@@ -33,12 +33,12 @@ class DestinationNode:
             data = data.decode('utf-8')
 
             # send to s
-            self.r1Socket.sendto(get_binary_from_string(ACK_MESSAGE), (INTERFACE_4, PORT))
+            self.r1Socket.sendto(get_binary_from_string(ACK_MESSAGE), (INTERFACE_4, PORT_4))
 
     def worker_r2(self):
         # Interface 9 (for r2)
         self.r2Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.r2Socket.bind((INTERFACE_9, PORT))
+        self.r2Socket.bind((INTERFACE_9, PORT_9))
 
         while True:
             # receive from r2
@@ -47,7 +47,7 @@ class DestinationNode:
             data = data.decode('utf-8')
 
             # send to s
-            self.r2Socket.sendto(get_binary_from_string(ACK_MESSAGE), (INTERFACE_8, PORT))
+            self.r2Socket.sendto(get_binary_from_string(ACK_MESSAGE), (INTERFACE_8, PORT_8))
 
 
 if __name__ == '__main__':
