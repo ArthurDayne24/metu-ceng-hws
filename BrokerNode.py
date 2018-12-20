@@ -1,49 +1,40 @@
 import socket
 import threading
+import select
 from commons import *
+
 
 class BrokerNode:
     def __init__(self):
+
+        self.packets = None
 
         self.sSocket = self.r1Socket = self.r2Socket = None
         self.sConnectionSocket = None
 
         # Interface 1 (for s)
         self.sSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sSocket.bind((INTERFACE_1, PORT_1)) 
-        self.sSocket.listen(1) # Behaves like a server
+        self.sSocket.bind((INTERFACE_1, PORT_1))
+        self.sSocket.listen(1)  # Behaves like a server
 
-        self.sConnectionSocket, _ = self.sSocket.accept() #Accept and connect to a client
+        self.sConnectionSocket, _ = self.sSocket.accept()  # Accept and connect to a client
 
         # Interface 2 (for r1)
         self.r1Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.r1Socket.bind((INTERFACE_2, PORT_2))
-
-        self.base_changed = 0
 
         self.base = 0
         self.nextseqnum = 0
 
     # Handles data transfer from s to d
     def run(self):
+        # TODO
         pass
 
         self.sSocket.close()
         self.r1Socket.close()
 
-    def worker_r1(self):
-
-        # get (n)ack from r1 and transmit to s
-
-        # receive from r1
-        data, _ = self.r1Socket.recvfrom(PACKET_SIZE)
-
-        self.received.notify()        
-
     def worker_sender(self):
-
-        # TODO handle buffering logic
-        window_buffer = []
 
         self.base = 0
         self.nextseqnum = 0
@@ -53,17 +44,12 @@ class BrokerNode:
 
         while True:
 
-            base_changed.acquire()
-
             if self.nextseqnum < self.base + BROKER_WINDOW_SIZE:
 
-                base_changed.release()
+                # prepare packet
+                while received_size < PAYLOAD_SIZE:
+                    data = self.sConnectionSocket.recv(PAYLOAD_SIZE)  # receive from s
 
-                # prepare packet 
-                while received_size < PAYLOAD_SIZE: 
-                
-                    data = self.sConnectionSocket.recv(PAYLOAD_SIZE)# receive from s
-                    
                     receive_buffer.extend(data)
                     received_size += len(data)
 
@@ -76,78 +62,24 @@ class BrokerNode:
                 intermediate = payload + sequence_number
 
                 packet = intermediate + checksum(intermediate)
+                self.packets.append(packet)
 
                 # send to router 1
-                self.r1Socket.sendto(send_data, (INTERFACE_3, PORT_3))
+                self.r1Socket.sendto(packet, (INTERFACE_3, PORT_3))
 
                 # TODO handle two routers
 
-                base_changed.acquire()
-
                 if self.base == self.nextseqnum:
-
-                    base_changed.release()
+                    pass
 
                     # TODO start timer
-
-                base_changed.release()
 
                 self.nextseqnum += 1
 
             else:
-                self.base_changed.wait()
+                pass
 
-            base_changed.release()
-
-
-            
-
-
-
-
-#            if not window_buffer:
-#
-#                buffer_ctr = 0
-#                
-#                data = bytearray() 
-#                
-#                while buffer_ctr < BROKER_WINDOW_SIZE:
-#                    
-#                    get_data = self.sConnectionSocket.recv(PACKET_SIZE)# receive from s
-#
-#                    data.extend(get_data)
-#                    
-#                    #If the incoming data less than packet size, do not send it
-#               
-#                    if len(data) < PACKET_SIZE: 
-#                        continue
-#
-#                    else:
-#                        window_buffer.append(data)
-#
-#                        buffer_ctr += 1
-#
-#                        data = data[PACKET_SIZE:]
-#
-#            # else : no operation for receive
-#
-#            for idx in range(BROKER_WINDOW_SIZE):
-#                send_data = window_buffer[idx] #Make sure to send data with only packet size
-#            
-#                self.r1Socket.sendto(send_data, (INTERFACE_3, PORT_3))
-#
-#            self.received = threading.Condition()
-#
-#            r1BackwardThread = threading.Thread(target=self.worker_r1)
-#            r1BackwardThread.start()
-#
-#            # Timeout case
-#            if not received.wait(TIMEOUT):
-#                pass
-#
-#            else:
-#                window_buffer = []
-
+    "Receives ACK from router 1 and accomplishes resend operation"
     def worker_receiver_1(self):
 
         receive_buffer = bytearray()
@@ -156,12 +88,25 @@ class BrokerNode:
         while True:
 
             # prepare packet 
-            while received_size < PACKET_SIZE: 
-            
-                data, _ = self.r1Socket.recvfrom(PACKET_SIZE)
-                
-                receive_buffer.extend(data)
-                received_size += len(data)
+            while received_size < PACKET_SIZE:
+
+                self.r1Socket.setblocking(False)
+
+                ready = select.select([self.r1Socket], [], [], TIMEOUT)
+
+                # if timeout not occurred
+                if ready[0]:
+                    data, _ = self.r1Socket.recvfrom(PACKET_SIZE)  # type: (bytes, object)
+
+                    receive_buffer.extend(data)
+                    received_size += len(data)
+
+                # timeout case
+                else:
+                    receive_buffer = []
+
+                    self.timeout_handler_thread = threading.Thread(target=self.worker_timeout_handler, args=(self.base,))
+                    self.timeout_handler_thread.start()
 
             packet = receive_buffer[:PACKET_SIZE]
             receive_buffer = receive_buffer[PACKET_SIZE:]
@@ -178,17 +123,15 @@ class BrokerNode:
 
             # if not corrupted
 
-            with self.base_changed:
-    
-                self.base = int(intsequence_number) + 1
-
-                self.base_changed.notify()
+            self.base = int(sequence_number) + 1
 
             if self.base == self.nextseqnum:
-                # TODO stop timer
-            else:
-                # TODO start timer
+                return  # no more packets
+
+    # timeout base is not the current base !
+    def worker_timeout_handler(self, timeout_base):
+        for packet_number in range(timeout_base, self.nextseqnum):
+            self.r1Socket.sendto(self.packets[packet_number], (INTERFACE_3, PORT_3))
 
 if __name__ == '__main__':
     BrokerNode().run()
-
