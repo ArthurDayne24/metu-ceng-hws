@@ -29,6 +29,12 @@ class BrokerNode:
 
     # Handles data transfer from s to d
     def run(self):
+
+        self.worker_sender()
+
+        for thread in self.timeout_handler_threads:
+            thread.join()
+
         self.sSocket.close()
         self.r1Socket.close()
 
@@ -67,15 +73,13 @@ class BrokerNode:
 
                 # TODO handle two routers
 
+                # if first time, start receive worker
                 if self.base == self.nextseqnum:
-                    pass
 
-                    # TODO start timer
+                    self.receiver_thread = threading.Thread(target=self.worker_receiver_1())
+                    self.receiver_thread.start()
 
                 self.nextseqnum += 1
-
-            else:
-                pass
 
     "Receives ACK from router 1 and accomplishes resend operation"
     def worker_receiver_1(self):
