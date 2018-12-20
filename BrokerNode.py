@@ -7,7 +7,8 @@ from commons import *
 class BrokerNode:
     def __init__(self):
 
-        self.packets = None
+        self.timeout_handler_threads = []
+        self.packets = []
 
         self.sSocket = self.r1Socket = self.r2Socket = None
         self.sConnectionSocket = None
@@ -28,9 +29,6 @@ class BrokerNode:
 
     # Handles data transfer from s to d
     def run(self):
-        # TODO
-        pass
-
         self.sSocket.close()
         self.r1Socket.close()
 
@@ -106,6 +104,7 @@ class BrokerNode:
                     receive_buffer = []
 
                     self.timeout_handler_thread = threading.Thread(target=self.worker_timeout_handler, args=(self.base,))
+                    self.timeout_handler_threads.append(self.timeout_handler_thread)
                     self.timeout_handler_thread.start()
 
             packet = receive_buffer[:PACKET_SIZE]
