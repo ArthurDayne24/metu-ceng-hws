@@ -7,6 +7,7 @@ from commons import *
 class BrokerNode:
     def __init__(self):
 
+        self.receiver_thread = threading.Thread(target=self.worker_receiver_1)
         self.timeout_handler_threads = []
         self.packets = []
 
@@ -32,8 +33,12 @@ class BrokerNode:
 
         self.worker_sender()
 
+        debug("Waiting for timeouts")
+
         for thread in self.timeout_handler_threads:
             thread.join()
+
+        debug("Timeout waiting ends")
 
         self.sSocket.close()
         self.r1Socket.close()
@@ -46,13 +51,13 @@ class BrokerNode:
         receive_buffer = bytearray()
         received_size = 0
 
-        while True:
+        while self.nextseqnum < NUMBER_OF_PACKETS:
 
-            if self.nextseqnum < self.base + BROKER_WINDOW_SIZE:
+            if self.nextseqnum < self.base + RDT_WINDOW_SIZE:
 
                 # prepare packet
                 while received_size < PAYLOAD_SIZE:
-                    data = self.sConnectionSocket.recv(PAYLOAD_SIZE)  # receive from s
+                    data = self.sConnectionSocket.recv(PAYLOAD_SIZE)
 
                     receive_buffer.extend(data)
                     received_size += len(data)
@@ -61,7 +66,7 @@ class BrokerNode:
                 receive_buffer = receive_buffer[PAYLOAD_SIZE:]
                 received_size -= PAYLOAD_SIZE
 
-                sequence_number = bytearray(str(self.nextseqnum).zfill(SEQUENCE_NUM_SIZE))
+                sequence_number = bytearray(str(self.nextseqnum).zfill(SEQUENCE_NUM_SIZE), 'utf-8')
 
                 intermediate = payload + sequence_number
 
@@ -69,17 +74,28 @@ class BrokerNode:
                 self.packets.append(packet)
 
                 # send to router 1
-                self.r1Socket.sendto(packet, (INTERFACE_3, PORT_3))
+                if ON_LOCAL:
+                    self.r1Socket.sendto(packet, (INTERFACE_5, PORT_5))
+                else:
+                    self.r1Socket.sendto(packet, (INTERFACE_3, PORT_3))
+
+                debug("Sending " + packet.decode('utf-8'))
+                debug(packet)
 
                 # TODO handle two routers
 
                 # if first time, start receive worker
                 if self.base == self.nextseqnum:
 
-                    self.receiver_thread = threading.Thread(target=self.worker_receiver_1())
                     self.receiver_thread.start()
 
                 self.nextseqnum += 1
+
+        debug("Wait for receiver thread to exit")
+
+        self.receiver_thread.join()
+
+        debug("Receiver thread is closed")
 
     "Receives ACK from router 1 and accomplishes resend operation"
     def worker_receiver_1(self):
@@ -107,26 +123,26 @@ class BrokerNode:
                 else:
                     receive_buffer = []
 
-                    self.timeout_handler_thread = threading.Thread(target=self.worker_timeout_handler, args=(self.base,))
-                    self.timeout_handler_threads.append(self.timeout_handler_thread)
-                    self.timeout_handler_thread.start()
+                    timeout_handler_thread = threading.Thread(target=self.worker_timeout_handler, args=(self.base,))
+                    self.timeout_handler_threads.append(timeout_handler_thread)
+                    timeout_handler_thread.start()
 
             packet = receive_buffer[:PACKET_SIZE]
             receive_buffer = receive_buffer[PACKET_SIZE:]
             received_size -= PACKET_SIZE
 
-            intermediate = packet[:PAYLOAD_SIZE + SEQUENCE_NUM_SIZE]
-            packet_checksum = packet[PAYLOAD_SIZE + SEQUENCE_NUM_SIZE:]
-            sequence_number = intermediate[PAYLOAD_SIZE:]
-
             # if packet is corrupted
 
-            if checksum(intermediate) != packet_checksum:
+            if is_corrupted(packet):
+                continue
+
+            new_sequence_number = int(get_sequence_number(packet)) + 1
+
+            if new_sequence_number < self.base:
                 continue
 
             # if not corrupted
-
-            self.base = int(sequence_number) + 1
+            self.base = new_sequence_number
 
             if self.base == self.nextseqnum:
                 return  # no more packets
@@ -134,7 +150,12 @@ class BrokerNode:
     # timeout base is not the current base !
     def worker_timeout_handler(self, timeout_base):
         for packet_number in range(timeout_base, self.nextseqnum):
-            self.r1Socket.sendto(self.packets[packet_number], (INTERFACE_3, PORT_3))
+            if ON_LOCAL:
+                self.r1Socket.sendto(self.packets[packet_number], (INTERFACE_5, PORT_5))
+            else:
+                self.r1Socket.sendto(self.packets[packet_number], (INTERFACE_3, PORT_3))
+
+        debug("Resent some packets")
 
 if __name__ == '__main__':
     BrokerNode().run()

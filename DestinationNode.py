@@ -1,55 +1,70 @@
-
 import socket
-import threading 
+import threading
 from commons import *
 
+
 class DestinationNode:
+
     def __init__(self):
+        self.expected_sequence_num = 0
         self.r1Socket = self.r2Socket = None
 
-        # init threads
         self.r1Thread = threading.Thread(target=self.worker_r1)
+
+        self.current_ack = None
+
+    def run(self):
         self.r1Thread.start()
 
-        self.r2Thread = threading.Thread(target=self.worker_r2)
-        self.r2Thread.start()
-
-        # end
         self.r1Thread.join()
-        self.r2Thread.join()
 
         self.r1Socket.close()
-        self.r2Socket.close()
 
     def worker_r1(self):
         # Interface 5 (for r1)
         self.r1Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.r1Socket.bind((INTERFACE_5, PORT_5))
 
-        while True:
-            # receive from r1
-            data, _ = self.r1Socket.recvfrom(PACKET_SIZE)
-            # convert to bytearray
-            data = data.decode('utf-8')
+        receive_buffer = bytearray()
+        received_size = 0
 
-            # send to s
-            self.r1Socket.sendto(get_binary_from_string(ACK_MESSAGE), (INTERFACE_4, PORT_4))
+        while self.expected_sequence_num < NUMBER_OF_PACKETS:
 
-    def worker_r2(self):
-        # Interface 9 (for r2)
-        self.r2Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.r2Socket.bind((INTERFACE_9, PORT_9))
+            # prepare packet
+            while received_size < PACKET_SIZE:
+                data, _ = self.r1Socket.recvfrom(PACKET_SIZE)
 
-        while True:
-            # receive from r2
-            data, _ = self.r2Socket.recvfrom(PACKET_SIZE)
-            # convert to bytearray
-            data = data.decode('utf-8')
+                receive_buffer.extend(data)
+                received_size += len(data)
 
-            # send to s
-            self.r2Socket.sendto(get_binary_from_string(ACK_MESSAGE), (INTERFACE_8, PORT_8))
+            received_packet = receive_buffer[:PACKET_SIZE]
+            receive_buffer = receive_buffer[PACKET_SIZE:]
+            received_size -= PACKET_SIZE
+
+            debug("last byte")
+            debug(received_packet[-1])
+            debug("Whole packet is " + received_packet.decode('utf-8'))
+
+            if is_corrupted(received_packet) or not self.expected_sequence_num == get_sequence_number(received_packet):
+                if ON_LOCAL:
+                    self.r1Socket.sendto(self.current_ack, (INTERFACE_2, PORT_2))
+                else:
+                    self.r1Socket.sendto(self.current_ack, (INTERFACE_4, PORT_4))
+                continue
+
+            # prepare ACK packet
+            payload = bytearray("1" * PAYLOAD_SIZE, 'utf-8')
+            sequence_number = bytearray(str(self.expected_sequence_num).zfill(SEQUENCE_NUM_SIZE), 'utf-8')
+            intermediate = payload + sequence_number
+            self.current_ack = intermediate + checksum(intermediate)
+
+            if ON_LOCAL:
+                self.r1Socket.sendto(self.current_ack, (INTERFACE_2, PORT_2))
+            else:
+                self.r1Socket.sendto(self.current_ack, (INTERFACE_4, PORT_4))
+
+            self.expected_sequence_num += 1
 
 
 if __name__ == '__main__':
-    DestinationNode()
-
+    DestinationNode().run()
