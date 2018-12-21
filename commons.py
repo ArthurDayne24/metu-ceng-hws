@@ -8,7 +8,7 @@ TIMEOUT = 1  # seconds
 
 TOTAL_BYTES = 5 * 1024 * 1024
 
-CHECKSUM_SIZE = 2
+CHECKSUM_SIZE = 4 # TODO solve problem
 SEQUENCE_NUM_SIZE = 8 # 3 is sufficient
 
 HEADER_SIZE = CHECKSUM_SIZE + SEQUENCE_NUM_SIZE
@@ -72,14 +72,16 @@ else:
 
 RDT_WINDOW_SIZE = 5
 
+ENCODING = "utf-8"
+
 # converts bytearray to int
 def get_int_from_binary(byte):
-    return int(byte.decode('utf-8'))
+    return int(byte.decode(ENCODING))
 
 
 # converts string to bytearray
 def get_binary_from_string(string):
-    return bytearray(string, 'utf-8')
+    return bytearray(string, ENCODING)
 
 
 def checksum(payload_sequence):
@@ -92,7 +94,9 @@ def checksum(payload_sequence):
     first_byte = chr(first_byte)
     second_byte = chr(second_byte)
 
-    return bytearray(first_byte + second_byte, 'utf-8')
+    computed_checksum = first_byte.encode(ENCODING) + second_byte.encode(ENCODING)
+
+    return computed_checksum
 
 
 def debug(msg):
@@ -109,11 +113,5 @@ def is_corrupted(packet):
     packet_checksum = packet[PAYLOAD_SIZE + SEQUENCE_NUM_SIZE:]
 
     corrupted = checksum(intermediate) != packet_checksum
-
-    if corrupted:
-        debug("Packet is corrupted")
-        debug(packet)
-        debug(packet_checksum)
-        debug(checksum(intermediate))
 
     return corrupted

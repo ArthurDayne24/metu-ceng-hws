@@ -66,7 +66,7 @@ class BrokerNode:
                 receive_buffer = receive_buffer[PAYLOAD_SIZE:]
                 received_size -= PAYLOAD_SIZE
 
-                sequence_number = bytearray(str(self.nextseqnum).zfill(SEQUENCE_NUM_SIZE), 'utf-8')
+                sequence_number = bytearray(str(self.nextseqnum).zfill(SEQUENCE_NUM_SIZE), ENCODING)
 
                 intermediate = payload + sequence_number
 
@@ -79,14 +79,13 @@ class BrokerNode:
                 else:
                     self.r1Socket.sendto(packet, (INTERFACE_3, PORT_3))
 
-                debug("Sending " + packet.decode('utf-8'))
+                debug("Send packet")
                 debug(packet)
 
                 # TODO handle two routers
 
                 # if first time, start receive worker
-                if self.base == self.nextseqnum:
-
+                if self.nextseqnum == 0:
                     self.receiver_thread.start()
 
                 self.nextseqnum += 1
@@ -103,7 +102,7 @@ class BrokerNode:
         receive_buffer = bytearray()
         received_size = 0
 
-        while True:
+        while self.nextseqnum < NUMBER_OF_PACKETS:
 
             # prepare packet 
             while received_size < PACKET_SIZE:
@@ -145,7 +144,7 @@ class BrokerNode:
             self.base = new_sequence_number
 
             if self.base == self.nextseqnum:
-                return  # no more packets
+                continue
 
     # timeout base is not the current base !
     def worker_timeout_handler(self, timeout_base):
@@ -155,7 +154,8 @@ class BrokerNode:
             else:
                 self.r1Socket.sendto(self.packets[packet_number], (INTERFACE_3, PORT_3))
 
-        debug("Resent some packets")
+            debug("Resent packet")
+            debug(self.packets[packet_number])
 
 if __name__ == '__main__':
     BrokerNode().run()

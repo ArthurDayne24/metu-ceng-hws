@@ -5,7 +5,7 @@ from commons import *
 
 # Construct a random message string with a repeated pattern.
 def get_random_message():
-    return bytearray(str(random.randint(1000, 9999)) * (PAYLOAD_SIZE // 4), 'utf-8')
+    return bytearray(str(random.randint(1000, 9999)) * (PAYLOAD_SIZE // 4), ENCODING)
 
 
 class SourceNode:

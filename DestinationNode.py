@@ -1,5 +1,6 @@
 import socket
 import threading
+import random
 from commons import *
 
 
@@ -41,11 +42,16 @@ class DestinationNode:
             receive_buffer = receive_buffer[PACKET_SIZE:]
             received_size -= PACKET_SIZE
 
-            debug("last byte")
-            debug(received_packet[-1])
-            debug("Whole packet is " + received_packet.decode('utf-8'))
+            # TODO remove this part
+            p = random.uniform(0, 1)
+            if p < 0.4:
+                debug("Skipped")
+                debug(received_packet)
+                continue
+
 
             if is_corrupted(received_packet) or not self.expected_sequence_num == get_sequence_number(received_packet):
+
                 if ON_LOCAL:
                     self.r1Socket.sendto(self.current_ack, (INTERFACE_2, PORT_2))
                 else:
@@ -53,8 +59,8 @@ class DestinationNode:
                 continue
 
             # prepare ACK packet
-            payload = bytearray("1" * PAYLOAD_SIZE, 'utf-8')
-            sequence_number = bytearray(str(self.expected_sequence_num).zfill(SEQUENCE_NUM_SIZE), 'utf-8')
+            payload = bytearray("1" * PAYLOAD_SIZE, ENCODING)
+            sequence_number = bytearray(str(self.expected_sequence_num).zfill(SEQUENCE_NUM_SIZE), ENCODING)
             intermediate = payload + sequence_number
             self.current_ack = intermediate + checksum(intermediate)
 
@@ -62,6 +68,12 @@ class DestinationNode:
                 self.r1Socket.sendto(self.current_ack, (INTERFACE_2, PORT_2))
             else:
                 self.r1Socket.sendto(self.current_ack, (INTERFACE_4, PORT_4))
+
+            debug("sent packet")
+            debug(self.current_ack)
+
+            debug("Received packet")
+            debug(received_packet)
 
             self.expected_sequence_num += 1
 

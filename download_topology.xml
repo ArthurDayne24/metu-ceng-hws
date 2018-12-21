@@ -62,56 +62,41 @@
 <link xmlns="http://www.geni.net/resources/rspec/3" client_id="link-0">
 <interface_ref xmlns="http://www.geni.net/resources/rspec/3" client_id="interface-0"/>
 <interface_ref xmlns="http://www.geni.net/resources/rspec/3" client_id="interface-1"/>
+
 <site xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" id="undefined"/>
-
-
-
-
-<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-0" dest_id="interface-1" capacity="1000"/>
-<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-1" dest_id="interface-0" capacity="1000"/>
+<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-0" dest_id="interface-1" capacity="2000"/>
+<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-1" dest_id="interface-0" capacity="2000"/>
 </link>
 <link xmlns="http://www.geni.net/resources/rspec/3" client_id="link-1">
 <interface_ref xmlns="http://www.geni.net/resources/rspec/3" client_id="interface-2"/>
 <interface_ref xmlns="http://www.geni.net/resources/rspec/3" client_id="interface-3"/>
+
 <site xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" id="undefined"/>
-
-
-
-
-<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-2" dest_id="interface-3" capacity="10"/>
-<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-3" dest_id="interface-2" capacity="10"/>
+<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-2" dest_id="interface-3" capacity="500"/>
+<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-3" dest_id="interface-2" capacity="500"/>
 </link>
 <link xmlns="http://www.geni.net/resources/rspec/3" client_id="link-2">
 <interface_ref xmlns="http://www.geni.net/resources/rspec/3" client_id="interface-4"/>
 <interface_ref xmlns="http://www.geni.net/resources/rspec/3" client_id="interface-5"/>
+
 <site xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" id="undefined"/>
-
-
-
-
-<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-4" dest_id="interface-5" capacity="10"/>
-<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-5" dest_id="interface-4" capacity="10"/>
+<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-4" dest_id="interface-5" capacity="500"/>
+<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-5" dest_id="interface-4" capacity="500"/>
 </link>
 <link xmlns="http://www.geni.net/resources/rspec/3" client_id="link-3">
 <interface_ref xmlns="http://www.geni.net/resources/rspec/3" client_id="interface-6"/>
 <interface_ref xmlns="http://www.geni.net/resources/rspec/3" client_id="interface-7"/>
+
 <site xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" id="undefined"/>
-
-
-
-
-<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-6" dest_id="interface-7" capacity="10"/>
-<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-7" dest_id="interface-6" capacity="10"/>
+<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-6" dest_id="interface-7" capacity="500"/>
+<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-7" dest_id="interface-6" capacity="500"/>
 </link>
 <link xmlns="http://www.geni.net/resources/rspec/3" client_id="link-4">
 <interface_ref xmlns="http://www.geni.net/resources/rspec/3" client_id="interface-8"/>
 <interface_ref xmlns="http://www.geni.net/resources/rspec/3" client_id="interface-9"/>
+
 <site xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" id="undefined"/>
-
-
-
-
-<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-8" dest_id="interface-9" capacity="10"/>
-<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-9" dest_id="interface-8" capacity="10"/>
+<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-8" dest_id="interface-9" capacity="500"/>
+<property xmlns="http://www.geni.net/resources/rspec/3" source_id="interface-9" dest_id="interface-8" capacity="500"/>
 </link>
 </rspec>
