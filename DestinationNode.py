@@ -14,6 +14,13 @@ class DestinationNode:
 
         self.current_ack = None
 
+    def prepare_ack_for_seq(self, sequence_number):
+        payload = bytearray("1" * PAYLOAD_SIZE, ENCODING)
+        sequence_number = bytearray(str(sequence_number).zfill(SEQUENCE_NUM_SIZE), ENCODING)
+        intermediate = payload + sequence_number
+
+        return intermediate + checksum(intermediate)
+
     def run(self):
         self.r1Thread.start()
 
@@ -42,14 +49,6 @@ class DestinationNode:
             receive_buffer = receive_buffer[PACKET_SIZE:]
             received_size -= PACKET_SIZE
 
-            # TODO remove this part
-            p = random.uniform(0, 1)
-            if p < 0.4:
-                debug("Skipped")
-                debug(received_packet)
-                continue
-
-
             if is_corrupted(received_packet) or not self.expected_sequence_num == get_sequence_number(received_packet):
 
                 if ON_LOCAL:
@@ -59,10 +58,17 @@ class DestinationNode:
                 continue
 
             # prepare ACK packet
-            payload = bytearray("1" * PAYLOAD_SIZE, ENCODING)
-            sequence_number = bytearray(str(self.expected_sequence_num).zfill(SEQUENCE_NUM_SIZE), ENCODING)
-            intermediate = payload + sequence_number
-            self.current_ack = intermediate + checksum(intermediate)
+            self.current_ack = self.prepare_ack_for_seq(self.expected_sequence_num)
+
+            # TODO remove this part
+            p = random.uniform(0, 1)
+            if p < 0.4:
+                debug("Skipped")
+                debug(received_packet)
+                continue
+
+            if self.current_ack is None:
+                continue
 
             if ON_LOCAL:
                 self.r1Socket.sendto(self.current_ack, (INTERFACE_2, PORT_2))
