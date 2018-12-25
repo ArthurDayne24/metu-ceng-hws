@@ -13,7 +13,9 @@ SEQUENCE_NUM_SIZE = 8 # 3 is sufficient
 
 HEADER_SIZE = CHECKSUM_SIZE + SEQUENCE_NUM_SIZE
 
-PAYLOAD_SIZE = 512
+PAYLOAD_SIZE = 64
+
+RDT_WINDOW_SIZE = 20
 
 NUMBER_OF_PACKETS = TOTAL_BYTES // PAYLOAD_SIZE
 
@@ -28,12 +30,15 @@ PACKET_SIZE = PAYLOAD_SIZE + HEADER_SIZE
 if ON_LOCAL:
     INTERFACE_1 = "localhost"
     INTERFACE_2 = "localhost"
-    INTERFACE_3 = "localhost"
-    INTERFACE_4 = "localhost"
     INTERFACE_5 = "localhost"
     INTERFACE_6 = "localhost"
+
+    INTERFACE_3 = "localhost"
+    INTERFACE_4 = "localhost"
+
     INTERFACE_7 = "localhost"
     INTERFACE_8 = "localhost"
+
     INTERFACE_9 = "localhost"
 
     PORT_1 = 8101
@@ -49,12 +54,15 @@ if ON_LOCAL:
 else:
     INTERFACE_1 = "10.10.1.2"
     INTERFACE_2 = "10.10.2.1"
+
     INTERFACE_3 = "10.10.2.2"
     INTERFACE_4 = "10.10.3.1"
-    INTERFACE_5 = "10.10.3.2"
-    INTERFACE_6 = "10.10.4.1"
+
     INTERFACE_7 = "10.10.4.2"
     INTERFACE_8 = "10.10.5.1"
+
+    INTERFACE_5 = "10.10.3.2"
+    INTERFACE_6 = "10.10.4.1"
     INTERFACE_9 = "10.10.5.2"
 
     __COMMON_PORT = 8100
@@ -69,8 +77,6 @@ else:
     PORT_7 = __COMMON_PORT
     PORT_8 = __COMMON_PORT
     PORT_9 = __COMMON_PORT
-
-RDT_WINDOW_SIZE = 5
 
 ENCODING = "utf-8"
 

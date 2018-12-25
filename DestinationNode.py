@@ -21,12 +21,10 @@ class DestinationNode:
         self.current_ack = None
 
         self.sockets = [self.r1Socket, self.r2Socket]
-        self.sendingInt = [INTERFACE_4, INTERFACE_8]
-        self.sendingPort = [PORT_4, PORT_8]
-        self.local_sendingInt = [INTERFACE_2, INTERFACE_6]
-        self.local_sendingPort = [PORT_2, PORT_6]
+        self.sendingInt = [INTERFACE_2, INTERFACE_6]
+        self.sendingPort = [PORT_2, PORT_6]
 
-        self.l_criticalRegion = threading.Lock()
+        self.l_expectedSeqNum = threading.Lock()
 
     def prepare_ack_for_seq(self, sequence_number):
         payload = bytearray("1" * PAYLOAD_SIZE, ENCODING)
@@ -49,8 +47,6 @@ class DestinationNode:
         rSocket = self.sockets[router_id]
         sendingInt = self.sendingInt[router_id]
         sendingPort = self.sendingPort[router_id]
-        local_sendingInt = self.local_sendingInt[router_id]
-        local_sendingPort = self.local_sendingPort[router_id]
 
         receive_buffer = bytearray()
         received_size = 0
@@ -70,37 +66,35 @@ class DestinationNode:
             receive_buffer = receive_buffer[PACKET_SIZE:]
             received_size -= PACKET_SIZE
 
-            # TODO remove this part
-            p = random.uniform(0, 1)
-            if p < 0.05:
-                debug("Skipped ack packet with seq: " + str(self.expected_sequence_num))
+            #p = random.uniform(0, 1)
+            #if p < 0.05:
+            #    debug("Skipped ack packet with seq: " + str(self.expected_sequence_num))
+            #    continue
+
+            resent_current_ack = is_corrupted(received_packet)
+
+            if not resent_current_ack:
+                with self.l_expectedSeqNum:
+                    resent_current_ack = not self.expected_sequence_num == get_sequence_number(received_packet)
+
+            if resent_current_ack:
+                if not self.current_ack:
+                    rSocket.sendto(self.current_ack, (sendingInt, sendingPort))
                 continue
 
-            with self.l_criticalRegion:
-
-                if is_corrupted(received_packet) or not self.expected_sequence_num == get_sequence_number(received_packet):
-
-                    if self.current_ack is None:
-                        continue
-
-                    if ON_LOCAL:
-                        rSocket.sendto(self.current_ack, (local_sendingInt, local_sendingPort))
-                    else:
-                        rSocket.sendto(self.current_ack, (sendingInt, sendingPort))
-
-                    continue
-
-                # prepare ACK packet
-                self.current_ack = self.prepare_ack_for_seq(self.expected_sequence_num)
-
-                if ON_LOCAL:
-                    rSocket.sendto(self.current_ack, (local_sendingInt, local_sendingPort))
-                else:
-                    rSocket.sendto(self.current_ack, (sendingInt, sendingPort))
-
-                debug("sent ack for seq: " + str(self.expected_sequence_num))
-
+            with self.l_expectedSeqNum:
+                # Assigning to local variable to avoid unnecessary lock/release
+                current_expected_sequence_num = self.expected_sequence_num
                 self.expected_sequence_num += 1
+
+            debug("Received packet with seq number " + str(current_expected_sequence_num))
+
+            # prepare ACK packet
+            self.current_ack = self.prepare_ack_for_seq(current_expected_sequence_num)
+
+            debug("sent ack for seq: " + str(current_expected_sequence_num))
+
+            rSocket.sendto(self.current_ack, (sendingInt, sendingPort))
 
 if __name__ == '__main__':
     DestinationNode().run()

@@ -7,12 +7,20 @@ from commons import *
 
 
 class BrokerNode:
-    l_criticalRegion = ...  # type: Lock
+    l_base = ...  # type: Lock
 
     def __init__(self):
 
+        self.base = 0
+        self.nextseqnum = 0
+
         self.receiver_thread_1 = threading.Thread(target=self.worker_receiver, args=(0,))
         self.receiver_thread_2 = threading.Thread(target=self.worker_receiver, args=(1,))
+
+        self.sender_thread_1 = threading.Thread(target=self.worker_sender, args=(0,))
+        self.sender_thread_2 = threading.Thread(target=self.worker_sender, args=(1,))
+
+        self.tcp_receiver_thread = threading.Thread(target=self.worker_tcp_receiver)
 
         self.packets = []
 
@@ -32,109 +40,143 @@ class BrokerNode:
         self.r2Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.r2Socket.bind((INTERFACE_6, PORT_6))
 
-        self.base = 0
-        self.nextseqnum = 0
-
         self.sockets = [self.r1Socket, self.r2Socket]
-        self.sendingInt = [INTERFACE_3, INTERFACE_7]
-        self.sendingPort = [PORT_3, PORT_7]
-        self.local_sendingInt = [INTERFACE_5, INTERFACE_9]
-        self.local_sendingPort = [PORT_5, PORT_9]
+        self.sendingInt = [INTERFACE_5, INTERFACE_9]
+        self.sendingPort = [PORT_5, PORT_9]
+        self.receiver_threads = [self.receiver_thread_1, self.receiver_thread_2]
 
-        self.l_criticalRegion = threading.Lock()
+        self.l_base = threading.Lock()
+        self.l_tcpReceive = threading.Lock()
+        self.l_nextseqnum = threading.Lock()
+
+        # CV for producer / consumer pattern
+        self.cv_packetReady = threading.Condition()
+        self.nreceivedPackets = 0
+
+        # Timeout guard
+        self.is_timeout_already = False
+        self.l_is_timeout_already = threading.Lock()
 
     # Handles data transfer from s to d
     def run(self):
 
-        self.worker_sender()
+        self.tcp_receiver_thread.start()
+
+        self.sender_thread_1.start()
+        self.sender_thread_2.start()
+
+        self.sender_thread_1.join()
+        self.sender_thread_2.join()
+
+        self.tcp_receiver_thread.join()
 
         self.sSocket.close()
 
         self.r1Socket.close()
         self.r2Socket.close()
 
-    def decide_path(self, seed):
-        if ON_LOCAL:
-            if seed % 2 == 0:
-                router_interface = INTERFACE_5
-                router_port = PORT_5
-                router_socket = self.r1Socket
-            else:
-                # send to router 2
-                router_interface = INTERFACE_9
-                router_port = PORT_9
-                router_socket = self.r2Socket
-        else:
-            if seed % 2 == 0:
-                # send to router 1
-                router_interface = INTERFACE_3
-                router_port = PORT_3
-                router_socket = self.r1Socket
-            else:
-                # send to router 2
-                router_interface = INTERFACE_7
-                router_port = PORT_7
-                router_socket = self.r2Socket
+    def worker_tcp_receiver(self):
 
-        return router_socket, router_interface, router_port
-
-    def worker_sender(self):
-
-        self.base = 0
-        self.nextseqnum = 0
+        nextseqnum = 0
 
         receive_buffer = bytearray()
         received_size = 0
 
-        while self.nextseqnum < NUMBER_OF_PACKETS:
+        while nextseqnum < NUMBER_OF_PACKETS:
+
+            # prepare packet
+            while received_size < PAYLOAD_SIZE:
+                data = self.sConnectionSocket.recv(PAYLOAD_SIZE)
+
+                receive_buffer.extend(data)
+                received_size += len(data)
+
+            payload = receive_buffer[:PAYLOAD_SIZE]
+            receive_buffer = receive_buffer[PAYLOAD_SIZE:]
+            received_size -= PAYLOAD_SIZE
+
+            sequence_number = bytearray(str(nextseqnum).zfill(SEQUENCE_NUM_SIZE), ENCODING)
+
+            nextseqnum += 1
+c
+            intermediate = payload + sequence_number
+
+            packet = intermediate + checksum(intermediate)
+
+            self.packets.append(packet)
+
+            with self.cv_packetReady:
+                self.nreceivedPackets += 1
+                self.cv_packetReady.notifyAll()
+
+    def worker_sender(self, routerId):
+
+        first_visit = True
+
+        router_port = self.sendingPort[routerId]
+        router_interface = self.sendingInt[routerId]
+        router_socket = self.sockets[routerId]
+        receiver_thread = self.receiver_threads[routerId]
+
+        while True:
+
+            self.l_nextseqnum.locked()
+            debug("locked at 124")
+
+            if self.nextseqnum == NUMBER_OF_PACKETS:
+                debug("release at 126")
+                self.l_nextseqnum.release()
+                break
 
             if self.nextseqnum < self.base + RDT_WINDOW_SIZE:
 
-                # prepare packet
-                while received_size < PAYLOAD_SIZE:
-                    data = self.sConnectionSocket.recv(PAYLOAD_SIZE)
+                with self.cv_packetReady:
+                    while self.nreceivedPackets < self.nextseqnum:
+                        self.cv_packetReady.wait()
 
-                    receive_buffer.extend(data)
-                    received_size += len(data)
-
-                payload = receive_buffer[:PAYLOAD_SIZE]
-                receive_buffer = receive_buffer[PAYLOAD_SIZE:]
-                received_size -= PAYLOAD_SIZE
-
-                sequence_number = bytearray(str(self.nextseqnum).zfill(SEQUENCE_NUM_SIZE), ENCODING)
-
-                intermediate = payload + sequence_number
-
-                packet = intermediate + checksum(intermediate)
-                self.packets.append(packet)
-
-                router_socket, router_interface, router_port = self.decide_path(self.nextseqnum)
-
-                router_socket.sendto(packet, (router_interface, router_port))
+                    packet = self.packets[self.nextseqnum]
 
                 debug("Packet sent with seq: " + str(self.nextseqnum))
 
-                # if first time, start receive worker
-                if self.nextseqnum == 0:
-                    self.receiver_thread_1.start()
-                    self.receiver_thread_2.start()
-
                 self.nextseqnum += 1
 
-        self.receiver_thread_1.join()
-        self.receiver_thread_2.join()
+                debug("release at 143")
+                self.l_nextseqnum.release()
+
+                router_socket.sendto(packet, (router_interface, router_port))
+
+                # if first time, start receive worker
+                if first_visit:
+                    first_visit = False
+                    receiver_thread.start()
+
+            else:
+                debug("released at 154")
+                self.l_nextseqnum.release()
+
+        receiver_thread.join()
 
     "Receives ACK from router 1 and accomplishes resend operation"
-    def worker_receiver(self, router_id):
+    def worker_receiver(self, routerId):
 
-        rSocket = self.sockets[router_id]
+        rSocket = self.sockets[routerId]
 
         receive_buffer = bytearray()
         received_size = 0
 
-        while self.nextseqnum < NUMBER_OF_PACKETS:
+        while True:
 
-            # prepare packet 
+            self.l_nextseqnum.acquire()
+
+            if self.nextseqnum == NUMBER_OF_PACKETS:
+                debug("released at 171")
+                self.l_nextseqnum.release()
+                break
+
+            debug("released at 176")
+            self.l_nextseqnum.release()
+
+            # prepare packet
             while received_size < PACKET_SIZE:
 
                 rSocket.setblocking(False)
@@ -153,7 +195,7 @@ class BrokerNode:
                     receive_buffer = bytearray()
                     received_size = 0
 
-                    timeout_handler_thread = threading.Thread(target=self.worker_timeout_handler)
+                    timeout_handler_thread = threading.Thread(target=self.worker_timeout_handler, args=(routerId, self.nextseqnum,))
 
                     timeout_handler_thread.start()
 
@@ -170,7 +212,7 @@ class BrokerNode:
 
             new_sequence_number = get_sequence_number(packet) + 1
 
-            with self.l_criticalRegion:
+            with self.l_base:
 
                 if new_sequence_number < self.base:
                     continue
@@ -180,14 +222,25 @@ class BrokerNode:
                 debug("BASE IS UPDATED: " + str(self.base))
 
     # timeout base is not the current base !
-    def worker_timeout_handler(self):
+    def worker_timeout_handler(self, routerId, nextseqnum):
 
-        for packet_number in range(self.base, self.nextseqnum):
+        with self.l_is_timeout_already:
+            if self.is_timeout_already:
+                return
+            else:
+                self.is_timeout_already = True
+
+        for packet_number in range(self.base, nextseqnum):
             debug("Resending " + str(packet_number))
 
-            router_socket, router_interface, router_port = self.decide_path(packet_number)
+            router_socket = self.sockets[routerId]
+            router_interface = self.sendingInt[routerId]
+            router_port = self.sendingPort[routerId]
 
             router_socket.sendto(self.packets[packet_number], (router_interface, router_port))
+
+        with self.l_is_timeout_already:
+            self.is_timeout_already = False
 
 
 if __name__ == '__main__':
