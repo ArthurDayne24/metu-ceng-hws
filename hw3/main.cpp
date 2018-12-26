@@ -18,6 +18,26 @@ static void errorCallback(int error,
     fprintf(stderr, "Error: %s\n", description);
 }
 
+/* Set Camera */
+int centerx = 0, centery = 0, centerz = 1;
+int upx = 0, upy = 0, upz = 1;
+
+void setCamera() {
+    glViewport(0, 0, widthTexture, heightTexture); // TODO ??
+
+    glMatrixMode(GL_MODELVIEW);
+    // Position, direction it is pointing, up vector
+    glLoadIdentity();
+    gluLookAt(widthTexture / 2, widthTexture / 10, -widthTexture / 4, centerx, centery, centerz, upx, upy, upz);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45, 1, 0.1, 1000); // TODO radians or degrees ?
+}
+
+void drawObject() {
+}
+
 // Keyboard functions, they are called in keyboard() function which is the key listener
 void increaseHeightFactor(){}
 void decreaseHeightFactor(){}
