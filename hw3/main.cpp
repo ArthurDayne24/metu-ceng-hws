@@ -12,8 +12,8 @@ GLuint idMVPMatrix;
 int widthTexture, heightTexture;
 
 static void errorCallback(int error,
-  const char * description) {
-  fprintf(stderr, "Error: %s\n", description);
+    const char * description) {
+    fprintf(stderr, "Error: %s\n", description);
 }
 
 // Keyboard functions, they are called in keyboard() function which is the key listener
@@ -33,68 +33,68 @@ void fullscreenToggle(){}
 
 // Key event function which listens all key events
 void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods){
-  // height factor
-  if (key == GLFW_KEY_O && action == GLFW_PRESS) increaseHeightFactor();
-  else if (key == GLFW_KEY_L && action == GLFW_PRESS) decreaseHeightFactor();
-  // pitch
-  else if (key == GLFW_KEY_W && action == GLFW_PRESS) pitchUp();
-  else if (key == GLFW_KEY_S && action == GLFW_PRESS) pitchDown();
-  // yaw
-  else if (key == GLFW_KEY_A && action == GLFW_PRESS) yawLeft();
-  else if (key == GLFW_KEY_D && action == GLFW_PRESS) yawRight();
-  // speed
-  else if (key == GLFW_KEY_U && action == GLFW_PRESS) increaseSpeed();
-  else if (key == GLFW_KEY_J && action == GLFW_PRESS) decreaseSpeed();
-  // fullscreen
-  else if (key == GLFW_KEY_F && action == GLFW_PRESS) fullscreenToggle();
+    // height factor
+    if (key == GLFW_KEY_O && action == GLFW_PRESS) increaseHeightFactor();
+    else if (key == GLFW_KEY_L && action == GLFW_PRESS) decreaseHeightFactor();
+    // pitch
+    else if (key == GLFW_KEY_W && action == GLFW_PRESS) pitchUp();
+    else if (key == GLFW_KEY_S && action == GLFW_PRESS) pitchDown();
+    // yaw
+    else if (key == GLFW_KEY_A && action == GLFW_PRESS) yawLeft();
+    else if (key == GLFW_KEY_D && action == GLFW_PRESS) yawRight();
+    // speed
+    else if (key == GLFW_KEY_U && action == GLFW_PRESS) increaseSpeed();
+    else if (key == GLFW_KEY_J && action == GLFW_PRESS) decreaseSpeed();
+    // fullscreen
+    else if (key == GLFW_KEY_F && action == GLFW_PRESS) fullscreenToggle();
 }
 
 int main(int argc, char * argv[]) {
 
-  if (argc != 2) {
-    printf("Only one texture image expected!\n");
-    exit(-1);
-  }
+    if (argc != 2) {
+        printf("Only one texture image expected!\n");
+        exit(-1);
+    }
 
-  glfwSetErrorCallback(errorCallback);
+    glfwSetErrorCallback(errorCallback);
 
-  if (!glfwInit()) {
-    exit(-1);
-  }
+    if (!glfwInit()) {
+        exit(-1);
+    }
 
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
 
-  win = glfwCreateWindow(600, 600, "CENG477 - HW3", NULL, NULL);
+    win = glfwCreateWindow(600, 600, "CENG477 - HW3", NULL, NULL);
 
-  if (!win) {
+    if (!win) {
+        glfwTerminate();
+        exit(-1);
+    }
+    glfwMakeContextCurrent(win);
+
+    GLenum err = glewInit();
+    if (err != GLEW_OK) {
+        fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+
+        glfwTerminate();
+        exit(-1);
+    }
+
+    initShaders();
+    glUseProgram(idProgramShader);
+    initTexture(argv[1], & widthTexture, & heightTexture);
+
+    glfwSetKeyCallback(win, keyboard);
+
+    while (!glfwWindowShouldClose(win)) {
+        glfwSwapBuffers(win);
+        glfwPollEvents();
+    }
+
+    glfwDestroyWindow(win);
     glfwTerminate();
-    exit(-1);
-  }
-  glfwMakeContextCurrent(win);
 
-  GLenum err = glewInit();
-  if (err != GLEW_OK) {
-    fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
-
-    glfwTerminate();
-    exit(-1);
-  }
-
-  initShaders();
-  glUseProgram(idProgramShader);
-  initTexture(argv[1], & widthTexture, & heightTexture);
-
-  glfwSetKeyCallback(win, keyboard);
-
-  while (!glfwWindowShouldClose(win)) {
-    glfwSwapBuffers(win);
-    glfwPollEvents();
-  }
-
-  glfwDestroyWindow(win);
-  glfwTerminate();
-
-  return 0;
+    return 0;
 }
