@@ -11,6 +11,8 @@ GLuint idMVPMatrix;
 
 int widthTexture, heightTexture;
 
+int speed; // moving speed of the camera, initially zero
+
 static void errorCallback(int error,
     const char * description) {
     fprintf(stderr, "Error: %s\n", description);
@@ -26,8 +28,12 @@ void pitchDown(){}
 void yawLeft(){}
 void yawRight(){}
 
-void increaseSpeed(){}
-void decreaseSpeed(){}
+void increaseSpeed(){
+    speed++;
+}
+void decreaseSpeed(){
+    if (speed > 0) speed--;
+}
 
 void fullscreenToggle(){}
 
@@ -47,6 +53,11 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods){
     else if (key == GLFW_KEY_J && action == GLFW_PRESS) decreaseSpeed();
     // fullscreen
     else if (key == GLFW_KEY_F && action == GLFW_PRESS) fullscreenToggle();
+}
+ 
+// Window resize callback
+void resize(GLFWwindow* window, int width, int height){
+
 }
 
 int main(int argc, char * argv[]) {
@@ -86,7 +97,8 @@ int main(int argc, char * argv[]) {
     glUseProgram(idProgramShader);
     initTexture(argv[1], & widthTexture, & heightTexture);
 
-    glfwSetKeyCallback(win, keyboard);
+    glfwSetKeyCallback(win, keyboard); // register key callback
+    glfwSetWindowSizeCallback(win, resize); // register resize callback
 
     while (!glfwWindowShouldClose(win)) {
         glfwSwapBuffers(win);
