@@ -51,7 +51,8 @@ class BrokerNode:
 
         # CV for producer / consumer pattern
         self.cv_packetReady = threading.Condition()
-        self.nreceivedPackets = 0
+        # Last received packet's index
+        self.nReceivedPacketIndex = -1
 
         # Timeout guard
         self.is_timeout_already = False
@@ -98,7 +99,7 @@ class BrokerNode:
             sequence_number = bytearray(str(nextseqnum).zfill(SEQUENCE_NUM_SIZE), ENCODING)
 
             nextseqnum += 1
-c
+
             intermediate = payload + sequence_number
 
             packet = intermediate + checksum(intermediate)
@@ -106,7 +107,7 @@ c
             self.packets.append(packet)
 
             with self.cv_packetReady:
-                self.nreceivedPackets += 1
+                self.nReceivedPacketIndex += 1
                 self.cv_packetReady.notifyAll()
 
     def worker_sender(self, routerId):
@@ -120,27 +121,23 @@ c
 
         while True:
 
-            self.l_nextseqnum.locked()
-            debug("locked at 124")
+            self.l_nextseqnum.acquire()
 
             if self.nextseqnum == NUMBER_OF_PACKETS:
-                debug("release at 126")
                 self.l_nextseqnum.release()
                 break
 
             if self.nextseqnum < self.base + RDT_WINDOW_SIZE:
-
                 with self.cv_packetReady:
-                    while self.nreceivedPackets < self.nextseqnum:
+                    while self.nReceivedPacketIndex < self.nextseqnum:
                         self.cv_packetReady.wait()
 
                     packet = self.packets[self.nextseqnum]
 
-                debug("Packet sent with seq: " + str(self.nextseqnum))
+                debug("Will send packet with seq: " + str(self.nextseqnum))
 
                 self.nextseqnum += 1
 
-                debug("release at 143")
                 self.l_nextseqnum.release()
 
                 router_socket.sendto(packet, (router_interface, router_port))
@@ -151,7 +148,6 @@ c
                     receiver_thread.start()
 
             else:
-                debug("released at 154")
                 self.l_nextseqnum.release()
 
         receiver_thread.join()
@@ -169,11 +165,9 @@ c
             self.l_nextseqnum.acquire()
 
             if self.nextseqnum == NUMBER_OF_PACKETS:
-                debug("released at 171")
                 self.l_nextseqnum.release()
                 break
 
-            debug("released at 176")
             self.l_nextseqnum.release()
 
             # prepare packet

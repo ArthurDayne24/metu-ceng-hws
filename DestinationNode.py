@@ -78,7 +78,7 @@ class DestinationNode:
                     resent_current_ack = not self.expected_sequence_num == get_sequence_number(received_packet)
 
             if resent_current_ack:
-                if not self.current_ack:
+                if self.current_ack is not None:
                     rSocket.sendto(self.current_ack, (sendingInt, sendingPort))
                 continue
 
