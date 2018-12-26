@@ -25,7 +25,7 @@ Vec3 crossProductVec3(const Vec3 & a, const Vec3 & b) {
  * Calculate dot product of vec3 a, vec3 b and return resulting value.
  */
 double dotProductVec3(const Vec3 & a, const Vec3 & b) {
-    return a.x * b.x + a.y * b.y + a.z * b.z < 1E-6 ? 0 : a.x * b.x + a.y * b.y + a.z * b.z;
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 /*
