@@ -16,6 +16,39 @@ static void errorCallback(int error,
   fprintf(stderr, "Error: %s\n", description);
 }
 
+// Keyboard functions, they are called in keyboard() function which is the key listener
+void increaseHeightFactor(){}
+void decreaseHeightFactor(){}
+
+void pitchUp(){}
+void pitchDown(){}
+
+void yawLeft(){}
+void yawRight(){}
+
+void increaseSpeed(){}
+void decreaseSpeed(){}
+
+void fullscreenToggle(){}
+
+// Key event function which listens all key events
+void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods){
+  // height factor
+  if (key == GLFW_KEY_O && action == GLFW_PRESS) increaseHeightFactor();
+  else if (key == GLFW_KEY_L && action == GLFW_PRESS) decreaseHeightFactor();
+  // pitch
+  else if (key == GLFW_KEY_W && action == GLFW_PRESS) pitchUp();
+  else if (key == GLFW_KEY_S && action == GLFW_PRESS) pitchDown();
+  // yaw
+  else if (key == GLFW_KEY_A && action == GLFW_PRESS) yawLeft();
+  else if (key == GLFW_KEY_D && action == GLFW_PRESS) yawRight();
+  // speed
+  else if (key == GLFW_KEY_U && action == GLFW_PRESS) increaseSpeed();
+  else if (key == GLFW_KEY_J && action == GLFW_PRESS) decreaseSpeed();
+  // fullscreen
+  else if (key == GLFW_KEY_F && action == GLFW_PRESS) fullscreenToggle();
+}
+
 int main(int argc, char * argv[]) {
 
   if (argc != 2) {
@@ -52,6 +85,8 @@ int main(int argc, char * argv[]) {
   initShaders();
   glUseProgram(idProgramShader);
   initTexture(argv[1], & widthTexture, & heightTexture);
+
+  glfwSetKeyCallback(win, keyboard);
 
   while (!glfwWindowShouldClose(win)) {
     glfwSwapBuffers(win);
