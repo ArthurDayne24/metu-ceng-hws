@@ -7,7 +7,6 @@ from commons import *
 
 
 class BrokerNode:
-    l_base = ...  # type: Lock
 
     def __init__(self):
 
@@ -21,6 +20,8 @@ class BrokerNode:
         self.sender_thread_2 = threading.Thread(target=self.worker_sender, args=(1,))
 
         self.tcp_receiver_thread = threading.Thread(target=self.worker_tcp_receiver)
+
+        self.timeout_handler_thread = None
 
         self.packets = []
 
@@ -45,7 +46,6 @@ class BrokerNode:
         self.sendingPort = [PORT_5, PORT_9]
         self.receiver_threads = [self.receiver_thread_1, self.receiver_thread_2]
 
-        self.l_base = threading.Lock()
         self.l_tcpReceive = threading.Lock()
         self.l_nextseqnum = threading.Lock()
 
@@ -54,8 +54,10 @@ class BrokerNode:
         # Last received packet's index
         self.nReceivedPacketIndex = -1
 
+        # Is self.base update
+        self.cv_baseUpdated = threading.Condition()
+
         # Timeout guard
-        self.is_timeout_already = False
         self.l_is_timeout_already = threading.Lock()
 
     # Handles data transfer from s to d
@@ -66,10 +68,12 @@ class BrokerNode:
         self.sender_thread_1.start()
         self.sender_thread_2.start()
 
+        self.tcp_receiver_thread.join()
+
+        self.timeout_handler_thread.join()
+
         self.sender_thread_1.join()
         self.sender_thread_2.join()
-
-        self.tcp_receiver_thread.join()
 
         self.sSocket.close()
 
@@ -110,20 +114,24 @@ class BrokerNode:
                 self.nReceivedPacketIndex += 1
                 self.cv_packetReady.notifyAll()
 
-    def worker_sender(self, routerId):
+    def worker_sender(self, router_id):
 
         first_visit = True
 
-        router_port = self.sendingPort[routerId]
-        router_interface = self.sendingInt[routerId]
-        router_socket = self.sockets[routerId]
-        receiver_thread = self.receiver_threads[routerId]
+        router_port = self.sendingPort[router_id]
+        router_interface = self.sendingInt[router_id]
+        router_socket = self.sockets[router_id]
+        receiver_thread = self.receiver_threads[router_id]
 
         while True:
 
             self.l_nextseqnum.acquire()
 
-            if self.nextseqnum == NUMBER_OF_PACKETS:
+            with self.cv_baseUpdated:
+                while self.nextseqnum >= self.base + RDT_WINDOW_SIZE and self.base != NUMBER_OF_PACKETS:
+                    self.cv_baseUpdated.wait()
+
+            if self.base == NUMBER_OF_PACKETS:
                 self.l_nextseqnum.release()
                 break
 
@@ -134,7 +142,7 @@ class BrokerNode:
 
                     packet = self.packets[self.nextseqnum]
 
-                debug("Will send packet with seq: " + str(self.nextseqnum))
+                #debug("Will send packet with seq: " + str(self.nextseqnum))
 
                 self.nextseqnum += 1
 
@@ -147,39 +155,36 @@ class BrokerNode:
                     first_visit = False
                     receiver_thread.start()
 
-            else:
-                self.l_nextseqnum.release()
-
+        debug("+++++++++++++++++++++++++++++++++++++++++++++++++++++Before join")
         receiver_thread.join()
 
     "Receives ACK from router 1 and accomplishes resend operation"
-    def worker_receiver(self, routerId):
+    def worker_receiver(self, router_id):
 
-        rSocket = self.sockets[routerId]
+        r_socket = self.sockets[router_id]
 
         receive_buffer = bytearray()
         received_size = 0
 
         while True:
 
-            self.l_nextseqnum.acquire()
+            debug("Receiver base: " + str(self.base) + " " + str(NUMBER_OF_PACKETS))
 
-            if self.nextseqnum == NUMBER_OF_PACKETS:
-                self.l_nextseqnum.release()
-                break
-
-            self.l_nextseqnum.release()
+            with self.cv_baseUpdated:
+                if self.base == NUMBER_OF_PACKETS:
+                    debug("Receiver exits")
+                    break
 
             # prepare packet
             while received_size < PACKET_SIZE:
 
-                rSocket.setblocking(False)
+                r_socket.setblocking(False)
 
-                ready = select.select([rSocket], [], [], TIMEOUT)
+                ready = select.select([r_socket], [], [], TIMEOUT)
 
                 # if timeout not occurred
                 if ready[0]:
-                    data, _ = rSocket.recvfrom(PACKET_SIZE)  # type: (bytes, object)
+                    data, _ = r_socket.recvfrom(PACKET_SIZE)  # type: (bytes, object)
 
                     receive_buffer.extend(data)
                     received_size += len(data)
@@ -189,15 +194,16 @@ class BrokerNode:
                     receive_buffer = bytearray()
                     received_size = 0
 
-                    timeout_handler_thread = threading.Thread(target=self.worker_timeout_handler, args=(routerId, self.nextseqnum,))
-
-                    timeout_handler_thread.start()
+                    if not self.l_is_timeout_already.locked():
+                        self.l_is_timeout_already.acquire()
+                        self.timeout_handler_thread = threading.Thread(target=self.worker_timeout_handler, args=(router_id, self.nextseqnum,))
+                        self.timeout_handler_thread.start()
 
             packet = receive_buffer[:PACKET_SIZE]
             receive_buffer = receive_buffer[PACKET_SIZE:]
             received_size -= PACKET_SIZE
 
-            debug("ACK received with seq " + str(get_sequence_number(packet)))
+            #debug("ACK received with seq " + str(get_sequence_number(packet)))
 
             # if packet is corrupted
 
@@ -206,36 +212,29 @@ class BrokerNode:
 
             new_sequence_number = get_sequence_number(packet) + 1
 
-            with self.l_base:
-
+            debug("Before cv_baseUpdated")
+            with self.cv_baseUpdated:
                 if new_sequence_number < self.base:
                     continue
-
                 # if not corrupted
                 self.base = new_sequence_number
-                debug("BASE IS UPDATED: " + str(self.base))
+                self.cv_baseUpdated.notifyAll()
+
+            #debug("BASE IS UPDATED: " + str(self.base))
 
     # timeout base is not the current base !
-    def worker_timeout_handler(self, routerId, nextseqnum):
-
-        with self.l_is_timeout_already:
-            if self.is_timeout_already:
-                return
-            else:
-                self.is_timeout_already = True
+    def worker_timeout_handler(self, router_id, nextseqnum):
 
         for packet_number in range(self.base, nextseqnum):
-            debug("Resending " + str(packet_number))
+            #debug("Resending " + str(packet_number))
 
-            router_socket = self.sockets[routerId]
-            router_interface = self.sendingInt[routerId]
-            router_port = self.sendingPort[routerId]
+            router_socket = self.sockets[router_id]
+            router_interface = self.sendingInt[router_id]
+            router_port = self.sendingPort[router_id]
 
             router_socket.sendto(self.packets[packet_number], (router_interface, router_port))
 
-        with self.l_is_timeout_already:
-            self.is_timeout_already = False
-
+        self.l_is_timeout_already.release()
 
 if __name__ == '__main__':
     BrokerNode().run()

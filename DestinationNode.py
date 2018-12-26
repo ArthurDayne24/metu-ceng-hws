@@ -7,6 +7,7 @@ from commons import *
 class DestinationNode:
 
     def __init__(self):
+
         self.expected_sequence_num = 0
 
         self.r1Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -26,7 +27,8 @@ class DestinationNode:
 
         self.l_expectedSeqNum = threading.Lock()
 
-    def prepare_ack_for_seq(self, sequence_number):
+    @staticmethod
+    def prepare_ack_for_seq(sequence_number):
         payload = bytearray("1" * PAYLOAD_SIZE, ENCODING)
         sequence_number = bytearray(str(sequence_number).zfill(SEQUENCE_NUM_SIZE), ENCODING)
         intermediate = payload + sequence_number
@@ -44,20 +46,27 @@ class DestinationNode:
         self.r2Socket.close()
 
     def worker_r(self, router_id):
-        rSocket = self.sockets[router_id]
-        sendingInt = self.sendingInt[router_id]
-        sendingPort = self.sendingPort[router_id]
+        r_socket = self.sockets[router_id]
+        sending_int = self.sendingInt[router_id]
+        sending_port = self.sendingPort[router_id]
 
         receive_buffer = bytearray()
         received_size = 0
 
-        # TODO care hanging thread problem for last packets
+        while True:
 
-        while self.expected_sequence_num < NUMBER_OF_PACKETS:
+            self.l_expectedSeqNum.acquire()
+
+            if self.expected_sequence_num == NUMBER_OF_PACKETS:
+                debug("Exits")
+                self.l_expectedSeqNum.release()
+                break
+
+            self.l_expectedSeqNum.release()
 
             # prepare packet
             while received_size < PACKET_SIZE:
-                data, _ = rSocket.recvfrom(PACKET_SIZE)
+                data, _ = r_socket.recvfrom(PACKET_SIZE)
 
                 receive_buffer.extend(data)
                 received_size += len(data)
@@ -66,10 +75,10 @@ class DestinationNode:
             receive_buffer = receive_buffer[PACKET_SIZE:]
             received_size -= PACKET_SIZE
 
-            #p = random.uniform(0, 1)
-            #if p < 0.05:
-            #    debug("Skipped ack packet with seq: " + str(self.expected_sequence_num))
-            #    continue
+            p = random.uniform(0, 1)
+            if p < 0.05:
+                debug("Skipped ack packet with seq: " + str(self.expected_sequence_num))
+                continue
 
             resent_current_ack = is_corrupted(received_packet)
 
@@ -79,7 +88,7 @@ class DestinationNode:
 
             if resent_current_ack:
                 if self.current_ack is not None:
-                    rSocket.sendto(self.current_ack, (sendingInt, sendingPort))
+                    r_socket.sendto(self.current_ack, (sending_int, sending_port))
                 continue
 
             with self.l_expectedSeqNum:
@@ -94,7 +103,7 @@ class DestinationNode:
 
             debug("sent ack for seq: " + str(current_expected_sequence_num))
 
-            rSocket.sendto(self.current_ack, (sendingInt, sendingPort))
+            r_socket.sendto(self.current_ack, (sending_int, sending_port))
 
 if __name__ == '__main__':
     DestinationNode().run()
