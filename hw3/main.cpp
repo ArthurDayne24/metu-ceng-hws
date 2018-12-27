@@ -13,6 +13,8 @@ int widthTexture, heightTexture;
 
 int speed; // moving speed of the camera, initially zero
 
+float* triangle_vertices;
+
 static void errorCallback(int error,
     const char * description) {
     fprintf(stderr, "Error: %s\n", description);
@@ -80,6 +82,11 @@ void resize(GLFWwindow* window, int width, int height){
 
 }
 
+// function that initiates the vertex array in user domain
+void initVertexArr(int width, int height){
+    
+}
+
 int main(int argc, char * argv[]) {
 
     if (argc != 2) {
@@ -113,6 +120,8 @@ int main(int argc, char * argv[]) {
         exit(-1);
     }
 
+    initVertexArr(widthTexture, heightTexture);
+
     initShaders();
     glUseProgram(idProgramShader);
     initTexture(argv[1], & widthTexture, & heightTexture);
@@ -123,6 +132,7 @@ int main(int argc, char * argv[]) {
     while (!glfwWindowShouldClose(win)) {
         glfwSwapBuffers(win);
         glfwPollEvents();
+        
     }
 
     glfwDestroyWindow(win);
