@@ -18,10 +18,11 @@ int widthTexture, heightTexture;
 
 int speed; // moving speed of the camera, initially zero
 
-float* triangle_vertices;
+GLfloat* triangle_vertices;
+// This will identify our vertex buffer
+GLuint vertexbuffer;
 
-static void errorCallback(int error,
-    const char * description) {
+static void errorCallback(int error, const char * description) {
     fprintf(stderr, "Error: %s\n", description);
 }
 
@@ -87,9 +88,43 @@ void resize(GLFWwindow* window, int width, int height){
 
 }
 
+// XXX: Call this before windows is created and before any other OpenGL call
 // function that initiates the vertex array in user domain
-void initVertexArr(int width, int height){
-    
+void initVertexArr(int width, int height) {
+    GLuint VertexArrayId;
+    glGenVertexArrays(1, &VertexArrayId);
+    glBindVertexArray(VertexArrayId);
+
+    // An array of 3 vectors which represents 3 vertices
+    // TODO fill triangle_vertices
+    // See http://www.opengl-tutorial.org/beginners-tutorials/tutorial-2-the-first-triangle/
+
+    // Identify triangles to OpenGL
+    // Generate 1 buffer, put the resulting identifier in vertexbuffer
+    glGenBuffers(1, &vertexbuffer);
+    // The following commands will talk about our 'vertexbuffer' buffer
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+    // Give our vertices to OpenGL.
+    glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
+}
+
+// Call this in while loop
+void drawTriangles(int numberOfTriangles) {
+    // 1st attribute buffer : vertices
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+    glVertexAttribPointer(
+            0,                     // attribute 0. No particular reason for 0, but must match the layout in the shader.
+            3 * numberOfTriangles, // size
+            GL_FLOAT,              // type
+            GL_FALSE,              // normalized?
+            0,                     // stride
+            (void*) 0              // array buffer offset
+    );
+
+    // Draw the triangles !
+    glDrawArrays(GL_TRIANGLES, 0, 3 * numberOfTriangles);
+    glDisableVertexAttribArray(0);
 }
 
 int main(int argc, char * argv[]) {
