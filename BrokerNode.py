@@ -70,10 +70,10 @@ class BrokerNode:
 
         self.tcp_receiver_thread.join()
 
-        self.timeout_handler_thread.join()
-
         self.sender_thread_1.join()
         self.sender_thread_2.join()
+
+        self.timeout_handler_thread.join()
 
         self.sSocket.close()
 
