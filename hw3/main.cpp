@@ -1,6 +1,11 @@
 #include "helper.h"
+#include "glm/glm.hpp"
+#include "glm/mat4x4.hpp"
+#include "glm/mat3x3.hpp"
+#include "glm/vec4.hpp"
+#include "glm/vec3.hpp"
 
-static GLFWwindow * win = NULL;
+static GLFWwindow * win = nullptr;
 
 // Shaders
 GLuint idProgramShader;
@@ -104,7 +109,7 @@ int main(int argc, char * argv[]) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
 
-    win = glfwCreateWindow(600, 600, "CENG477 - HW3", NULL, NULL);
+    win = glfwCreateWindow(600, 600, "CENG477 - HW3", nullptr, nullptr);
 
     if (!win) {
         glfwTerminate();
