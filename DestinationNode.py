@@ -53,19 +53,11 @@ class DestinationNode:
         receive_buffer = bytearray()
         received_size = 0
 
-        while True:
-
-            self.l_expectedSeqNum.acquire()
-
-            if self.expected_sequence_num == NUMBER_OF_PACKETS:
-                debug("Exits")
-                self.l_expectedSeqNum.release()
-                break
-
-            self.l_expectedSeqNum.release()
+        while self.expected_sequence_num != NUMBER_OF_PACKETS:
 
             # prepare packet
             while received_size < PACKET_SIZE:
+
                 data, _ = r_socket.recvfrom(PACKET_SIZE)
 
                 receive_buffer.extend(data)

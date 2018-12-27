@@ -114,6 +114,7 @@ class BrokerNode:
                 self.nReceivedPacketIndex += 1
                 self.cv_packetReady.notifyAll()
 
+
     def worker_sender(self, router_id):
 
         first_visit = True
@@ -128,34 +129,26 @@ class BrokerNode:
             self.l_nextseqnum.acquire()
 
             with self.cv_baseUpdated:
-                while self.nextseqnum >= self.base + RDT_WINDOW_SIZE and self.base != NUMBER_OF_PACKETS:
+                while self.nextseqnum >= self.base + RDT_WINDOW_SIZE:
                     self.cv_baseUpdated.wait()
 
-            if self.base == NUMBER_OF_PACKETS:
-                self.l_nextseqnum.release()
-                break
+            with self.cv_packetReady:
+                while self.nReceivedPacketIndex < self.nextseqnum:
+                    self.cv_packetReady.wait()
 
-            if self.nextseqnum < self.base + RDT_WINDOW_SIZE:
-                with self.cv_packetReady:
-                    while self.nReceivedPacketIndex < self.nextseqnum:
-                        self.cv_packetReady.wait()
+                packet = self.packets[self.nextseqnum]
 
-                    packet = self.packets[self.nextseqnum]
+            self.nextseqnum += 1
 
-                #debug("Will send packet with seq: " + str(self.nextseqnum))
+            self.l_nextseqnum.release()
 
-                self.nextseqnum += 1
+            router_socket.sendto(packet, (router_interface, router_port))
 
-                self.l_nextseqnum.release()
+            # if first time, start receive worker
+            if first_visit:
+                first_visit = False
+                receiver_thread.start()
 
-                router_socket.sendto(packet, (router_interface, router_port))
-
-                # if first time, start receive worker
-                if first_visit:
-                    first_visit = False
-                    receiver_thread.start()
-
-        debug("+++++++++++++++++++++++++++++++++++++++++++++++++++++Before join")
         receiver_thread.join()
 
     "Receives ACK from router 1 and accomplishes resend operation"
@@ -166,14 +159,7 @@ class BrokerNode:
         receive_buffer = bytearray()
         received_size = 0
 
-        while True:
-
-            debug("Receiver base: " + str(self.base) + " " + str(NUMBER_OF_PACKETS))
-
-            with self.cv_baseUpdated:
-                if self.base == NUMBER_OF_PACKETS:
-                    debug("Receiver exits")
-                    break
+        while self.base != NUMBER_OF_PACKETS:
 
             # prepare packet
             while received_size < PACKET_SIZE:
@@ -203,36 +189,35 @@ class BrokerNode:
             receive_buffer = receive_buffer[PACKET_SIZE:]
             received_size -= PACKET_SIZE
 
-            #debug("ACK received with seq " + str(get_sequence_number(packet)))
+            debug("Received ack for " + str(get_sequence_number(packet)))
 
             # if packet is corrupted
-
             if is_corrupted(packet):
+                debug("Ack packet for seq " + str(get_sequence_number(packet)) + " is corrupted")
                 continue
 
             new_sequence_number = get_sequence_number(packet) + 1
 
-            debug("Before cv_baseUpdated")
             with self.cv_baseUpdated:
                 if new_sequence_number < self.base:
                     continue
                 # if not corrupted
                 self.base = new_sequence_number
+                debug("Base is updated to " + str(self.base))
                 self.cv_baseUpdated.notifyAll()
-
-            #debug("BASE IS UPDATED: " + str(self.base))
 
     # timeout base is not the current base !
     def worker_timeout_handler(self, router_id, nextseqnum):
 
         for packet_number in range(self.base, nextseqnum):
-            #debug("Resending " + str(packet_number))
 
             router_socket = self.sockets[router_id]
             router_interface = self.sendingInt[router_id]
             router_port = self.sendingPort[router_id]
 
             router_socket.sendto(self.packets[packet_number], (router_interface, router_port))
+
+            debug("Resent packet with seq " + str(packet_number))
 
         self.l_is_timeout_already.release()
 
