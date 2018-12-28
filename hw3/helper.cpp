@@ -11,7 +11,6 @@ void initShaders() {
   glAttachShader(idProgramShader, idFragmentShader);
 
   glLinkProgram(idProgramShader);
-
 }
 
 GLuint initVertexShader(const string& filename)
@@ -34,7 +33,7 @@ GLuint initVertexShader(const string& filename)
     glGetShaderInfoLog(vs, 1024, &length, output);
     printf("VS compile log: %s\n", output);
 
-	  return vs;
+    return vs;
 }
 
 GLuint initFragmentShader(const string& filename)
@@ -57,7 +56,7 @@ GLuint initFragmentShader(const string& filename)
     glGetShaderInfoLog(fs, 1024, &length, output);
     printf("FS compile log: %s\n", output);
 
-	  return fs;
+    return fs;
 }
 
 bool readDataFromFile(const string& fileName, string &data) {
@@ -86,7 +85,7 @@ void initTexture(char *filename,int *w, int *h)
 {
     int width, height;
 
-    unsigned char *raw_image = NULL;
+    unsigned char *raw_image = nullptr;
     int bytes_per_pixel = 3;   /* or 1 for GRACYSCALE images */
     int color_space = JCS_RGB; /* or JCS_GRAYSCALE for grayscale images */
 

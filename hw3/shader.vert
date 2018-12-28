@@ -1,6 +1,7 @@
 #version 410
 
-layout(location = 0) in vec3 position;
+layout(location = 0) in vec3 vertexPosition;
+layout(location = 1) in vec3 vertexColor;
 
 // Data from CPU 
 uniform mat4 MVP; // ModelViewProjection Matrix
@@ -13,6 +14,7 @@ uniform sampler2D rgbTexture;
 uniform int widthTexture;
 uniform int heightTexture;
 
+// These are fed to shader.frag, as I see
 
 // Output to Fragment Shader
 out vec2 textureCoordinate; // For texture-color
@@ -29,8 +31,8 @@ void main()
 
     // compute toLight vector vertex coordinate in VCS
    
-   // set gl_Position variable correctly to give the transformed vertex position
+    // set gl_Position variable correctly to give the transformed vertex position
 
-   gl_Position = vec4(0,0,0,0); // this is a placeholder. It does not correctly set the position 
-    
+    gl_Position = MVP * vec4(vertexPosition, 1);
+
 }
