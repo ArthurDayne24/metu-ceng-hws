@@ -32,6 +32,9 @@ glm::vec3 *camera_pos;
 glm::vec3 *camera_gaze;
 glm::vec3 *camera_up;
 
+// Vertex array id
+GLuint VertexArrayId;
+
 static void errorCallback(int error, const char * description) {
     fprintf(stderr, "Error: %s\n", description);
 }
@@ -89,14 +92,12 @@ void keyboard(GLFWwindow *window, int key, int scancode, int action, int mods) {
 }
  
 // Window resize callback
-void resize(GLFWwindow* window, int width, int height){
-
+void resize(GLFWwindow* window, int width, int height) {
 }
 
 // XXX: Call this before windows is created and before any other OpenGL call
 // function that initiates the vertex array in user domain
 void initVertexArray(int width, int height) {
-    GLuint VertexArrayId;
     glGenVertexArrays(1, &VertexArrayId);
     glBindVertexArray(VertexArrayId);
 }
@@ -104,27 +105,20 @@ void initVertexArray(int width, int height) {
 void fillVertexBuffersData() {
     // An array of 3 vectors which represents 3 vertices
     // TODO fill g_vertex_buffer_data
-    // See http://www.opengl-tutorial.org/beginners-tutorials/tutorial-2-the-first-triangle/
-
-    // Identify triangles to OpenGL
-    // Generate 1 buffer, put the resulting identifier in vertexbuffer
-    glGenBuffers(1, &vertexbuffer);
-    // The following commands will talk about our 'vertexbuffer' buffer
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    // Give our vertices to OpenGL.
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data,
-                 GL_STATIC_DRAW);
+    // TODO fill g_color_buffer_data
+    // TODO define global and fill other buffer_data here if needed
 }
 
 void initVertexBuffers() {
     glGenBuffers(1, &vertexbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data,
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
     glGenBuffers(1, &colorbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
+
+    // TODO create/define other buffer(s) and buffer_data(s) here
 }
 
 // Call this in while loop
@@ -142,12 +136,6 @@ void setBuffers() {
             (void *) 0             // array buffer offset
     );
 
-    // TODO bunu en sona mı almalıyız ?
-    // Draw the triangles !
-    glDrawArrays(GL_TRIANGLES, 0, 3 * numberOfTriangles);
-
-    glDisableVertexAttribArray(0);
-
     // 2nd attribute buffer : colors
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
@@ -159,9 +147,14 @@ void setBuffers() {
             0,                                // stride
             (void *) 0                          // array buffer offset
     );
+
+    // Draw the triangles !
+    glDrawArrays(GL_TRIANGLES, 0, 3 * numberOfTriangles);
+
+    glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
 
-    // TODO put here other buffers as well
+    // TODO put here other buffers if needed
 }
 
 int main(int argc, char * argv[]) {
@@ -247,6 +240,14 @@ int main(int argc, char * argv[]) {
         glfwPollEvents();
     }
 
+    // Cleanup VBO and shader
+    glDeleteBuffers(1, &vertexbuffer);
+    glDeleteBuffers(1, &colorbuffer);
+    // TODO delete other buffers here if defined/used/created
+    glDeleteProgram(idProgramShader);
+    glDeleteVertexArrays(1, &VertexArrayId);
+
+    // Close OpenGL window and terminate GLFW
     glfwDestroyWindow(window);
     glfwTerminate();
 
