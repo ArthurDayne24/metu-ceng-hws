@@ -2,23 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ba7a44cd-089c-400b-acc8-64ca9d3114b2" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/experimental.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experimental_broker.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experimental_destination.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experimental_router1.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experimental_router2.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/input.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notes" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/putJustCommons.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/setntp.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/onurctirtir.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/onurctirtir.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BrokerNode.py" beforeDir="false" afterPath="$PROJECT_DIR$/BrokerNode.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DestinationNode.py" beforeDir="false" afterPath="$PROJECT_DIR$/DestinationNode.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README" beforeDir="false" afterPath="$PROJECT_DIR$/README" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SourceNode.py" beforeDir="false" afterPath="$PROJECT_DIR$/SourceNode.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/commons.py" beforeDir="false" afterPath="$PROJECT_DIR$/commons.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/putToServers.sh" beforeDir="false" afterPath="$PROJECT_DIR$/putToServers.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/configAtBroker.sh" beforeDir="false" afterPath="$PROJECT_DIR$/configAtBroker.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/configAtDest.sh" beforeDir="false" afterPath="$PROJECT_DIR$/configAtDest.sh" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -105,11 +92,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/BrokerNode.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="511">
-              <caret line="186" lean-forward="true" selection-start-line="186" selection-end-line="186" />
+            <state relative-caret-position="184">
+              <caret line="143" column="8" selection-start-line="143" selection-start-column="8" selection-end-line="143" selection-end-column="8" />
               <folding>
                 <element signature="e#0#13#0" expanded="true" />
               </folding>
@@ -135,7 +122,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/notes">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="488">
@@ -197,7 +184,6 @@
         <option value="$PROJECT_DIR$/putJustCommons.sh" />
         <option value="$PROJECT_DIR$/SourceNode.py" />
         <option value="$PROJECT_DIR$/DestinationNode.py" />
-        <option value="$PROJECT_DIR$/BrokerNode.py" />
         <option value="$PROJECT_DIR$/experimental_broker.sh" />
         <option value="$PROJECT_DIR$/experimental_router1.sh" />
         <option value="$PROJECT_DIR$/experimental_router2.sh" />
@@ -207,14 +193,15 @@
         <option value="$PROJECT_DIR$/README" />
         <option value="$PROJECT_DIR$/commons.py" />
         <option value="$PROJECT_DIR$/notes" />
+        <option value="$PROJECT_DIR$/BrokerNode.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="4">
-    <option name="x" value="960" />
-    <option name="y" value="24" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="-59" />
+    <option name="y" value="-4" />
     <option name="width" value="960" />
-    <option name="height" value="1056" />
+    <option name="height" value="1048" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -308,7 +295,7 @@
       <workItem from="1546100862577" duration="1843000" />
       <workItem from="1546107082435" duration="1107000" />
       <workItem from="1546129641892" duration="3497000" />
-      <workItem from="1546170250021" duration="24791000" />
+      <workItem from="1546170250021" duration="25050000" />
     </task>
     <task id="LOCAL-00001" summary="Some improvements done">
       <created>1545333624157</created>
@@ -394,25 +381,31 @@
       <option name="project" value="LOCAL" />
       <updated>1545920408410</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Experiments continue">
+      <created>1546195165496</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1546195165496</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="111023000" />
+    <option name="totallyTimeSpent" value="111282000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="960" y="24" width="960" height="1056" extended-state="4" />
-    <editor active="true" />
+    <frame x="0" y="-4" width="1920" height="1084" extended-state="6" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" />
-      <window_info active="true" content_ui="combo" id="Project" order="1" visible="true" weight="0.38730854" />
+      <window_info content_ui="combo" id="Project" order="1" visible="true" weight="0.18890075" />
       <window_info id="Structure" order="2" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Docker" order="0" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" order="1" weight="0.36954087" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="1" visible="true" weight="0.36886102" />
       <window_info anchor="bottom" id="Event Log" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="3" />
       <window_info anchor="bottom" id="Find" order="4" weight="0.32831" />
-      <window_info anchor="bottom" id="Python Console" order="5" visible="true" weight="0.30139935" />
+      <window_info anchor="bottom" id="Python Console" order="5" weight="0.292581" />
       <window_info anchor="bottom" id="Database Changes" order="6" />
       <window_info anchor="bottom" id="Run" order="7" weight="0.3291536" />
       <window_info anchor="bottom" id="Version Control" order="8" />
@@ -445,7 +438,8 @@
     <MESSAGE value="Major improvement in transmission speed with another CV, but no solution to exit problem" />
     <MESSAGE value="Faster implementation" />
     <MESSAGE value="Tested on remote, observed a bit slow" />
-    <option name="LAST_COMMIT_MESSAGE" value="Tested on remote, observed a bit slow" />
+    <MESSAGE value="Experiments continue" />
+    <option name="LAST_COMMIT_MESSAGE" value="Experiments continue" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/destDelay.sh" />
@@ -549,16 +543,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/BrokerNode.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="511">
-          <caret line="186" lean-forward="true" selection-start-line="186" selection-end-line="186" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/commons.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1640">
@@ -570,6 +554,16 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="488">
           <caret line="37" column="18" lean-forward="true" selection-start-line="37" selection-start-column="18" selection-end-line="37" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/BrokerNode.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="184">
+          <caret line="143" column="8" selection-start-line="143" selection-start-column="8" selection-end-line="143" selection-end-column="8" />
+          <folding>
+            <element signature="e#0#13#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

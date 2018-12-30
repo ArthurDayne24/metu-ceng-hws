@@ -141,6 +141,8 @@ class BrokerNode:
                 first_visit = False
                 receiver_thread.start()
 
+        receiver_thread.join()
+
     "Receives ACK from router 1 and accomplishes resend operation"
 
     def worker_receiver(self, router_id):
