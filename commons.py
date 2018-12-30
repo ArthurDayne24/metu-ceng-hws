@@ -1,21 +1,21 @@
 import sys
 
-ON_LOCAL = True
+ON_LOCAL = False
 
-DEBUG = True
+DEBUG = False
 
-TIMEOUT = 0.5  # seconds
+RDT_WINDOW_SIZE = 16
 
-TOTAL_BYTES = 5 * 1024 * 1024
+TIMEOUT = (2.4 * RDT_WINDOW_SIZE) * 1e-3  # seconds
+
+TOTAL_BYTES = 5 * 1000 * 1000
 
 CHECKSUM_SIZE = 2
 SEQUENCE_NUM_SIZE = 6
 
 HEADER_SIZE = CHECKSUM_SIZE + SEQUENCE_NUM_SIZE
 
-PAYLOAD_SIZE = 512
-
-RDT_WINDOW_SIZE = 8
+PAYLOAD_SIZE = 500
 
 NUMBER_OF_PACKETS = TOTAL_BYTES // PAYLOAD_SIZE
 
@@ -30,15 +30,12 @@ PACKET_SIZE = PAYLOAD_SIZE + HEADER_SIZE
 if ON_LOCAL:
     INTERFACE_1 = "localhost"
     INTERFACE_2 = "localhost"
-    INTERFACE_5 = "localhost"
-    INTERFACE_6 = "localhost"
-
     INTERFACE_3 = "localhost"
     INTERFACE_4 = "localhost"
-
+    INTERFACE_5 = "localhost"
+    INTERFACE_6 = "localhost"
     INTERFACE_7 = "localhost"
     INTERFACE_8 = "localhost"
-
     INTERFACE_9 = "localhost"
 
     PORT_1 = 8101
@@ -81,11 +78,6 @@ ENCODING = "utf-8"
 # converts bytearray to int
 def get_int_from_binary(byte):
     return int(byte.decode(ENCODING))
-
-
-# converts string to bytearray
-def get_binary_from_string(string):
-    return bytearray(string, ENCODING)
 
 
 def checksum(payload_sequence):

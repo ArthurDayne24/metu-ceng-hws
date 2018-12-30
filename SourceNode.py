@@ -1,11 +1,6 @@
 import socket
-import random
+import time
 from commons import *
-
-
-# Construct a random message string with a repeated pattern.
-def get_random_message():
-    return bytearray(str(random.randint(1000, 9999)) * (PAYLOAD_SIZE // 4), ENCODING)
 
 
 class SourceNode:
@@ -16,16 +11,27 @@ class SourceNode:
 
     def run(self):
         sent_size = 0
+        nextseqnum = 0
 
-        while sent_size < TOTAL_BYTES:
-            # construct a message
-            payload = get_random_message()
+        print("Started at " + str(time.time()))
 
-            self.bSocket.send(payload)  # send message to broker over the open TCP connection
+        with open('input.txt', 'rb') as fd:
 
-            sent_size += PAYLOAD_SIZE
+            while sent_size < TOTAL_BYTES:
+                # construct a message
+                payload = fd.read(PAYLOAD_SIZE)
 
-        # end
+                sequence_number = bytearray(str(nextseqnum).zfill(SEQUENCE_NUM_SIZE), ENCODING)
+
+                intermediate = payload + sequence_number
+
+                packet = intermediate + checksum(intermediate)
+
+                self.bSocket.send(packet)  # send message to broker over the open TCP connection
+
+                sent_size += PAYLOAD_SIZE
+                nextseqnum += 1
+
         self.bSocket.close()
 
 

@@ -1,7 +1,6 @@
 import socket
 import threading
 import select
-from threading import Lock
 
 from commons import *
 
@@ -90,30 +89,23 @@ class BrokerNode:
         while nextseqnum < NUMBER_OF_PACKETS:
 
             # prepare packet
-            while received_size < PAYLOAD_SIZE:
-                data = self.sConnectionSocket.recv(PAYLOAD_SIZE)
+            while received_size < PACKET_SIZE:
+                data = self.sConnectionSocket.recv(PACKET_SIZE)
 
                 receive_buffer.extend(data)
                 received_size += len(data)
 
-            payload = receive_buffer[:PAYLOAD_SIZE]
-            receive_buffer = receive_buffer[PAYLOAD_SIZE:]
-            received_size -= PAYLOAD_SIZE
-
-            sequence_number = bytearray(str(nextseqnum).zfill(SEQUENCE_NUM_SIZE), ENCODING)
+            packet = receive_buffer[:PACKET_SIZE]
+            receive_buffer = receive_buffer[PACKET_SIZE:]
+            received_size -= PACKET_SIZE
 
             nextseqnum += 1
-
-            intermediate = payload + sequence_number
-
-            packet = intermediate + checksum(intermediate)
 
             self.packets.append(packet)
 
             with self.cv_packetReady:
                 self.nReceivedPacketIndex += 1
                 self.cv_packetReady.notifyAll()
-
 
     def worker_sender(self, router_id):
 
@@ -124,7 +116,7 @@ class BrokerNode:
         router_socket = self.sockets[router_id]
         receiver_thread = self.receiver_threads[router_id]
 
-        while True:
+        while self.base != NUMBER_OF_PACKETS:
 
             self.l_nextseqnum.acquire()
 
@@ -149,9 +141,8 @@ class BrokerNode:
                 first_visit = False
                 receiver_thread.start()
 
-        receiver_thread.join()
-
     "Receives ACK from router 1 and accomplishes resend operation"
+
     def worker_receiver(self, router_id):
 
         r_socket = self.sockets[router_id]
@@ -162,7 +153,7 @@ class BrokerNode:
         while self.base != NUMBER_OF_PACKETS:
 
             # prepare packet
-            while received_size < PACKET_SIZE:
+            while received_size < PACKET_SIZE and self.base != NUMBER_OF_PACKETS:
 
                 r_socket.setblocking(False)
 
@@ -182,18 +173,16 @@ class BrokerNode:
 
                     if not self.l_is_timeout_already.locked():
                         self.l_is_timeout_already.acquire()
-                        self.timeout_handler_thread = threading.Thread(target=self.worker_timeout_handler, args=(router_id, self.nextseqnum,))
+                        self.timeout_handler_thread = threading.Thread(target=self.worker_timeout_handler,
+                                                                       args=(router_id, self.nextseqnum,))
                         self.timeout_handler_thread.start()
 
             packet = receive_buffer[:PACKET_SIZE]
             receive_buffer = receive_buffer[PACKET_SIZE:]
             received_size -= PACKET_SIZE
 
-            debug("Received ack for " + str(get_sequence_number(packet)))
-
             # if packet is corrupted
             if is_corrupted(packet):
-                debug("Ack packet for seq " + str(get_sequence_number(packet)) + " is corrupted")
                 continue
 
             new_sequence_number = get_sequence_number(packet) + 1
@@ -203,23 +192,20 @@ class BrokerNode:
                     continue
                 # if not corrupted
                 self.base = new_sequence_number
-                debug("Base is updated to " + str(self.base))
                 self.cv_baseUpdated.notifyAll()
 
     # timeout base is not the current base !
     def worker_timeout_handler(self, router_id, nextseqnum):
 
         for packet_number in range(self.base, nextseqnum):
-
             router_socket = self.sockets[router_id]
             router_interface = self.sendingInt[router_id]
             router_port = self.sendingPort[router_id]
 
             router_socket.sendto(self.packets[packet_number], (router_interface, router_port))
 
-            debug("Resent packet with seq " + str(packet_number))
-
         self.l_is_timeout_already.release()
+
 
 if __name__ == '__main__':
     BrokerNode().run()

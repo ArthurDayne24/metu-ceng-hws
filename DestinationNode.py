@@ -1,6 +1,9 @@
+import filecmp
 import socket
 import threading
-import random
+import os
+import time
+
 from commons import *
 
 
@@ -8,7 +11,15 @@ class DestinationNode:
 
     def __init__(self):
 
+        if os.path.exists('output.txt'):
+            os.remove('output.txt')
+
+        self.l_output_buffer = threading.Lock()
+        self.written_to_buffer = False
+        self.output_buffer = [None] * NUMBER_OF_PACKETS
+
         self.expected_sequence_num = 0
+        self.l_expectedSeqNum = threading.Lock()
 
         self.r1Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.r1Socket.bind((INTERFACE_5, PORT_5))
@@ -24,8 +35,6 @@ class DestinationNode:
         self.sockets = [self.r1Socket, self.r2Socket]
         self.sendingInt = [INTERFACE_2, INTERFACE_6]
         self.sendingPort = [PORT_2, PORT_6]
-
-        self.l_expectedSeqNum = threading.Lock()
 
     @staticmethod
     def prepare_ack_for_seq(sequence_number):
@@ -56,7 +65,7 @@ class DestinationNode:
         while self.expected_sequence_num != NUMBER_OF_PACKETS:
 
             # prepare packet
-            while received_size < PACKET_SIZE:
+            while received_size < PACKET_SIZE and self.expected_sequence_num != NUMBER_OF_PACKETS:
 
                 data, _ = r_socket.recvfrom(PACKET_SIZE)
 
@@ -66,11 +75,6 @@ class DestinationNode:
             received_packet = receive_buffer[:PACKET_SIZE]
             receive_buffer = receive_buffer[PACKET_SIZE:]
             received_size -= PACKET_SIZE
-
-            p = random.uniform(0, 1)
-            if p < 0.05:
-                debug("Skipped ack packet with seq: " + str(self.expected_sequence_num))
-                continue
 
             resent_current_ack = is_corrupted(received_packet)
 
@@ -88,14 +92,22 @@ class DestinationNode:
                 current_expected_sequence_num = self.expected_sequence_num
                 self.expected_sequence_num += 1
 
-            debug("Received packet with seq number " + str(current_expected_sequence_num))
+            # save data to buffer
+            self.output_buffer[current_expected_sequence_num] = received_packet
 
             # prepare ACK packet
             self.current_ack = self.prepare_ack_for_seq(current_expected_sequence_num)
 
-            debug("sent ack for seq: " + str(current_expected_sequence_num))
-
             r_socket.sendto(self.current_ack, (sending_int, sending_port))
+
+        with self.l_output_buffer:
+            if self.written_to_buffer:
+                return
+            print("Ends at " + str(time.time()))
+            with open('output.txt', 'wb+') as fd:
+                fd.write(b''.join(map(lambda p: p[:PAYLOAD_SIZE], self.output_buffer)))
+            self.written_to_buffer = True
+            print("File transmission is successful." if filecmp.cmp('input.txt', 'output.txt') else 'Failed!')
 
 if __name__ == '__main__':
     DestinationNode().run()
