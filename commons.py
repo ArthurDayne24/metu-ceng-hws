@@ -6,7 +6,7 @@ DEBUG = False
 
 RDT_WINDOW_SIZE = 16
 
-TIMEOUT = (2.4 * RDT_WINDOW_SIZE) * 1e-3  # seconds
+TIMEOUT = (2.5 * RDT_WINDOW_SIZE) * 1e-3  # seconds
 
 TOTAL_BYTES = 5 * 1000 * 1000
 
@@ -74,6 +74,9 @@ else:
 
 ENCODING = "utf-8"
 
+ZERO = ord(str(0))
+NINE = ord(str(9))
+
 
 # converts bytearray to int
 def get_int_from_binary(byte):
@@ -106,8 +109,12 @@ def get_sequence_number(packet):
 
 def is_corrupted(packet):
     intermediate = packet[:PAYLOAD_SIZE + SEQUENCE_NUM_SIZE]
+    packet_sequence_number = intermediate[PAYLOAD_SIZE:]
     packet_checksum = packet[PAYLOAD_SIZE + SEQUENCE_NUM_SIZE:]
 
-    corrupted = checksum(intermediate) != packet_checksum
+    corrupted = any(map(lambda b: b < ZERO or b > NINE, packet_sequence_number))
+
+    if not corrupted:
+        corrupted = checksum(intermediate) != packet_checksum
 
     return corrupted

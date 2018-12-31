@@ -136,6 +136,8 @@ class BrokerNode:
 
             router_socket.sendto(packet, (router_interface, router_port))
 
+            debug("Sent packet with sequence " + str(self.nextseqnum - 1))
+
             # if first time, start receive worker
             if first_visit:
                 first_visit = False
@@ -179,6 +181,9 @@ class BrokerNode:
                                                                        args=(router_id, self.nextseqnum,))
                         self.timeout_handler_thread.start()
 
+            if self.base == NUMBER_OF_PACKETS:
+                return
+
             packet = receive_buffer[:PACKET_SIZE]
             receive_buffer = receive_buffer[PACKET_SIZE:]
             received_size -= PACKET_SIZE
@@ -189,6 +194,8 @@ class BrokerNode:
 
             new_sequence_number = get_sequence_number(packet) + 1
 
+            debug("Received ack for " + str(new_sequence_number - 1))
+            
             with self.cv_baseUpdated:
                 if new_sequence_number < self.base:
                     continue
@@ -200,6 +207,9 @@ class BrokerNode:
     def worker_timeout_handler(self, router_id, nextseqnum):
 
         for packet_number in range(self.base, nextseqnum):
+
+            debug("Resent packet with " + str(packet_number))
+
             router_socket = self.sockets[router_id]
             router_interface = self.sendingInt[router_id]
             router_port = self.sendingPort[router_id]
