@@ -27,7 +27,7 @@ figure1 = figure;
 errorbar(setting, values, errors);
 xlabel('Reordering Percentage (%)');
 ylabel('File Transfer Time (s)');
-title('File Transfer Time vs "Reordering Percantage');
+title('File Transfer Time vs Reordering Percantage');
 savefig(figure1, 'plot3.fig')
 pause;
 

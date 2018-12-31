@@ -27,7 +27,7 @@ figure1 = figure;
 errorbar(setting, values, errors);
 xlabel('Corruption Percentage (%)');
 ylabel('File Transfer Time (s)');
-title('File Transfer Time vs "Corruption Percantage');
+title('File Transfer Time vs Corruption Percantage');
 savefig(figure1, 'plot2.fig')
 pause;
 
