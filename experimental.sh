@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# base script to set experimental options in nodes
+
 if [[ "$1" == "clear" ]]; then
     echo Clear netem/tc settings for interface $2
     tc qdisc replace dev $2 root netem loss 0% corrupt 0% duplicate 0% delay 0ms reorder 0% 0%

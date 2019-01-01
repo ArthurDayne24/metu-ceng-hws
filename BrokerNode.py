@@ -9,20 +9,30 @@ class BrokerNode:
 
     def __init__(self):
 
+        # base and next sequence numbers to be used in Go-Back-N
         self.base = 0
         self.nextseqnum = 0
 
+        # receiver threads to receive ACK packets from destination node via two interfaces
         self.receiver_thread_1 = threading.Thread(target=self.worker_receiver, args=(0,))
         self.receiver_thread_2 = threading.Thread(target=self.worker_receiver, args=(1,))
 
+        # > Producer / Consumer Pattern elements
+
+        self.packets = []
+
+        # sender threads to send packets to destination node via two interfaces
+        # these threads pick packets from the queue which tcp receiver thread fills in the mean time
         self.sender_thread_1 = threading.Thread(target=self.worker_sender, args=(0,))
         self.sender_thread_2 = threading.Thread(target=self.worker_sender, args=(1,))
 
+        # receiver thread that receives packets from source node and puts to queue
         self.tcp_receiver_thread = threading.Thread(target=self.worker_tcp_receiver)
 
-        self.timeout_handler_thread = None
+        # Producer / Consumer Pattern elements <
 
-        self.packets = []
+        # We register last timeout handler thread to "join" at the end of file transmission
+        self.timeout_handler_thread = None
 
         self.sSocket = self.r1Socket = self.r2Socket = None
         self.sConnectionSocket = None
@@ -34,18 +44,22 @@ class BrokerNode:
 
         self.sConnectionSocket, _ = self.sSocket.accept()  # Accept and connect to a client
 
+        # > sockets to be used for connections with routers
+
         self.r1Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.r1Socket.bind((INTERFACE_2, PORT_2))
 
         self.r2Socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.r2Socket.bind((INTERFACE_6, PORT_6))
 
+        # sockets to be used for connections with routers <
+
         self.sockets = [self.r1Socket, self.r2Socket]
         self.sendingInt = [INTERFACE_5, INTERFACE_9]
         self.sendingPort = [PORT_5, PORT_9]
         self.receiver_threads = [self.receiver_thread_1, self.receiver_thread_2]
 
-        self.l_tcpReceive = threading.Lock()
+        # protect next sequence number variable from race conditions
         self.l_nextseqnum = threading.Lock()
 
         # CV for producer / consumer pattern
@@ -53,10 +67,11 @@ class BrokerNode:
         # Last received packet's index
         self.nReceivedPacketIndex = -1
 
-        # Is self.base update
+        # is self.base updated ?
+        # to prevent idle while loops at sender threads
         self.cv_baseUpdated = threading.Condition()
 
-        # Timeout guard
+        # timeout worker guard to satisfy "only one timeout handler works at a moment"
         self.l_is_timeout_already = threading.Lock()
 
     # Handles data transfer from s to d
@@ -83,12 +98,14 @@ class BrokerNode:
 
         nextseqnum = 0
 
+        # store and forward implementation variables
         receive_buffer = bytearray()
         received_size = 0
 
         while nextseqnum < NUMBER_OF_PACKETS:
 
-            # prepare packet
+            # > store and forward implementation
+
             while received_size < PACKET_SIZE:
                 data = self.sConnectionSocket.recv(PACKET_SIZE)
 
@@ -99,18 +116,24 @@ class BrokerNode:
             receive_buffer = receive_buffer[PACKET_SIZE:]
             received_size -= PACKET_SIZE
 
+            # < store and forward implementation
+
             nextseqnum += 1
 
             self.packets.append(packet)
 
+            # notify sender threads as new packets are available to be sent
             with self.cv_packetReady:
                 self.nReceivedPacketIndex += 1
                 self.cv_packetReady.notifyAll()
 
+    # Worker thread to send packets to destination node
     def worker_sender(self, router_id):
 
+        # if first iteration, then invoke related receiver thread
         first_visit = True
 
+        # functionalize sender worker to use via both sender threads with the help of router_id
         router_port = self.sendingPort[router_id]
         router_interface = self.sendingInt[router_id]
         router_socket = self.sockets[router_id]
@@ -118,12 +141,16 @@ class BrokerNode:
 
         while self.base != NUMBER_OF_PACKETS:
 
+            # > protect next sequence number
+
             self.l_nextseqnum.acquire()
 
+            # prevent needless while loops checking that if there exists new packets within the window
             with self.cv_baseUpdated:
                 while self.nextseqnum >= self.base + RDT_WINDOW_SIZE:
                     self.cv_baseUpdated.wait()
 
+            # prevent needles while loops checking that if a packet is made available by source receiver (tcp receiver) thread
             with self.cv_packetReady:
                 while self.nReceivedPacketIndex < self.nextseqnum:
                     self.cv_packetReady.wait()
@@ -134,31 +161,35 @@ class BrokerNode:
 
             self.l_nextseqnum.release()
 
+            # protect next sequence number <
+
+            # send packet to destination
             router_socket.sendto(packet, (router_interface, router_port))
 
-            debug("Sent packet with sequence " + str(self.nextseqnum - 1))
-
-            # if first time, start receive worker
+            # if first iteration, then invoke related receiver thread
             if first_visit:
                 first_visit = False
                 receiver_thread.start()
 
         receiver_thread.join()
 
-    "Receives ACK from router 1 and accomplishes resend operation"
-
+    # Worker thread receiving ACK packets from destination node
     def worker_receiver(self, router_id):
 
+        # functionalize receiver worker to use via both receiver threads with the help of router_id
         r_socket = self.sockets[router_id]
 
+        # store and forward implementation variables
         receive_buffer = bytearray()
         received_size = 0
 
         while self.base != NUMBER_OF_PACKETS:
 
-            # prepare packet
+            # > store and forward implementation
+
             while received_size < PACKET_SIZE and self.base != NUMBER_OF_PACKETS:
 
+                # wait at most for TIMEOUT seconds for an ACK packet
                 r_socket.setblocking(False)
 
                 ready = select.select([r_socket], [], [], TIMEOUT)
@@ -170,16 +201,19 @@ class BrokerNode:
                     receive_buffer.extend(data)
                     received_size += len(data)
 
-                # timeout case
+                # if timeout occurred
                 else:
                     receive_buffer = bytearray()
                     received_size = 0
 
+                    # satisfy that only one timeout thread is used at a moment
                     if not self.l_is_timeout_already.locked():
                         self.l_is_timeout_already.acquire()
                         self.timeout_handler_thread = threading.Thread(target=self.worker_timeout_handler,
                                                                        args=(router_id, self.nextseqnum,))
                         self.timeout_handler_thread.start()
+
+            # store and forward implementation <
 
             if self.base == NUMBER_OF_PACKETS:
                 return
@@ -188,34 +222,34 @@ class BrokerNode:
             receive_buffer = receive_buffer[PACKET_SIZE:]
             received_size -= PACKET_SIZE
 
-            # if packet is corrupted
+            # if packet is corrupted, then ignore received packet
             if is_corrupted(packet):
                 continue
 
             new_sequence_number = get_sequence_number(packet) + 1
 
-            debug("Received ack for " + str(new_sequence_number - 1))
-            
             with self.cv_baseUpdated:
+                # if ACK is received for an already ACK'ed packet, ignore it
                 if new_sequence_number < self.base:
                     continue
-                # if not corrupted
+
+                # update base variable and notify sender threads
                 self.base = new_sequence_number
                 self.cv_baseUpdated.notifyAll()
 
-    # timeout base is not the current base !
     def worker_timeout_handler(self, router_id, nextseqnum):
 
+        # resend all packets within the window
         for packet_number in range(self.base, nextseqnum):
 
-            debug("Resent packet with " + str(packet_number))
-
+            # functionalize timeout handler worker to be invoked via both receiver threads with the help of router_id
             router_socket = self.sockets[router_id]
             router_interface = self.sendingInt[router_id]
             router_port = self.sendingPort[router_id]
 
             router_socket.sendto(self.packets[packet_number], (router_interface, router_port))
 
+        # release lock to tell receiver threads that timeout thread is available
         self.l_is_timeout_already.release()
 
 

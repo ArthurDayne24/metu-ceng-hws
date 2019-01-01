@@ -23,6 +23,6 @@
    Run SourceNode.py at source node.
 
 5) After file transfer is done, at source node and destination node, timestamps are printed.
-   Difference between these timestamps is the measurement of how much time passed for file transmission
+   Difference between these timestamps is the measurement of how much time passed for file transmission in seconds
 
 6) Close scripts by Ctrl+C at source, broker and destination nodes.

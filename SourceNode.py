@@ -13,21 +13,30 @@ class SourceNode:
         sent_size = 0
         nextseqnum = 0
 
+        # print timestamp to measure file transfer time by hand at the end of the day
         print("Started at " + str(time.time()))
 
         with open('input.txt', 'rb') as fd:
 
             while sent_size < TOTAL_BYTES:
-                # construct a message
+
+                # > construct a message
+
                 payload = fd.read(PAYLOAD_SIZE)
 
+                # prepare sequence number part
                 sequence_number = bytearray(str(nextseqnum).zfill(SEQUENCE_NUM_SIZE), ENCODING)
 
+                # for checksum
                 intermediate = payload + sequence_number
 
+                # concat payload, sequence number and checksum parts
                 packet = intermediate + checksum(intermediate)
 
-                self.bSocket.send(packet)  # send message to broker over the open TCP connection
+                # construct a message <
+
+                # send message to broker over the open TCP connection
+                self.bSocket.send(packet)
 
                 sent_size += PAYLOAD_SIZE
                 nextseqnum += 1
