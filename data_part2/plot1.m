@@ -25,9 +25,9 @@ errors = [err_no, err_one, err_two, err_three];
 
 figure1 = figure;
 errorbar(setting, values, errors);
-xlabel('Paclet Loss Percentage (%)');
+xlabel('Packet Loss Percentage (%)');
 ylabel('File Transfer Time (s)');
-title('File Transfer Time vs Packet Loss Percantage');
+title('File Transfer Time vs Packet Loss Percentage');
 savefig(figure1, 'plot1.fig')
 pause;
 

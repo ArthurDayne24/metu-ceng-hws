@@ -1,3 +1,4 @@
+import hashlib
 import sys
 
 # this flag is set to True to make tests on our local machine, see below if / else blocks
@@ -22,7 +23,7 @@ TOTAL_BYTES = 5 * 1000 * 1000
 # CHECKSUM is computed over < PAYLOAD | SEQUENCE >
 # Then concatenated
 
-CHECKSUM_SIZE = 2
+CHECKSUM_SIZE = 32
 SEQUENCE_NUM_SIZE = 6
 
 HEADER_SIZE = CHECKSUM_SIZE + SEQUENCE_NUM_SIZE
@@ -92,18 +93,11 @@ def get_int_from_binary(byte):
 
 # calculate checksum and return as bytearray
 def checksum(payload_sequence):
-    first_byte = sum(payload_sequence[i] for i in range(0, PAYLOAD_SIZE + SEQUENCE_NUM_SIZE, 2))
-    second_byte = sum(payload_sequence[i + 1] for i in range(0, PAYLOAD_SIZE + SEQUENCE_NUM_SIZE, 2))
+    md5 = hashlib.md5()
 
-    first_byte += (second_byte - second_byte & 0xFF) >> 8
-    second_byte = second_byte & 0xFF
+    md5.update(payload_sequence)
 
-    first_byte = chr(first_byte & 0xFF)
-    second_byte = chr(second_byte & 0xFF)
-
-    computed_checksum = first_byte.encode(ENCODING)[0:1] + second_byte.encode(ENCODING)[0:1]
-
-    return computed_checksum
+    return bytearray(md5.hexdigest(), ENCODING)
 
 
 def debug(msg):
