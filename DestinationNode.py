@@ -50,12 +50,10 @@ class DestinationNode:
 
     @staticmethod
     def prepare_ack_for_seq(sequence_number):
-        # ACK packet format is "111...11" (length of PAYLOAD_SIZE) + sequence number of ACK'ed packet + checksum of this ACK packet
-        payload = bytearray("1" * PAYLOAD_SIZE, ENCODING)
+        # ACK packet format is sequence number of ACK'ed packet + checksum of this ACK packet
         sequence_number = bytearray(str(sequence_number).zfill(SEQUENCE_NUM_SIZE), ENCODING)
-        intermediate = payload + sequence_number
 
-        return intermediate + checksum(intermediate)
+        return sequence_number + checksum(sequence_number)
 
     def run(self):
         self.r1Thread.start()
@@ -80,18 +78,18 @@ class DestinationNode:
         while self.expected_sequence_num != NUMBER_OF_PACKETS:
 
             # > store and forward implementation
-            while received_size < PACKET_SIZE and self.expected_sequence_num != NUMBER_OF_PACKETS:
+            while received_size < DATA_PACKET_SIZE and self.expected_sequence_num != NUMBER_OF_PACKETS:
 
-                data, _ = r_socket.recvfrom(PACKET_SIZE)
+                data, _ = r_socket.recvfrom(DATA_PACKET_SIZE)
 
                 receive_buffer.extend(data)
                 received_size += len(data)
 
             # store and forward implementation <
 
-            received_packet = receive_buffer[:PACKET_SIZE]
-            receive_buffer = receive_buffer[PACKET_SIZE:]
-            received_size -= PACKET_SIZE
+            received_packet = receive_buffer[:DATA_PACKET_SIZE]
+            receive_buffer = receive_buffer[DATA_PACKET_SIZE:]
+            received_size -= DATA_PACKET_SIZE
 
             # should we resend last successful ACK ? (corruption)
             resent_current_ack = is_corrupted(received_packet)
@@ -128,10 +126,14 @@ class DestinationNode:
         with self.l_output_buffer:
             if self.written_to_buffer:
                 return
+
             print("Ends at " + str(time.time()))
+
             with open('output.txt', 'wb+') as fd:
                 fd.write(b''.join(map(lambda p: p[:PAYLOAD_SIZE], self.output_buffer)))
+
             self.written_to_buffer = True
+
             print("File transmission is successful." if filecmp.cmp('input.txt', 'output.txt') else 'Failed!')
 
 if __name__ == '__main__':

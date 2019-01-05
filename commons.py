@@ -2,7 +2,7 @@ import hashlib
 import sys
 
 # this flag is set to True to make tests on our local machine, see below if / else blocks
-ON_LOCAL = False
+ON_LOCAL = True
 
 # debug prints are enabled / disabled
 DEBUG = False
@@ -16,6 +16,10 @@ TIMEOUT = (2.5 * RDT_WINDOW_SIZE) * 1e-3
 # file size in bytes
 TOTAL_BYTES = 5 * 1000 * 1000
 
+CHECKSUM_SIZE = 32
+SEQUENCE_NUM_SIZE = 6
+PAYLOAD_SIZE = 500
+
 # > packet format
 
 # Packet Format:
@@ -23,18 +27,15 @@ TOTAL_BYTES = 5 * 1000 * 1000
 # CHECKSUM is computed over < PAYLOAD | SEQUENCE >
 # Then concatenated
 
-CHECKSUM_SIZE = 32
-SEQUENCE_NUM_SIZE = 6
+DATA_HEADER_SIZE = CHECKSUM_SIZE + SEQUENCE_NUM_SIZE
 
-HEADER_SIZE = CHECKSUM_SIZE + SEQUENCE_NUM_SIZE
-
-PAYLOAD_SIZE = 500
+DATA_PACKET_SIZE = PAYLOAD_SIZE + DATA_HEADER_SIZE
 
 # packet format <
 
 NUMBER_OF_PACKETS = TOTAL_BYTES // PAYLOAD_SIZE
 
-PACKET_SIZE = PAYLOAD_SIZE + HEADER_SIZE
+ACK_PACKET_SIZE = SEQUENCE_NUM_SIZE + CHECKSUM_SIZE
 
 # Interfaces
 if ON_LOCAL:
@@ -105,6 +106,10 @@ def debug(msg):
         print(msg, file=sys.stderr)
 
 
+def get_ack_sequence_number(ack_packet):
+    return int(ack_packet[:SEQUENCE_NUM_SIZE])
+
+
 def get_sequence_number(packet):
     return int(packet[PAYLOAD_SIZE: PAYLOAD_SIZE + SEQUENCE_NUM_SIZE])
 
@@ -124,5 +129,19 @@ def is_corrupted(packet):
     if not corrupted:
         # if computed checksum is not equal to extracted checksum, then packet is corrupted
         corrupted = checksum(intermediate) != packet_checksum
+
+    return corrupted
+
+
+def is_ack_corrupted(packet):
+    packet_sequence_number = packet[:SEQUENCE_NUM_SIZE]
+    packet_checksum = packet[SEQUENCE_NUM_SIZE:]
+
+    # if sequence number part contains non numeric characters, then packet is corrupted
+    corrupted = any(map(lambda b: b < ZERO or b > NINE, packet_sequence_number))
+
+    if not corrupted:
+        # if computed checksum is not equal to extracted checksum, then packet is corrupted
+        corrupted = checksum(packet_sequence_number) != packet_checksum
 
     return corrupted

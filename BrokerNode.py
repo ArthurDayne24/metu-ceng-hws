@@ -87,7 +87,8 @@ class BrokerNode:
         self.sender_thread_1.join()
         self.sender_thread_2.join()
 
-        self.timeout_handler_thread.join()
+        if self.timeout_handler_thread is not None:
+            self.timeout_handler_thread.join()
 
         self.sSocket.close()
 
@@ -106,15 +107,15 @@ class BrokerNode:
 
             # > store and forward implementation
 
-            while received_size < PACKET_SIZE:
-                data = self.sConnectionSocket.recv(PACKET_SIZE)
+            while received_size < DATA_PACKET_SIZE:
+                data = self.sConnectionSocket.recv(DATA_PACKET_SIZE)
 
                 receive_buffer.extend(data)
                 received_size += len(data)
 
-            packet = receive_buffer[:PACKET_SIZE]
-            receive_buffer = receive_buffer[PACKET_SIZE:]
-            received_size -= PACKET_SIZE
+            packet = receive_buffer[:DATA_PACKET_SIZE]
+            receive_buffer = receive_buffer[DATA_PACKET_SIZE:]
+            received_size -= DATA_PACKET_SIZE
 
             # < store and forward implementation
 
@@ -187,7 +188,7 @@ class BrokerNode:
 
             # > store and forward implementation
 
-            while received_size < PACKET_SIZE and self.base != NUMBER_OF_PACKETS:
+            while received_size < ACK_PACKET_SIZE and self.base != NUMBER_OF_PACKETS:
 
                 # wait at most for TIMEOUT seconds for an ACK packet
                 r_socket.setblocking(False)
@@ -196,7 +197,7 @@ class BrokerNode:
 
                 # if timeout not occurred
                 if ready[0]:
-                    data, _ = r_socket.recvfrom(PACKET_SIZE)  # type: (bytes, object)
+                    data, _ = r_socket.recvfrom(ACK_PACKET_SIZE)  # type: (bytes, object)
 
                     receive_buffer.extend(data)
                     received_size += len(data)
@@ -218,15 +219,15 @@ class BrokerNode:
             if self.base == NUMBER_OF_PACKETS:
                 return
 
-            packet = receive_buffer[:PACKET_SIZE]
-            receive_buffer = receive_buffer[PACKET_SIZE:]
-            received_size -= PACKET_SIZE
+            packet = receive_buffer[:ACK_PACKET_SIZE]
+            receive_buffer = receive_buffer[ACK_PACKET_SIZE:]
+            received_size -= ACK_PACKET_SIZE
 
             # if packet is corrupted, then ignore received packet
-            if is_corrupted(packet):
+            if is_ack_corrupted(packet):
                 continue
 
-            new_sequence_number = get_sequence_number(packet) + 1
+            new_sequence_number = get_ack_sequence_number(packet) + 1
 
             with self.cv_baseUpdated:
                 # if ACK is received for an already ACK'ed packet, ignore it
@@ -239,13 +240,13 @@ class BrokerNode:
 
     def worker_timeout_handler(self, router_id, nextseqnum):
 
+        # functionalize timeout handler worker to be invoked via both receiver threads with the help of router_id
+        router_socket = self.sockets[router_id]
+        router_interface = self.sendingInt[router_id]
+        router_port = self.sendingPort[router_id]
+
         # resend all packets within the window
         for packet_number in range(self.base, nextseqnum):
-
-            # functionalize timeout handler worker to be invoked via both receiver threads with the help of router_id
-            router_socket = self.sockets[router_id]
-            router_interface = self.sendingInt[router_id]
-            router_port = self.sendingPort[router_id]
 
             router_socket.sendto(self.packets[packet_number], (router_interface, router_port))
 
