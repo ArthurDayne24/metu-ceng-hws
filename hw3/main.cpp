@@ -1,6 +1,8 @@
 #include "helper.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/vec3.hpp>
+#include <vector>
 
 static GLFWwindow *window = nullptr;
 
@@ -12,17 +14,14 @@ GLuint idJpegTexture;
 GLuint idMVPMatrix;
 
 int widthTexture, heightTexture;
-int numberOfTriangles;
 
-int speed; // moving speed of the camera, initially zero
+// TODO ?
+int speed = 0; // moving speed of the camera, initially zero
 
 /* Data and their buffers */
 // Vertices
 GLfloat *g_vertex_buffer_data; // old triangle vertices
 GLuint vertexbuffer;
-// Colors
-GLfloat *g_color_buffer_data;
-GLuint colorbuffer;
 
 // Our ModelViewProjection : multiplication of our 3 matrices
 glm::mat4 *mvp;
@@ -36,7 +35,7 @@ glm::vec3 *camera_up;
 GLuint VertexArrayId;
 
 static void errorCallback(int error, const char * description) {
-    fprintf(stderr, "Error: %s\n", description);
+    fprintf(stderr, "Error: %s with error no:%d\n", description, error);
 }
 
 // Call this in while loop, I guess
@@ -64,6 +63,7 @@ void pitchDown(){}
 void yawLeft(){}
 void yawRight(){}
 
+// TODO: hata olabilir bunlarda !
 void increaseSpeed(){
     speed++;
 }
@@ -93,6 +93,7 @@ void keyboard(GLFWwindow *window, int key, int scancode, int action, int mods) {
  
 // Window resize callback
 void resize(GLFWwindow* window, int width, int height) {
+    // TODO: implement
 }
 
 // XXX: Call this before windows is created and before any other OpenGL call
@@ -102,31 +103,56 @@ void initVertexArray(int width, int height) {
     glBindVertexArray(VertexArrayId);
 }
 
-void fillVertexBuffersData() {
+void fillVertexBuffersData(size_t size_g_vertex_buffer_data) {
     // An array of 3 vectors which represents 3 vertices
-    // TODO fill g_vertex_buffer_data
-    // TODO fill g_color_buffer_data
-    // TODO define global and fill other buffer_data here if needed
-}
 
-void initVertexBuffers() {
+    g_vertex_buffer_data = (GLfloat*) malloc(size_g_vertex_buffer_data);
+
+    // TODO: check loop
+    GLfloat *p = g_vertex_buffer_data;
+    for (int i = 0; i < heightTexture; i++) {
+        for (int j = 0; j < widthTexture; j++) {
+            // First triangle
+            p[0] = i;
+            p[1] = 0;
+            p[2] = j;
+
+            p[3] = i;
+            p[4] = 0;
+            p[5] = j+1;
+
+            p[6] = i+1;
+            p[7] = 0;
+            p[8] = j;
+
+            // Second triangle
+            p[9] = i;
+            p[10] = 0;
+            p[11] = j+1;
+
+            p[12] = i+1;
+            p[13] = 0;
+            p[14] = j+1;
+
+            p[15] = i+1;
+            p[16] = 0;
+            p[17] = j;
+
+            p += 18;
+        }
+    }
+
     glGenBuffers(1, &vertexbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &colorbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
-
-    // TODO create/define other buffer(s) and buffer_data(s) here
+    glBufferData(GL_ARRAY_BUFFER, size_g_vertex_buffer_data, g_vertex_buffer_data, GL_STATIC_DRAW);
 }
 
 // Call this in while loop
-void setBuffers() {
+void setBuffers(int numberOfTriangles) {
     // 1st attribute buffer : vertices
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    // TODO not sure on parameters
+    // TODO not sure on these parameters
     glVertexAttribPointer(
             0,                     // attribute 0. No particular reason for 0, but must match the layout in the shader.
             3,                     // size
@@ -136,25 +162,10 @@ void setBuffers() {
             (void *) 0             // array buffer offset
     );
 
-    // 2nd attribute buffer : colors
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-    glVertexAttribPointer(
-            1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-            3,                                // size
-            GL_FLOAT,                         // type
-            GL_FALSE,                         // normalized?
-            0,                                // stride
-            (void *) 0                          // array buffer offset
-    );
-
     // Draw the triangles !
-    glDrawArrays(GL_TRIANGLES, 0, 3 * numberOfTriangles);
+    glDrawArrays(GL_TRIANGLES, 0, numberOfTriangles * 3);
 
     glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-
-    // TODO put here other buffers if needed
 }
 
 int main(int argc, char * argv[]) {
@@ -202,7 +213,9 @@ int main(int argc, char * argv[]) {
     glDepthFunc(GL_LESS);
 
     initVertexArray(widthTexture, heightTexture);
-    numberOfTriangles = 2 * widthTexture * heightTexture; // TODO sure ?
+
+    int numberOfTriangles = 2 * widthTexture * heightTexture;
+    size_t size_g_vertex_buffer_data = sizeof(GLfloat) * numberOfTriangles * 3 * 3;
 
     initShaders();
     // Get a handle for our "MVP" uniform
@@ -219,7 +232,7 @@ int main(int argc, char * argv[]) {
 
     setMatrices();
 
-    fillVertexBuffersData();
+    fillVertexBuffersData(size_g_vertex_buffer_data);
 
     glfwSetKeyCallback(window, keyboard); // register key callback
     glfwSetWindowSizeCallback(window, resize); // register resize callback
@@ -234,7 +247,7 @@ int main(int argc, char * argv[]) {
         // This is done in the main loop since each model will have a different MVP matrix (At least for the M part)
         glUniformMatrix4fv(idMVPMatrix, 1, GL_FALSE, &(*mvp)[0][0]);
 
-        setBuffers();
+        setBuffers(numberOfTriangles);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -242,8 +255,6 @@ int main(int argc, char * argv[]) {
 
     // Cleanup VBO and shader
     glDeleteBuffers(1, &vertexbuffer);
-    glDeleteBuffers(1, &colorbuffer);
-    // TODO delete other buffers here if defined/used/created
     glDeleteProgram(idProgramShader);
     glDeleteVertexArrays(1, &VertexArrayId);
 
