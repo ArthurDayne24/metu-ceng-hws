@@ -105,34 +105,37 @@ vec3 calculateNormalVector(vec4 current_vertex) {
     // number of valid triangles
     float validCount = 0;
 
-    vec3 normal(0, 0, 0);
+    vec3 normal;
+    normal.x = 0;
+    normal.y = 0;
+    normal.z = 0;
 
-    if (isValid(dir1) && isValid(dir2)) {
+    if (isVal_dir1 && isVal_dir2) {
         normal += calculateSurfaceNormal(current_vertex.xyz, dir1, dir2);
         validCount += 1;
     }
 
-    if (isValid(dir2) && isValid(dir3)) {
+    if (isVal_dir2 && isVal_dir3) {
         normal += calculateSurfaceNormal(current_vertex.xyz, dir2, dir3);
         validCount += 1;
     }
 
-    if (isValid(dir3) && isValid(dir4)) {
+    if (isVal_dir3 && isVal_dir4) {
         normal += calculateSurfaceNormal(current_vertex.xyz, dir3, dir4);
         validCount += 1;
     }
 
-    if (isValid(dir4) && isValid(dir5)) {
+    if (isVal_dir4 && isVal_dir5) {
         normal += calculateSurfaceNormal(current_vertex.xyz, dir4, dir5);
         validCount += 1;
     }
 
-    if (isValid(dir5) && isValid(dir6)) {
+    if (isVal_dir5 && isVal_dir6) {
         normal += calculateSurfaceNormal(current_vertex.xyz, dir5, dir6);
         validCount += 1;
     }
 
-    if (isValid(dir6) && isValid(dir1)) {
+    if (isVal_dir6 && isVal_dir1) {
         normal += calculateSurfaceNormal(current_vertex.xyz, dir6, dir1);
         validCount += 1;
     }
