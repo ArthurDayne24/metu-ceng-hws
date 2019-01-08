@@ -103,10 +103,8 @@ void initVertexArray(int width, int height) {
     glBindVertexArray(VertexArrayId);
 }
 
-void fillVertexBuffersData(size_t size_g_vertex_buffer_data) {
+void fillVertexBuffersData(long long int size_g_vertex_buffer_data) {
     // An array of 3 vectors which represents 3 vertices
-
-    g_vertex_buffer_data = (GLfloat*) malloc(size_g_vertex_buffer_data);
 
     // TODO: check loop
     GLfloat *p = g_vertex_buffer_data;
@@ -138,6 +136,7 @@ void fillVertexBuffersData(size_t size_g_vertex_buffer_data) {
             p[16] = 0;
             p[17] = j;
 
+
             p += 18;
         }
     }
@@ -148,11 +147,10 @@ void fillVertexBuffersData(size_t size_g_vertex_buffer_data) {
 }
 
 // Call this in while loop
-void setBuffers(int numberOfTriangles) {
+void drawBuffers(int numberOfTriangles) {
     // 1st attribute buffer : vertices
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    // TODO not sure on these parameters
     glVertexAttribPointer(
             0,                     // attribute 0. No particular reason for 0, but must match the layout in the shader.
             3,                     // size
@@ -212,17 +210,23 @@ int main(int argc, char * argv[]) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
+    initTexture(argv[1], &widthTexture, &heightTexture);
+
     initVertexArray(widthTexture, heightTexture);
 
     int numberOfTriangles = 2 * widthTexture * heightTexture;
-    size_t size_g_vertex_buffer_data = sizeof(GLfloat) * numberOfTriangles * 3 * 3;
+
+    long long size_g_vertex_buffer_data = sizeof(GLfloat) * numberOfTriangles * 3 * 3;
+
+    g_vertex_buffer_data = new GLfloat[numberOfTriangles * 3 * 3];
+
+    fillVertexBuffersData(size_g_vertex_buffer_data);
 
     initShaders();
     // Get a handle for our "MVP" uniform
     // Only during the initialisation
     idMVPMatrix = (GLuint) (glGetUniformLocation(idVertexShader,
                                                  "MVP")); // TODO check signed / unsigned
-    initTexture(argv[1], &widthTexture, &heightTexture);
 
     camera_pos = new glm::vec3(widthTexture / 2, widthTexture / 10, -widthTexture / 4);
     camera_gaze = new glm::vec3(0, 0, 1);
@@ -231,8 +235,6 @@ int main(int argc, char * argv[]) {
     mvp = new glm::mat4();
 
     setMatrices();
-
-    fillVertexBuffersData(size_g_vertex_buffer_data);
 
     glfwSetKeyCallback(window, keyboard); // register key callback
     glfwSetWindowSizeCallback(window, resize); // register resize callback
@@ -247,7 +249,7 @@ int main(int argc, char * argv[]) {
         // This is done in the main loop since each model will have a different MVP matrix (At least for the M part)
         glUniformMatrix4fv(idMVPMatrix, 1, GL_FALSE, &(*mvp)[0][0]);
 
-        setBuffers(numberOfTriangles);
+        drawBuffers(numberOfTriangles);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

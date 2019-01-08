@@ -36,10 +36,10 @@ void main() {
 
   vec4 ambient = Ia * ka;
 
-  vec4 cos_diffuse = max(0, dot(vertexNormal, normalize(ToLightVector)));
+  float cos_diffuse = max(0, dot(vertexNormal, normalize(ToLightVector)));
   vec4 diffuse = Id * kd * cos_diffuse;
 
-  vec4 cos_specular =  max(0, dot(vertexNormal, normalize(ToLightVector + ToCameraVector)));
+  float cos_specular =  max(0, dot(vertexNormal, normalize(ToLightVector + ToCameraVector)));
   vec4 specular = Is * ks * pow(cos_specular, specExp);
 
   // compute the color using the following equation
