@@ -13,7 +13,15 @@ GLuint idVertexShader;
 GLuint idJpegTexture;
 GLuint idMVPMatrix;
 
+// Parameters
+GLuint idHeightFactor;
+GLuint idCameraPosition;
+GLuint idWidthTexture;
+GLuint idHeightTexture;
+
 int widthTexture, heightTexture;
+// initially
+float heightFactor;
 
 // TODO ?
 int speed = 0; // moving speed of the camera, initially zero
@@ -27,7 +35,7 @@ GLuint vertexbuffer;
 glm::mat4 *mvp;
 
 /* Camera params */
-glm::vec3 *camera_pos;
+glm::vec4 *camera_pos;
 glm::vec3 *camera_gaze;
 glm::vec3 *camera_up;
 
@@ -39,18 +47,20 @@ static void errorCallback(int error, const char * description) {
 }
 
 // Call this in while loop, I guess
-void setMatrices() {
+void setMVP() {
+    glm::vec3 camera_pos_vec3;
+    camera_pos_vec3.x = camera_pos->x;
+    camera_pos_vec3.y = camera_pos->y;
+    camera_pos_vec3.z = camera_pos->z;
+
     // Projection matrix
     glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 0.0f, 1.0f, 1000.0f);
     // Camera matrix
-    glm::mat4 View = glm::lookAt(*camera_pos, *camera_gaze, *camera_up);
+    glm::mat4 View = glm::lookAt(camera_pos_vec3, *camera_gaze, *camera_up);
     // Model matrix : an identity matrix (model will be at the origin)
     glm::mat4 Model = glm::mat4(1.0f);
     // Our ModelViewProjection : multiplication of our 3 matrices
     *mvp = Projection * View * Model;
-}
-
-void drawObject() {
 }
 
 // Keyboard functions, they are called in keyboard() function which is the key listener
@@ -111,31 +121,30 @@ void fillVertexBuffersData(long long int size_g_vertex_buffer_data) {
     for (int i = 0; i < heightTexture; i++) {
         for (int j = 0; j < widthTexture; j++) {
             // First triangle
-            p[0] = i;
+            p[0] = j;
             p[1] = 0;
-            p[2] = j;
+            p[2] = i;
 
-            p[3] = i;
+            p[3] = j+1;
             p[4] = 0;
-            p[5] = j+1;
+            p[5] = i;
 
-            p[6] = i+1;
+            p[6] = j;
             p[7] = 0;
-            p[8] = j;
+            p[8] = i+1;
 
             // Second triangle
-            p[9] = i;
+            p[9] = j+1;
             p[10] = 0;
-            p[11] = j+1;
+            p[11] = i;
 
-            p[12] = i+1;
+            p[12] = j+1;
             p[13] = 0;
-            p[14] = j+1;
+            p[14] = i+1;
 
-            p[15] = i+1;
+            p[15] = j;
             p[16] = 0;
-            p[17] = j;
-
+            p[17] = i+1;
 
             p += 18;
         }
@@ -143,11 +152,8 @@ void fillVertexBuffersData(long long int size_g_vertex_buffer_data) {
 
     glGenBuffers(1, &vertexbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, size_g_vertex_buffer_data, g_vertex_buffer_data, GL_STATIC_DRAW);
-}
+    glBufferData(GL_ARRAY_BUFFER, size_g_vertex_buffer_data, &g_vertex_buffer_data[0], GL_STATIC_DRAW);
 
-// Call this in while loop
-void drawBuffers(int numberOfTriangles) {
     // 1st attribute buffer : vertices
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -156,14 +162,15 @@ void drawBuffers(int numberOfTriangles) {
             3,                     // size
             GL_FLOAT,              // type
             GL_FALSE,              // normalized?
-            0,                     // stride
+            3 * sizeof(GLfloat),   // stride
             (void *) 0             // array buffer offset
     );
+}
 
+// Call this in while loop
+void drawBuffers(int numberOfTriangles) {
     // Draw the triangles !
     glDrawArrays(GL_TRIANGLES, 0, numberOfTriangles * 3);
-
-    glDisableVertexAttribArray(0);
 }
 
 int main(int argc, char * argv[]) {
@@ -209,6 +216,9 @@ int main(int argc, char * argv[]) {
     // Depth test TODO not sure if it is desired and where to put in code
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+    // Lighting
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
 
     initTexture(argv[1], &widthTexture, &heightTexture);
 
@@ -220,40 +230,54 @@ int main(int argc, char * argv[]) {
 
     g_vertex_buffer_data = new GLfloat[numberOfTriangles * 3 * 3];
 
-    fillVertexBuffersData(size_g_vertex_buffer_data);
-
     initShaders();
     // Get a handle for our "MVP" uniform
     // Only during the initialisation
-    idMVPMatrix = (GLuint) (glGetUniformLocation(idVertexShader,
-                                                 "MVP")); // TODO check signed / unsigned
 
-    camera_pos = new glm::vec3(widthTexture / 2, widthTexture / 10, -widthTexture / 4);
+    // start !
+    glUseProgram(idProgramShader);
+
+    camera_pos = new glm::vec4(widthTexture / 2, widthTexture / 10, -widthTexture / 4, 1);
     camera_gaze = new glm::vec3(0, 0, 1);
     camera_up = new glm::vec3(0, 1, 0); // TODO don't know
 
     mvp = new glm::mat4();
+    setMVP();
 
-    setMatrices();
+    heightFactor = 10; // initially
+
+    idMVPMatrix = static_cast<GLuint>(glGetUniformLocation(idVertexShader, "MVP"));
+    glUniformMatrix4fv(idMVPMatrix, 1, GL_FALSE, &(*mvp)[0][0]);
+
+    idCameraPosition = static_cast<GLuint>(glGetUniformLocation(idProgramShader, "cameraPosition"));
+    glUniform4fv(idCameraPosition, 1, &(*camera_pos)[0]);
+
+    idWidthTexture = static_cast<GLuint>(glGetUniformLocation(idProgramShader, "widthTexture"));
+    glUniform1f(idWidthTexture, widthTexture);
+
+    idHeightTexture = static_cast<GLuint>(glGetUniformLocation(idProgramShader, "heightTexture"));
+    glUniform1f(idHeightTexture, heightTexture);
+
+    idHeightFactor = static_cast<GLuint>(glGetUniformLocation(idProgramShader, "heightFactor"));
+    glUniform1f(idHeightFactor, heightFactor);
+
+    fillVertexBuffersData(size_g_vertex_buffer_data);
 
     glfwSetKeyCallback(window, keyboard); // register key callback
     glfwSetWindowSizeCallback(window, resize); // register resize callback
 
     while (!glfwWindowShouldClose(window)) {
-        // Clear the screen TODO desired ?
+        // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glUseProgram(idProgramShader);
-
-        // Send our transformation to the currently bound shader, in the "MVP" uniform
-        // This is done in the main loop since each model will have a different MVP matrix (At least for the M part)
-        glUniformMatrix4fv(idMVPMatrix, 1, GL_FALSE, &(*mvp)[0][0]);
 
         drawBuffers(numberOfTriangles);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    // disable vertex array at the end
+    glDisableVertexAttribArray(0);
 
     // Cleanup VBO and shader
     glDeleteBuffers(1, &vertexbuffer);
