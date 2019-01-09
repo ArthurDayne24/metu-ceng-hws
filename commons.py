@@ -2,7 +2,7 @@ import hashlib
 import sys
 
 # this flag is set to True to make tests on our local machine, see below if / else blocks
-ON_LOCAL = True
+ON_LOCAL = False
 
 # debug prints are enabled / disabled
 DEBUG = False
@@ -11,7 +11,7 @@ DEBUG = False
 RDT_WINDOW_SIZE = 16
 
 # timeout value in seconds for receiver threads waiting for ACK packets
-TIMEOUT = (2.5 * RDT_WINDOW_SIZE) * 1e-3
+TIMEOUT = 2.5 * RDT_WINDOW_SIZE * 1e-3
 
 # file size in bytes
 TOTAL_BYTES = 5 * 1000 * 1000
