@@ -6,7 +6,7 @@
 1) Run ./setntp.sh                      at source and destination to make time synchronized.
 
 2) Run sudo ./configAtBroker.sh         at broker to set routing logic
-   Run sudo ./configAtDestination.sh    at destination to set routing logic
+   Run sudo ./configAtDest.sh    at destination to set routing logic
 
 3) Run ./experimental_<NODE_NAME>.sh <EXPERIMENT> at each corresponding node to set netem/tc settings for experiments as following:
    For example:
@@ -15,7 +15,7 @@
      at router2 node, run "sudo ./experimental_router2 1.1" for experiment 1.1
      at destination node, run "sudo ./experimental_destination 1.1" for experiment 1.1
 
-   <EXPERIMENT> can be one of the [1.1, 1.2, 1.3,.. 3.3]
+   <EXPERIMENT> files are under data_part_2 and can be one of the [1.1, 1.2, 1.3,.. 3.3]
    <EXPERIMENT> can be set to "clear" without quotes to reset netem/tc settings
 
 4) Run BrokerNode.py at broker node.
