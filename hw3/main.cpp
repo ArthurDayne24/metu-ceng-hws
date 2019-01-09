@@ -2,6 +2,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/vec3.hpp"
+#include "glm/gtc/type_ptr.hpp"
 #include <vector>
 
 static GLFWwindow *window = nullptr;
@@ -22,9 +23,14 @@ GLuint idHeightTexture;
 int widthTexture, heightTexture;
 // initially
 float heightFactor;
+float pitchAngle;
+float yawAngle = 90.0f;
 
 // TODO ?
-int speed = 0; // moving speed of the camera, initially zero
+float speed = 0; // moving speed of the camera, initially zero
+
+bool isFullscreen = false;
+int oldPosX, oldPosY;
 
 /* Data and their buffers */
 // Vertices
@@ -53,50 +59,102 @@ void setMVP() {
     camera_pos_vec3.y = camera_pos->y;
     camera_pos_vec3.z = camera_pos->z;
 
+    // if we have speed, then we move the eye position in gaze direction
+    camera_pos_vec3 += speed * (*camera_gaze);
+
     // Projection matrix
-    glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 0.0f, 1.0f, 1000.0f);
+    glm::mat4 Projection = glm::perspective(45.0f, 1.0f, 0.1f, 1000.0f);
     // Camera matrix
-    glm::mat4 View = glm::lookAt(camera_pos_vec3, *camera_gaze, *camera_up);
+    glm::mat4 View = glm::lookAt(camera_pos_vec3, (*camera_gaze) + camera_pos_vec3, *camera_up);
     // Model matrix : an identity matrix (model will be at the origin)
     glm::mat4 Model = glm::mat4(1.0f);
     // Our ModelViewProjection : multiplication of our 3 matrices
     *mvp = Projection * View * Model;
+
+    camera_pos->x = camera_pos_vec3.x;
+    camera_pos->y = camera_pos_vec3.y;
+    camera_pos->z = camera_pos_vec3.z;
+    //cout << camera_pos->x << "," << camera_pos->y << "," << camera_pos->z << endl;
+    glUniformMatrix4fv(idMVPMatrix, 1, GL_FALSE, glm::value_ptr(*mvp));
+    glUniform4fv(idCameraPosition, 1, glm::value_ptr(*camera_pos));    
 }
 
 // Keyboard functions, they are called in keyboard() function which is the key listener
-void increaseHeightFactor(){}
-void decreaseHeightFactor(){}
+void increaseHeightFactor(){
+    heightFactor += 0.5;
+    // get heightfactor parameter from shader and update it 
+    glUniform1f(idHeightFactor, heightFactor);
+}
+void decreaseHeightFactor(){
+    heightFactor -= 0.5;
+    // get heightfactor parameter from shader and update it 
+    glUniform1f(idHeightFactor, heightFactor);
+}
 
-void pitchUp(){}
-void pitchDown(){}
+void updateGaze(){
+    camera_gaze->x = cos(glm::radians(pitchAngle)) * cos(glm::radians(yawAngle));
+    camera_gaze->y = sin(glm::radians(pitchAngle));
+    camera_gaze->z = cos(glm::radians(pitchAngle)) * sin(glm::radians(yawAngle));
+}
 
-void yawLeft(){}
-void yawRight(){}
+void pitchUp(){
+    pitchAngle += 0.6;
+    updateGaze();
+}
+void pitchDown(){
+    pitchAngle -= 0.6;
+    updateGaze();
+}
+// TODO: yaw might need to be reversed
+void yawLeft(){
+    yawAngle -= 0.6;
+    updateGaze();
+}
+void yawRight(){
+    yawAngle += 0.6;
+    updateGaze();
+}
 
 // TODO: hata olabilir bunlarda !
 void increaseSpeed(){
     speed++;
 }
 void decreaseSpeed(){
-    if (speed > 0) speed--;
+    speed--;
 }
 
-void fullscreenToggle(){}
+void fullscreenToggle(){
+    if (isFullscreen){
+        // get back to windowed, set window monitor to null and set viewport back to default
+        glfwSetWindowMonitor(window, NULL, oldPosX, oldPosY, 600, 600, GL_DONT_CARE);
+        glViewport(0, 0, 600, 600);
+        isFullscreen = false;
+    }
+    else{
+        // get to fullscreen mode, get the primary monitor, set window monitor to this and set viewport accordingly
+        glfwGetWindowPos(window, &oldPosX, &oldPosY);
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* videoMode = glfwGetVideoMode(monitor);
+        glfwSetWindowMonitor (window, monitor, 0, 0, videoMode->width, videoMode->height, GL_DONT_CARE);
+        glViewport(0, 0, videoMode->width, videoMode->height);
+        isFullscreen = true;
+    }
+}
 
 // Key event function which listens all key events
 void keyboard(GLFWwindow *window, int key, int scancode, int action, int mods) {
     // height factor
-    if (key == GLFW_KEY_O && action == GLFW_PRESS) increaseHeightFactor();
-    else if (key == GLFW_KEY_L && action == GLFW_PRESS) decreaseHeightFactor();
+    if (key == GLFW_KEY_O && (action == GLFW_PRESS || action == GLFW_REPEAT)) increaseHeightFactor();
+    else if (key == GLFW_KEY_L && (action == GLFW_PRESS || action == GLFW_REPEAT)) decreaseHeightFactor();
     // pitch
-    else if (key == GLFW_KEY_W && action == GLFW_PRESS) pitchUp();
-    else if (key == GLFW_KEY_S && action == GLFW_PRESS) pitchDown();
+    else if (key == GLFW_KEY_W && (action == GLFW_PRESS || action == GLFW_REPEAT)) pitchUp();
+    else if (key == GLFW_KEY_S && (action == GLFW_PRESS || action == GLFW_REPEAT)) pitchDown();
     // yaw
-    else if (key == GLFW_KEY_A && action == GLFW_PRESS) yawLeft();
-    else if (key == GLFW_KEY_D && action == GLFW_PRESS) yawRight();
+    else if (key == GLFW_KEY_A && (action == GLFW_PRESS || action == GLFW_REPEAT)) yawLeft();
+    else if (key == GLFW_KEY_D && (action == GLFW_PRESS || action == GLFW_REPEAT)) yawRight();
     // speed
-    else if (key == GLFW_KEY_U && action == GLFW_PRESS) increaseSpeed();
-    else if (key == GLFW_KEY_J && action == GLFW_PRESS) decreaseSpeed();
+    else if (key == GLFW_KEY_U && (action == GLFW_PRESS || action == GLFW_REPEAT)) increaseSpeed();
+    else if (key == GLFW_KEY_J && (action == GLFW_PRESS || action == GLFW_REPEAT)) decreaseSpeed();
     // fullscreen
     else if (key == GLFW_KEY_F && action == GLFW_PRESS) fullscreenToggle();
 }
@@ -104,6 +162,8 @@ void keyboard(GLFWwindow *window, int key, int scancode, int action, int mods) {
 // Window resize callback
 void resize(GLFWwindow* window, int width, int height) {
     // TODO: implement
+    //glfwGetWindowSize(win, &width, &height);
+    glViewport(0, 0, width, height );
 }
 
 // XXX: Call this before windows is created and before any other OpenGL call
@@ -155,8 +215,6 @@ void fillVertexBuffersData(long long int size_g_vertex_buffer_data) {
     glBufferData(GL_ARRAY_BUFFER, size_g_vertex_buffer_data, &g_vertex_buffer_data[0], GL_STATIC_DRAW);
 
     // 1st attribute buffer : vertices
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
     glVertexAttribPointer(
             0,                     // attribute 0. No particular reason for 0, but must match the layout in the shader.
             3,                     // size
@@ -165,12 +223,13 @@ void fillVertexBuffersData(long long int size_g_vertex_buffer_data) {
             3 * sizeof(GLfloat),   // stride
             (void *) 0             // array buffer offset
     );
+    glEnableVertexAttribArray(0);
 }
 
 // Call this in while loop
 void drawBuffers(int numberOfTriangles) {
     // Draw the triangles !
-    glDrawArrays(GL_TRIANGLES, 0, numberOfTriangles * 3);
+    glDrawArrays(GL_TRIANGLES, 0, numberOfTriangles * 18);
 }
 
 int main(int argc, char * argv[]) {
@@ -198,6 +257,8 @@ int main(int argc, char * argv[]) {
     }
     glfwMakeContextCurrent(window);
 
+    glViewport(0,0,600,600);
+
     GLenum err = glewInit();
     if (err != GLEW_OK) {
         fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
@@ -211,7 +272,7 @@ int main(int argc, char * argv[]) {
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
     // Dark blue background TODO not sure if it is desired
-    glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     // Depth test TODO not sure if it is desired and where to put in code
     glEnable(GL_DEPTH_TEST);
@@ -226,9 +287,9 @@ int main(int argc, char * argv[]) {
 
     int numberOfTriangles = 2 * widthTexture * heightTexture;
 
-    long long size_g_vertex_buffer_data = sizeof(GLfloat) * numberOfTriangles * 3 * 3;
+    long long size_g_vertex_buffer_data = sizeof(GLfloat) * numberOfTriangles * 3 * 6;
 
-    g_vertex_buffer_data = new GLfloat[numberOfTriangles * 3 * 3];
+    g_vertex_buffer_data = new GLfloat[numberOfTriangles * 3 * 6];
 
     initShaders();
     // Get a handle for our "MVP" uniform
@@ -237,20 +298,20 @@ int main(int argc, char * argv[]) {
     // start !
     glUseProgram(idProgramShader);
 
-    camera_pos = new glm::vec4(widthTexture / 2, widthTexture / 10, -widthTexture / 4, 1);
-    camera_gaze = new glm::vec3(0, 0, 1);
-    camera_up = new glm::vec3(0, 1, 0); // TODO don't know
+    camera_pos = new glm::vec4((float)widthTexture / 2, (float)widthTexture / 10, (float)-widthTexture / 4, 1);
+    camera_gaze = new glm::vec3(0.0f, 0.0f, 1.0f);
+    camera_up = new glm::vec3(0.0f, 1.0f, 0.0f); // TODO don't know
 
     mvp = new glm::mat4();
-    setMVP();
+    //setMVP();
 
     heightFactor = 10; // initially
 
-    idMVPMatrix = static_cast<GLuint>(glGetUniformLocation(idVertexShader, "MVP"));
-    glUniformMatrix4fv(idMVPMatrix, 1, GL_FALSE, &(*mvp)[0][0]);
+    idMVPMatrix = static_cast<GLuint>(glGetUniformLocation(idProgramShader, "MVP"));
+    glUniformMatrix4fv(idMVPMatrix, 1, GL_FALSE, glm::value_ptr(*mvp));
 
     idCameraPosition = static_cast<GLuint>(glGetUniformLocation(idProgramShader, "cameraPosition"));
-    glUniform4fv(idCameraPosition, 1, &(*camera_pos)[0]);
+    glUniform4fv(idCameraPosition, 1, glm::value_ptr(*camera_pos));
 
     idWidthTexture = static_cast<GLuint>(glGetUniformLocation(idProgramShader, "widthTexture"));
     glUniform1f(idWidthTexture, widthTexture);
@@ -269,6 +330,9 @@ int main(int argc, char * argv[]) {
     while (!glfwWindowShouldClose(window)) {
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        //glUseProgram(idProgramShader);
+        setMVP();
 
         drawBuffers(numberOfTriangles);
 

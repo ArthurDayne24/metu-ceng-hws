@@ -23,7 +23,7 @@ out vec3 ToLightVector;     // Vector from Vertex to Light; differences
 out vec3 ToCameraVector;    // Vector from Vertex to Camera; differences
 
 vec3 calculateToCameraVector(vec3 v) {
-    return cameraPosition.xyz - v;
+    return normalize(cameraPosition.xyz - v);
 }
 
 vec3 calculateToLightVector(vec3 v) {
@@ -33,7 +33,7 @@ vec3 calculateToLightVector(vec3 v) {
     lightPositionVec3.y = float(widthTexture) + float(heightTexture);
     lightPositionVec3.z = float(heightTexture) / 2.0f;
 
-    return lightPositionVec3 - v;
+    return normalize(lightPositionVec3 - v);
 }
 
 float calculateHeight(vec3 v) {
