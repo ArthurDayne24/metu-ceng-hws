@@ -23,7 +23,12 @@ then
     # for facebook
     ufw deny out from any to 157.240.9.35
     # for telnet
+    # B -> A
     ufw deny proto tcp from ${HOSTB} to any
+    # A -> B
+    ufw deny out proto tcp from any to ${HOSTB}
+    # for https (443)
+    ufw deny out from any to any port 443
 
     ufw reload
 
