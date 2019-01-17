@@ -99,16 +99,25 @@ print_payload(const u_char *payload, int len);
 
 
 /*
- * HW3C functions
+ * HW3C tasks and callbacks
  */
 void
 got_packet_task1(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
+
 void
 got_packet_task2(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
+
 void
 task1_2(int argc, char **argv);
+
 void
 task3(int argc, char **argv);
+
+/*
+ * Error and warning handlers
+ */
+void
+error_exit(const char *msg);
 
 #ifndef HW3_COMMONS_H
 #define HW3_COMMONS_H

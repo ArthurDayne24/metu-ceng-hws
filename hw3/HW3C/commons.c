@@ -1,7 +1,6 @@
 #include "commons.h"
 
-void
-print_hex_ascii_line(const u_char *payload, int len, int offset) {
+void print_hex_ascii_line(const u_char *payload, int len, int offset) {
 
     int i;
     int gap;
@@ -48,8 +47,7 @@ print_hex_ascii_line(const u_char *payload, int len, int offset) {
 /*
  * print packet payload data (avoid printing binary data)
  */
-void
-print_payload(const u_char *payload, int len) {
+void print_payload(const u_char *payload, int len) {
 
     int len_rem = len;
     int line_width = 16;            /* number of bytes per line */
@@ -85,5 +83,11 @@ print_payload(const u_char *payload, int len) {
             break;
         }
     }
+}
 
+void error_exit(const char *msg) {
+    if (msg != NULL) {
+        fprintf(stderr, "Error: %s\n", msg);
+    }
+    exit(1);
 }

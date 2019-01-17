@@ -9,22 +9,20 @@ got_packet_task1(u_char *args, const struct pcap_pkthdr *header, const u_char *p
     /* packet counter */
     static long long unsigned count = 1;
 
-    /* declare pointers to packet headers */
     /* The IP header */
     const struct sniff_ip *ip;
 
     int size_ip;
 
-    printf("\nPacket number %llu:\n", count);
-    count++;
-
     /* define/compute ip header offset */
     ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
     size_ip = IP_HL(ip)*4;
     if (size_ip < 20) {
-        printf("   * Invalid IP header length: %u bytes, skipped\n", size_ip);
+        printf("   * Invalid IP header length: %u bytes, skipped.\n", size_ip);
         return;
     }
+
+    printf("\nPacket number %llu:\n", count++);
 
     /* print source and destination IP addresses */
     printf("       From: %s\n", inet_ntoa(ip->ip_src));
@@ -37,24 +35,23 @@ got_packet_task1(u_char *args, const struct pcap_pkthdr *header, const u_char *p
 void
 got_packet_task2(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
 
-    static long long unsigned count = 1;                   /* packet counter */
+    /* packet counter */
+    static long long unsigned count = 1;
 
-    /* declare pointers to packet headers */
-    const struct sniff_ip *ip;              /* The IP header */
-    const char *payload;                    /* Packet payload */
+    /* The IP header */
+    const struct sniff_ip *ip;
+    /* Packet payload */
+    const char *payload;
 
     int size_ip;
     int size_tcp;
     int size_payload;
 
-    printf("\nPacket number %llu:\n", count);
-    count++;
-
     /* define/compute ip header offset */
     ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
     size_ip = IP_HL(ip)*4;
     if (size_ip < 20) {
-        printf("   * Invalid IP header length: %u bytes\n", size_ip);
+        printf("   * Invalid IP header length: %u bytes, skipped.\n", size_ip);
         return;
     }
 
@@ -63,26 +60,19 @@ got_packet_task2(u_char *args, const struct pcap_pkthdr *header, const u_char *p
         case IPPROTO_TCP:
             break;
         case IPPROTO_ICMP:
-            return;
+            break;
         default:
-            printf("   Protocol: unknown\n");
             return;
     }
 
     if (ip->ip_p == IPPROTO_TCP) {
         // TCP
 
-        printf("   Protocol: TCP\n");
-
-        /* print source and destination IP addresses */
-        printf("       From: %s\n", inet_ntoa(ip->ip_src));
-        printf("         To: %s\n", inet_ntoa(ip->ip_dst));
-
         /* define/compute tcp header offset */
         const struct sniff_tcp *tcp = (struct sniff_tcp *) (packet + SIZE_ETHERNET + size_ip);
         size_tcp = TH_OFF(tcp) * 4;
         if (size_tcp < 20) {
-            printf("   * Invalid TCP header length: %u bytes, skipped\n", size_tcp);
+            printf("   * Invalid TCP header length: %u bytes, skipped.\n", size_tcp);
             return;
         }
 
@@ -90,6 +80,14 @@ got_packet_task2(u_char *args, const struct pcap_pkthdr *header, const u_char *p
         uint16_t dport = ntohs(tcp->th_dport);
 
         if (dport >= 10 && dport <= 100) {
+
+            printf("\nPacket number %llu:\n", count++);
+
+            printf("   Protocol: TCP\n");
+
+            /* print source and destination IP addresses */
+            printf("       From: %s\n", inet_ntoa(ip->ip_src));
+            printf("         To: %s\n", inet_ntoa(ip->ip_dst));
 
             printf("   Src port: %d\n", sport);
             printf("   Dst port: %d\n", dport);
@@ -113,14 +111,18 @@ got_packet_task2(u_char *args, const struct pcap_pkthdr *header, const u_char *p
     else {
         // ICMP
 
+        printf("\nPacket number %llu:\n", count++);
+
         printf("   Protocol: ICMP\n");
 
         struct in_addr sip = ip->ip_src;
         struct in_addr dip = ip->ip_dst;
 
-        // TODO implement input mechanism
-        struct in_addr desired_dip;
-        if (dip.s_addr == desired_dip.s_addr) {
+        // convert desired ip address (string) to s_addr form
+        struct in_addr other_host_ip;
+        inet_pton(AF_INET, (const char *) args, &other_host_ip.s_addr);
+
+        if (dip.s_addr == other_host_ip.s_addr || sip.s_addr == other_host_ip.s_addr) {
 
             /* print source and destination IP addresses */
             printf("       From: %s\n", inet_ntoa(sip));
@@ -138,7 +140,6 @@ got_packet_task2(u_char *args, const struct pcap_pkthdr *header, const u_char *p
 
 void task1_2(int argc, char **argv)
 {
-
     char *dev = NULL;               /* capture device name */
     char errbuf[PCAP_ERRBUF_SIZE];  /* error buffer */
     pcap_t *handle;                 /* packet capture handle */
@@ -154,8 +155,7 @@ void task1_2(int argc, char **argv)
     if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
         fprintf(stderr, "Couldn't get netmask for device %s: %s\n",
                 dev, errbuf);
-        net = 0;
-        mask = 0;
+        error_exit(NULL);
     }
 
     /* print capture info */
@@ -166,27 +166,27 @@ void task1_2(int argc, char **argv)
     handle = pcap_open_live(dev, SNAP_LEN, 1, 1000, errbuf);
     if (handle == NULL) {
         fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
-        exit(EXIT_FAILURE);
+        error_exit(NULL);
     }
 
     /* make sure we're capturing on an Ethernet device [2] */
     if (pcap_datalink(handle) != DLT_EN10MB) {
         fprintf(stderr, "%s is not an Ethernet\n", dev);
-        exit(EXIT_FAILURE);
+        error_exit(NULL);
     }
 
     /* compile the filter expression */
     if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
         fprintf(stderr, "Couldn't parse filter %s: %s\n",
                 filter_exp, pcap_geterr(handle));
-        exit(EXIT_FAILURE);
+        error_exit(NULL);
     }
 
     /* apply the compiled filter */
     if (pcap_setfilter(handle, &fp) == -1) {
         fprintf(stderr, "Couldn't install filter %s: %s\n",
                 filter_exp, pcap_geterr(handle));
-        exit(EXIT_FAILURE);
+        error_exit(NULL);
     }
 
     /* now we can set our callback function */
@@ -196,7 +196,7 @@ void task1_2(int argc, char **argv)
     }
         // task2
     else {
-        pcap_loop(handle, -1, got_packet_task2, NULL);
+        pcap_loop(handle, -1, got_packet_task2, (u_char *) argv[3]);
     }
 
     /* cleanup */

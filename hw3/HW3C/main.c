@@ -1,4 +1,4 @@
-
+#include "commons.h"
 
 /*
  * arguments can be:
@@ -17,8 +17,7 @@ int main(int argc, char **argv)
         task3(argc, argv);
     }
     else {
-        printf("Wrong arguments are given\n");
-        exit(1);
+        error_exit("Wrong arguments are given.");
     }
 
     return 0;
