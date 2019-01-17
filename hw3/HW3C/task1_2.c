@@ -138,7 +138,8 @@ got_packet_task2(u_char *args, const struct pcap_pkthdr *header, const u_char *p
     }
 }
 
-void task1_2(int argc, char **argv)
+void
+task1_2(int argc, char **argv)
 {
     char *dev = NULL;               /* capture device name */
     char errbuf[PCAP_ERRBUF_SIZE];  /* error buffer */
