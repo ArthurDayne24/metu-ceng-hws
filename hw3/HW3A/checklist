@@ -1,9 +1,0 @@
-+ Prevent A from doing telnet to Machine B.
-+ Prevent B from doing telnet to Machine A.
-+ Prevent A from visiting an external web site (e.g.  Facebook).  You can
-  choose any web site that you like to block, but keep in mind, some web
-  servers have multiple IP addresses.
-+ Prevent all traffic that has a destination port of 443 and show that you
-  are not able to access a server using HTTPS after implementing this rule.
-+ Prevent all ICMP traffic and show that you are not able to ping another
-  machine.

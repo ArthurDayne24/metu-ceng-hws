@@ -99,7 +99,7 @@ print_payload(const u_char *payload, int len);
 
 
 /*
- * HW3C tasks and callbacks
+ * HW3C task handler and callbacks
  */
 void
 got_packet_task1(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
@@ -108,13 +108,13 @@ void
 got_packet_task2(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
 
 void
-task1_2(int argc, char **argv);
+got_packet_task3(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
 
 void
-task3(int argc, char **argv);
+run_task(int argc, char **argv);
 
 /*
- * Error and warning handlers
+ * Error handler
  */
 void
 error_exit(const char *msg);
