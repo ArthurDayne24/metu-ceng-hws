@@ -10,18 +10,21 @@ then
     ufw reset
     ufw disable
 
+    ufw reload
+    
     exit
 fi
 
-HOSTB=192.168.1.40
+HOSTB=10.0.2.5
 WEBSITEIP=157.240.9.35
 
-if [[ "$#" -eq 4 ]]; then
-    ${WEBSITEIP} = $3
+if [[ "$#" -eq 3 ]]; then
+    WEBSITEIP=$3
+    HOSTB=$2
 fi
 
-if [[ "$#" -eq 3 ]]; then
-    ${HOSTB} = $2
+if [[ "$#" -eq 2 ]]; then
+    HOSTB=$2
 fi
 
 # enable firewall
@@ -33,14 +36,14 @@ then
     # for icmp packets
     cp etc.ufw.before.rules /etc/ufw/before.rules
     # for facebook
-    ufw deny out from any to ${WEBSITEIP}
+    ufw deny out from 10.0.2.4 to ${WEBSITEIP}
     # for telnet
     # B -> A
-    ufw deny proto tcp from ${HOSTB} to any
+    ufw deny proto tcp from ${HOSTB} to 10.0.2.4 port 23
     # A -> B
-    ufw deny out proto tcp from any to ${HOSTB}
+    ufw deny out from 10.0.2.4 to ${HOSTB} port 23
     # for https (443)
-    ufw deny out from any to any port 443
+    ufw deny out from 10.0.2.4 to any port 443
 
     ufw reload
 
