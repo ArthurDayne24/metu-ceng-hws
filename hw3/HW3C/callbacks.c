@@ -48,7 +48,7 @@ got_packet_task2(u_char *args, const struct pcap_pkthdr *header, const u_char *p
     int size_payload;
 
     /* define/compute ip header offset */
-    ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
+    ip = (struct sniff_ip*) (packet + SIZE_ETHERNET);
     size_ip = IP_HL(ip)*4;
     if (size_ip < 20) {
         printf("   * Invalid IP header length: %u bytes, skipped.\n", size_ip);
@@ -81,7 +81,7 @@ got_packet_task2(u_char *args, const struct pcap_pkthdr *header, const u_char *p
 
         if (dport >= 10 && dport <= 100) {
 
-            printf("\nPacket number %llu:\n", count++);
+            printf("\nTCP packet number %llu:\n", count++);
 
             printf("   Protocol: TCP\n");
 
@@ -122,7 +122,7 @@ got_packet_task2(u_char *args, const struct pcap_pkthdr *header, const u_char *p
 
         if ((dip.s_addr == host1_ip.s_addr && sip.s_addr == host2_ip.s_addr) || (dip.s_addr == host2_ip.s_addr && sip.s_addr == host1_ip.s_addr)) {
 
-            printf("\nPacket number %llu:\n", count++);
+            printf("\nICMP packet number %llu:\n", count++);
 
             printf("   Protocol: ICMP\n");
 
@@ -159,7 +159,7 @@ got_packet_task3(u_char *args, const struct pcap_pkthdr *header, const u_char *p
     int size_payload;
 
     /* define/compute ip header offset */
-    ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
+    ip = (struct sniff_ip*) (packet + SIZE_ETHERNET);
     size_ip = IP_HL(ip)*4;
     if (size_ip < 20) {
         printf("   * Invalid IP header length: %u bytes, skipped.\n", size_ip);
@@ -180,31 +180,33 @@ got_packet_task3(u_char *args, const struct pcap_pkthdr *header, const u_char *p
         uint16_t sport = ntohs(tcp->th_sport);
         uint16_t dport = ntohs(tcp->th_dport);
 
-        // TODO how to identify if it is telnet ?
-        printf("\nPacket number %llu:\n", count++);
+        if (sport == 23 || dport == 23) {
 
-        printf("   Protocol: TCP\n");
+            printf("\nPacket number %llu:\n", count++);
 
-        /* print source and destination IP addresses */
-        printf("       From: %s\n", inet_ntoa(ip->ip_src));
-        printf("         To: %s\n", inet_ntoa(ip->ip_dst));
+            printf("   Protocol: TCP\n");
 
-        printf("   Src port: %d\n", sport);
-        printf("   Dst port: %d\n", dport);
+            /* print source and destination IP addresses */
+            printf("       From: %s\n", inet_ntoa(ip->ip_src));
+            printf("         To: %s\n", inet_ntoa(ip->ip_dst));
 
-        /* define/compute tcp payload (segment) offset */
-        payload = (const char *) (u_char *) (packet + SIZE_ETHERNET + size_ip + size_tcp);
+            printf("   Src port: %d\n", sport);
+            printf("   Dst port: %d\n", dport);
 
-        /* compute tcp payload (segment) size */
-        size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
+            /* define/compute tcp payload (segment) offset */
+            payload = (const char *) (u_char *) (packet + SIZE_ETHERNET + size_ip + size_tcp);
 
-        /*
-         * Print payload data; it might be binary, so don't just
-         * treat it as a string.
-         */
-        if (size_payload > 0) {
-            printf("   Payload (%d bytes):\n", size_payload);
-            print_payload((const u_char *) payload, size_payload);
+            /* compute tcp payload (segment) size */
+            size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
+
+            /*
+             * Print payload data; it might be binary, so don't just
+             * treat it as a string.
+             */
+            if (size_payload > 0) {
+                printf("   Payload (%d bytes):\n", size_payload);
+                print_payload((const u_char *) payload, size_payload);
+            }
         }
     }
 }

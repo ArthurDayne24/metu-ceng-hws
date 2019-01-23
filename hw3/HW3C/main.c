@@ -58,6 +58,7 @@ run_task(int argc, char **argv)
     // task2
     else if (strcmp(argv[1], "task2") == 0) {
         char ips[100];
+        memset(ips, 0, 100);
         strcpy(ips, argv[3]);
         strcpy(ips+50, argv[4]);
         pcap_loop(handle, -1, got_packet_task2, (u_char *) ips);
