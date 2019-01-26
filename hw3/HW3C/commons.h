@@ -1,3 +1,6 @@
+#ifndef HW3_COMMONS_H
+#define HW3_COMMONS_H
+
 #define APP_NAME        "sniffex"
 #define APP_DESC        "Sniffer example using libpcap"
 #define APP_COPYRIGHT   "Copyright (c) 2005 The Tcpdump Group"
@@ -118,8 +121,5 @@ run_task(int argc, char **argv);
  */
 void
 error_exit(const char *msg);
-
-#ifndef HW3_COMMONS_H
-#define HW3_COMMONS_H
 
 #endif //HW3_COMMONS_H
