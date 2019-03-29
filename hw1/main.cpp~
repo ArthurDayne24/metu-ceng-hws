@@ -1,0 +1,64 @@
+#include <iostream>
+#include "parser.h"
+#include "ppm.h"
+
+    const RGB BAR_COLOR[8] =
+    {
+        { 255, 255, 255 },  // 100% White
+        { 255, 255,   0 },  // Yellow
+        {   0, 255, 255 },  // Cyan
+        {   0, 255,   0 },  // Green
+        { 255,   0, 255 },  // Magenta
+        { 255,   0,   0 },  // Red
+        {   0,   0, 255 },  // Blue
+        {   0,   0,   0 },  // Black
+    };
+
+typedef unsigned char RGB[3];
+
+int main(int argc, char* argv[])
+{
+    parser::Scene scene;
+
+    scene.loadFromXml(argv[1]);
+
+    for (const parser::Camera & camera: scene.cameras) {
+
+        int width = camera.image_width, height = camera.image_height;
+        unsigned char* image = new unsigned char [width * height * 3];
+        
+        int i = 0;
+        
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+
+                parser::CameraRay cameraRay(camera, x, y);
+
+                image[i] = image[i+1] = image[i+2] = 0;
+                
+                for (const parser::Mesh & o: scene.meshes) {
+                    if (cameraRay.intersects(o, scene.vertex_data, intersection)) {
+                        image[i] = image[i+1] = image[i+2] = 255;
+                    }
+                }
+                for (const parser::Triangle & o: scene.triangles) {
+                    if (cameraRay.intersects(o, scene.vertex_data, intersection)) {
+                        image[i] = image[i+1] = image[i+2] = 255;
+                    }
+                }
+                for (const parser::Sphere & o: scene.spheres) {
+                    if (cameraRay.intersects(o, scene.vertex_data, intersection)) {
+                        image[i] = image[i+1] = image[i+2] = 255;
+                    }
+                }
+
+                i += 3;
+            }
+        }
+
+        write_ppm(camera.image_name.c_str(), image, width, height);
+        
+        delete image;
+    }
+}
+
