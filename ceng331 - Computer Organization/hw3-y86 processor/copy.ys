@@ -1,0 +1,60 @@
+# 2099380
+# Onur Can TIRTIR
+
+# what to store ?
+# stack size?
+
+.pos 0
+
+init:
+        irmovq stack, %rsp
+        irmovq stack, %rbp
+        call main
+        halt
+
+.align8
+
+src:
+        .quad 0x00a
+        .quad 0x0b0
+        .quad 0xc00
+
+dest:
+        .quad 0x111
+        .quad 0x222
+        .quad 0x333
+
+main:
+        irmovq  src, %rdi
+        irmovq  dest, %rsi
+        irmovq  $3, %rdx
+        call    copy_block
+        ret
+
+# begin copy_block
+copy_block:
+        irmovq  $0x1, %r8
+        irmovq  $0x8, %r9
+        xorq    %rax, %rax
+        jmp     test
+
+loop:
+        mrmovq    (%rdi), %rcx
+        rmmovq    %rcx, (%rsi)
+        xorq      %rcx, %rax
+        subq      %r8, %rdx
+        addq      %r9, %rsi
+        addq      %r9, %rdi
+
+test:
+        andq   %rdx,%rdx
+        jg     loop
+
+end:
+        ret   
+# end of copy_block
+
+.pos 0x200
+
+stack:
+

@@ -1,0 +1,32 @@
+<canvas id="canv1" width="800" height="600">
+</canvas>
+<script>
+var points = {{points}};
+
+var edges = {{edges}};
+
+var c = document.getElementById("canv1");
+var ctx = c.getContext("2d");
+var xs = 3, ys = 2;
+
+ctx.font = "10px sanserif";
+for (pid in points) {
+        ctx.beginPath();
+        ctx.fillStyle="#FF8080";
+        ctx.arc(points[pid][0]*xs,points[pid][1]*ys, 3.0, 0,2*Math.PI);
+        ctx.fill(); 
+        ctx.fillStyle="#000000";
+        ctx.fillText(pid,points[pid][0]*xs+4, points[pid][1]*ys+4); 
+}
+for (eid in edges) {
+        var p1x=points[edges[eid][0]][0]*xs;
+        var p1y=points[edges[eid][0]][1]*ys;
+        var p2x=points[edges[eid][1]][0]*xs;
+        var p2y=points[edges[eid][1]][1]*ys;
+        ctx.beginPath();
+        ctx.strokeStyle="#1010a0";
+        ctx.moveTo(p1x, p1y); ctx.lineTo(p2x, p2y);
+        ctx.stroke();
+}
+
+</script>

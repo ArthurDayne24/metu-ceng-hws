@@ -1,0 +1,269 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{commath}
+\usepackage{enumitem}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mdframed}
+
+\usepackage[hmargin=3cm,vmargin=6.0cm]{geometry}
+%\topmargin=0cm
+\topmargin=-2cm
+\addtolength{\textheight}{6.5cm}
+\addtolength{\textwidth}{2.0cm}
+%\setlength{\leftmargin}{-5cm}
+\setlength{\oddsidemargin}{0.0cm}
+\setlength{\evensidemargin}{0.0cm}
+
+%misc libraries goes here
+
+\begin{document}
+
+\section*{Student Information } 
+%Write your full name and id number between the colon and newline
+%Put one empty space character after colon and before newline
+Full Name :  Onur Can TIRTIR\\
+Id Number :  2099380\\
+
+% Write your answers below the section tags
+\section*{Answer 1}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item $x$ is to be an \textit{n-tuple} such that $x=(x_1, x_2,\dots x_n)$
+
+\begin{align*}
+	\prod_{k=1}^{n} A_k = & A_1\times A_2\times\dots \times A_n\\
+						= & \{x\in E \mid x_1\in A_1 \wedge x_2\in A_2 \wedge\dots \wedge x_n\in A_n\}\\
+						= & \{x\in E \mid f_1(x)\in A_1 \wedge f_2(x)\in A_2 \wedge\dots \wedge f_n(x)\in A_n\}\\
+						= & \{x\in E \mid f_1(x)\in A_1\}\cap \{x\in E \mid f_2(x)\in A_2\}\cap\dots \cap \{x\in E \mid f_n(x)\in A_n\}\\
+						= & f_{1}^{-1}(A_1)\cap f_{2}^{-1}(A_2)\cap\dots \cap f_{n}^{-1}(A_n)\\
+						= & \cap_{k=1}^{n} f_{k}^{-1}(A_k)
+\end{align*}
+	
+\item Take $n=2$, $A_1=\{a_1, a_2\}$ and $A_2=\{b_1, b_2\}$\\
+$x_\alpha$ and $x_\beta$ are to be an \textit{n-tuples}, take $x_\alpha=(a_1, b_2)\in E$ and $x_\beta=(a_2, b_2)\in E$.\\
+Then $f_2(x_\alpha)=f_2(x_\beta)=b_2$, hence there exists some $x_\alpha\neq x_\beta$ such that $f(x_\alpha)=f(x_\beta)$.\\
+Then by definiton of 1-1 function, $f_2$ is not 1-1.
+
+\item For example, every element in $E_1$ exists in at least one of the \textit{n-tuples} of $E$ because of the definition of \textit{cartesian product}. Let $x\in E$ be an \textit{n-tuple}. Then we can conclude;\\
+For all $x_k$'s where $k=1, 2,\dots, cardinality(E_1)$; \quad $\exists{x}$($x_k=f_1(x)$ where $x_k\in E_1=codomain(f_1))$.\\
+Then $f_i$ is an onto function.
+
+\item 
+
+\begin{align*}
+	\overline{f_{k}^{-1}(A_k)} = & \{x\in E \mid f_k(x)\notin A_k\} && \text{by the definition of complement}\\
+							   = & \{x\in E \mid f_k(x)\in \overline{A_k}\} &&\text{by the definition of complement}\\
+							   = & f_{k}^{-1}(\overline{A_k})
+\end{align*}
+
+\item Depending on $n$, there are 2 different cases in question for \textit{cartesian product}.
+
+\begin{enumerate}[label=(\roman*)]
+
+\item when $n=1$:
+
+$\overline{A_1}\times \prod_{k=2}^{n} E_k = \overline{A_1} = \overline{A_1\times \prod_{k=2}^{n} E_k}$
+
+\item Say $P=\prod_{k=2}^{n} E_k$.\\
+\begin{align*}
+	\overline{A_1}\times \prod_{k=2}^{n} E_k = & (E_1\setminus A_1)\times (\prod_{k=2}^{n} E_k) &&\text{by the definition of complement}\\
+			 							     = & (E_1\setminus A_1)\times P
+\end{align*}
+
+Take an arbitrary $x\in E_1\setminus A_1$ and an arbitrary y such that $y\in P=\prod_{k=2}^{n}$.\\ \\
+(Note: \textit{When $n=2$, y is an element of $E_2$ and in that case $(x,y)$ is a pair.\\When $n>2$, y is an $n-1$ tuple such that $y=(y_2, y_3,\dots, y_n)$ and $y_k\in E_k$ for every $k=2,3,\dots,n$. In that case $(x,y)=(x_1, y_2, y_3,\dots, y_n)$ is an $n-tuple$.})\\
+
+We know $y\in P$ and since $x\in E_1\setminus A_1$ we also know $x\in E_1$ and $x\notin A_1$. Hence $(x,y)\in E_1\times P$ and $(x,y)\notin A_1\times P$,  i.e $(x,y)\in (E_1\times P)\setminus (A_1\times P)$.\\
+Then $(x,y)\in (E_1\times E_2\times E_3\times\dots \times E_n)\setminus (A_1\times E_2\times E_3\times\dots \times E_n) = E\setminus (A_1\times E_2\times E_3\times\dots \times E_n = \overline{A_1\times \prod_{k=2}^{n} E_k})$\\
+Then we conclude that $\overline{A_1}\times \prod_{k=2}^{n} E_k \subset \overline{A_1\times \prod_{k=2}^{n} E_k}$
+
+\begin{align*}
+	\overline{A_1\times \prod_{k=2}^{n} E_k} = & E\setminus (A_1\times \prod_{k=2}^{n} E_k) &\text{by the definition of compl.}\\
+											 = & (E_1\times E_2\times\dots \times E_n)\setminus (A_1\times E_2\times E_3\times\dots \times E_n)\\
+											 = & (E_1\times P)\setminus (A_1\times P)
+\end{align*}	
+
+Take an arbitrary $(x,y)\in (E_1\times P)\setminus (A_1\times P)$.\\
+Then $(x,y)\in (E_1\times P)$ and $(x,y)\notin (A_1\times P)$ hence $x\in E_1$ and $y\in P$.\\ \\
+(Note: \textit{When $n=2$, y is an element of $P=E_2$ and in that case $(x,y)$ is a pair.\\
+When $n>2$, y is an $n-1$ tuple such that $y=(y_2, y_3,\dots, y_n)$ and $y_k\in E_k$ for every $k=2,3,\dots,n$. In that case $(x,y)=(x_1, y_2, y_3,\dots, y_n)$ is an $n-tuple$.})\\
+
+Since $(x,y)\notin (A_1\times P)$, either $x\notin A_1$ or $y\notin P$. But we know $y\in P$, which implies $x\notin A_1$. Hence $x\in (E_1\setminus A_1)$ and $y\in P$ then $(x,y)\in (E_1\setminus A_1)\times P$. Then $(x,y)\in \overline{A_1}\times P = \overline{A_1}\times \prod_{k=2}^{n} E_k$.\\
+Then we conclude that  $\overline{A_1\times \prod_{k=2}^{n} E_k} \subset  \overline{A_1}\times \prod_{k=2}^{n} E_k$.\\
+
+Since both $\overline{A_1\times \prod_{k=2}^{n} E_k}$ and $\overline{A_1}\times \prod_{k=2}^{n} E_k$ are subsets of each other, then by definition;\\  \\
+$\overline{A_1\times \prod_{k=2}^{n} E_k} = \overline{A_1}\times \prod_{k=2}^{n} E_k$
+
+\end{enumerate}
+
+\end{enumerate}
+
+\section*{Answer 2}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item 
+
+	\begin{align*}
+	&\forall x <    0,\, \abs{x}=-x,  \, then\quad f(x)=-2x.\\
+	&\forall x \geq 0,\,\quad\quad\quad\quad\,\qquad\quad f(x)=2x+1.
+	\end{align*}
+
+	\begin{enumerate}[label=(\roman*)]
+
+	\item \textit{Proving $f(x)$ is 1-1}\\
+
+		Taking an arbitrary pair $(x_1, x_2)$ such that $x_1\in dom(f(x))$ and $x_2\in dom(f(x))$, I will consider three cases to prove $f(x)$ is 1-1.
+
+		\begin{enumerate}[label=(\roman*)]
+
+		\item Choose an $(x_1, x_2)$ pair such that $f(x_1)=f(x_2)$ and $x_1< 0, x_2< 0$.\\
+		Assuming that $x_1\neq x_2$,\\
+		if $f(x_1)=f(x_2)$ then $-2x_1=-2x_2$ then $x_1=x_2$, which contradicts with assumption.
+
+		\item Choose an $(x_1, x_2)$ pair such that $f(x_1)=f(x_2)$ and $x_1\geq0, x_2\geq0$.\\
+		Assuming that $x_1\neq x_2$,\\
+		if $f(x_1)=f(x_2)$ then $2x_1+1=2x_2+1$ then $x_1=x_2$, which contradicts with assumption.
+
+		\item Choose an $(x_1, x_2)$ pair such that $x_1\geq 0$ and $x_2< 0$. We know $x_1\neq x_2$ as $x_1\geq 0$ and $x_2< 0$.\\
+		Assuming that $f(x_1)=f(x_2)$ then $2x_1+1=-2x_2$ where $x_1\in \mathbb{Z}$ and $x_2\in \mathbb{Z}$. When we divide both sides of equation, we get $x_1=-x_2-\frac{1}{2}$ then $x_1 \notin \mathbb{Z}$, which contradicts with the definition of $f(x)$.
+		\end{enumerate}
+		
+		So we can say that $\forall(x_1, x_2) \in dom(f(x)), f(x_1)=f(x_2) \rightarrow x_1=x_2$.
+		Then by definition, $f(x)$ is a 1-1 function.\\
+
+	\item \textit{Proving $f(x)$ is onto}\\
+
+		Pick up an arbitrary $x_1\in dom(f(x))$ and an arbitrary $y_1\in codomain(f(x))$.
+		Since $y_1\in \mathbb{N^+}$, we have two possibilities;\\
+
+		\begin{enumerate}[label=(\roman*)]
+
+		\item $y_1$ is an odd number. Then $y_1=2k+1$ where $k\in \mathbb{Z^+}\cup \{0\}$ hence $k\in dom(f(x))$.\\ 
+		Then we can easily take $x_1=k$ and it turns out that $y_1=2x_1+1=f(x_1)$ when $x_1\geq 0$.
+		
+		\item $y_1$ is an even number. Then $y_1=-2k$ where $k\in \mathbb{Z^-}$ hence $k\in dom(f(x))$.\\ 
+		Then we can easily take $x_1=k$ and it turns out that $y_1=-2x_1=f(x_1)$ when $x_1< 0$.
+
+		\end{enumerate}
+
+		So we can say that $\forall y_1 \in codomain(f(x))$, $\exists x_1$ such that $y_1=f(x_1)$.
+		Then by definition, $f(x)$ is an onto function.\\
+
+	\end{enumerate}
+
+	Since $f(x)$ is 1-1 and onto, then it has an inverse.\\
+
+\item
+
+	Since $f(x)$ has an inverse, then $\exists! x_1$ such that $f(x_1)=26$, so $f^{-1}(26)=x_1$.\\
+	Assuming that $x_1< 0$, $f(x_1)=-2x_1=26$. Then $x_1=-13<0$(satisfies our assumption).
+	Since $x_1$ is unique, answer is found. Then $f^{-1}(26)=x_1=-13$.
+
+\end{enumerate}
+
+\section*{Answer 3}
+
+$f(n)=12n\log_2n+36n\log_2^{2}n+12n^2+36n^2\log_2n$\\
+
+Say $p(n)=12n\log_2n$, $r(n)=36n\log_2^{2}n$, $t(n)=12n^2$, $q(n)=36n^2\log_2n$.
+
+\begin{enumerate}[label=(\roman*)]
+\item $\abs{p(n)}=\abs{12n\log_2n}\leq\abs{12n^2\log_2n}=12\abs{n^2\log_n}$,\\
+then $p(n)$ is $O(n^2\log_2n)$, choosing $k=2$ and $c_1=12$.
+
+\item $\abs{r(n)}=\abs{36n\log_2^{2}n}=\abs{36n\log_2n}.\abs{\log_2n}\leq\abs{36n\log_2n}.\abs{n}=\abs{36n^2\log_2n}=36\abs{n^2\log_2n}$,\\
+then $r(n)$ is $O(n^2\log_2n)$, choosing $k=2$ and $c_2=36$.
+
+\item $\abs{t(n)}=\abs{12n^2}\leq\abs{12n^2\log_2n}=12\abs{n^2\log_2n}$,\\
+then $t(n)$ is $O(n^2\log_2n)$, choosing $k=2$ and $c_3=12$.
+
+\item $\abs{q(n)}=\abs{36n^2\log_2n}=36\abs{n^2\log_2n}$,\\
+then $q(n)$ is $O(n^2\log_2n)$, choosing $k=2$ and $c_4=36$.
+
+\end{enumerate}
+
+Hence $\abs{f(n)}=\abs{p(n)+r(n)+t(n)+q(n)}\leq max(c1,c2,c3,c4)\abs{g(n)}=C\abs{g(n)}$, then $f(n)$ is $O(g(n))$ by definiton of \textit{Big O}.
+
+\section*{Answer 4}
+
+Assume that $E\setminus S$ is countable.\\
+Also we know $S$ is countable.\\
+Then $S\cup E\setminus S=E$ is also countable by \textit{the theorem proven below}, which contradicts with the premise \textit{"E is uncountable"}.\\
+ Then our assumption is false hence $E\setminus S$ is uncountable.
+
+\begin{mdframed}
+
+	\newtheorem{thm}{Theorem}
+
+	\begin{thm}
+	If A and B are countable sets then $A\cup B$ is also countable.
+	\end{thm}
+
+	\begin{proof}
+
+	We have three cases for the sets $A$ and $B$.
+
+		\begin{enumerate}[label=(\alph*)]
+
+		\item Assume that $A$ and $B$ are finite, then $A\cup B$ is also finite hence $A\cup B$ is countable.
+
+		\item Assume that $A$ is countably infinite and $B$ is finite.\\
+	Since $A$ is countably infinite then its elements can be listed in an infinite sequence such that $a_1, a_2, a_3,\dots, a_m,\dots$.\\
+	Since $B$ is finite then its elements can be listed in a finite sequence such that $b_1, b_2, b_3,\dots,b_n$.\\
+	Then we can show the elements of $A\cup B$ as $b_1, b_2, b_3,\dots,b_n, a_1, a_2, a_3,\dots,a_m,\dots$, which means $A\cup B$ is countable.
+
+		\item Assume that $A$ and $B$ are countably infinite.\\
+	Since $A$ is countably infinite then its elements can be listed in an infinite sequence such that $a_1, a_2, a_3,\dots, a_m,\dots$.\\
+	Since $B$ is countably infinite then its elements can be listed in an infinite sequence such that $b_1, b_2, b_3,\dots, b_n,\dots$.\\
+	Then we can show the elements of the $A\cup B$, again, in an infinite sequence such that $a_1, b_1, a_2, b_2, a_3, b_3,\dots, a_n, b_n,\dots$, which means $A\cup B$ is countable.
+
+		\end{enumerate}
+
+	As we see, if the sets $A$ and $B$ are countable then $A\cup B$ is also countable, regardless of whether one or two of the sets is infinite or not. 
+
+	\end{proof}
+
+\end{mdframed}
+
+\section*{Answer 5}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item
+
+	If $n\equiv 1(mod 3)$, then\\
+	$n^2\equiv n.n\equiv 1.1\equiv 1(mod 3)$ then\\
+	$n(n+1)\equiv n^2+n\equiv 1+1\equiv 2(mod 3)$\\
+
+	Otherwise(i.e $n\equiv 2(mod 3)$ or $n\equiv 3(mod 3)$):\\\\
+	If $n\equiv 2(mod 3)$, then\\
+	$n^2\equiv n.n\equiv 2.2\equiv 4\equiv 1(mod 3)$ then\\
+	$n(n+1)\equiv n^2+n\equiv 1+2\equiv 0(mod 3)$\\
+
+	If $n\equiv 0(mod 3)$, then\\
+	$n^2\equiv n.n\equiv 0.0\equiv 0(mod 3)$ then\\
+	$n(n+1)\equiv n^2+n\equiv 0+0\equiv 0(mod 3)$
+
+\item
+
+	$gcd(123,277)=gcd(277,123)=gcd(123,31)=gcd(31,30)=gcd(30,1)=gcd(1,0)=0$
+
+\item
+
+	Implication can be converted to the compound logic statement  $r\rightarrow q$,\\
+where \textit{r: p is an even prime greater than 2}, \textit{q: p is greater than $2^{100}+1$}.\\
+
+	Since the only even prime number is $2$ and $p\neq 2$ then $r$ is false.\\
+	Then the implication $r\rightarrow q$ is true, regardless of q is true or not.
+
+\end{enumerate}
+
+\end{document}
+
+​

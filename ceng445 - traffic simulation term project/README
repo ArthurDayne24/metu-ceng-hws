@@ -1,0 +1,5 @@
+http://localhost:8000/trafficserver/index.html is the landing page
+You can test with username: mert ,pass: panestennes
+You have to start tsserver.py with port 2566 before you test it.
+
+Onur Tırtır - Mert Tunç

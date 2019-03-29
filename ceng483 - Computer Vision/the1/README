@@ -1,0 +1,46 @@
+usage: descriptor.py [-h] [--input INPUT] [--output OUTPUT] [--dense DENSE]
+                     [--step STEP] [--train TRAIN] [--sigma SIGMA]
+
+optional arguments:
+  -h, --help       show this help message and exit
+  --input INPUT    Directory of images.
+  --output OUTPUT  Prefix of the file to output descriptors.
+  --dense DENSE    Dense SIFT or not.
+  --step STEP      If dense, then specify step size.
+  --train TRAIN    Training mode (1) or test mode (0).
+  --sigma SIGMA    Set sigma for DoG.
+
+################################################################################
+
+usage: constructClusters.py [-h] [--input INPUT] [--output OUTPUT] [--k K]
+                            [--batch BATCH] [--iters ITERS]
+                            [--justmse JUSTMSE]
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --input INPUT      Prefix set in 'descriptor.py' for descriptor arrays.
+  --output OUTPUT    Prefix of the file to output cluster info and histogram
+                     data.
+  --k K              Number of clusters.
+  --batch BATCH      Batch size for minibatches. (0) for no minibatches.
+  --iters ITERS      Max iters.
+  --justmse JUSTMSE  If (1), calculate and show MSE, then exit immediately.
+
+################################################################################
+
+usage: assign.py [-h] [--queries QUERIES] [--input INPUT]
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --queries QUERIES  Path to validation queries.
+  --input INPUT      Prefix of the files set as output in constructClusters.py
+
+################################################################################
+
+Usage for final model used to evaluate test set:
+    python3.5 descriptor.py --input=dataset/ --output=finalmodel --dense=0
+    python3.5 constructClusters.py --input=finalmodel --output=finalmodel_K256 --k=256 --iters=100
+    python3.5 assign.py --input=finalmodel_K256 --queries=test_queries.dat
+
+    #  These will generate 'finalmodel_K256_result.dat' to be used in evaluation scripts.
+

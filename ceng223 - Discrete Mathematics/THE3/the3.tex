@@ -1,0 +1,185 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{mathtools}
+
+
+\usepackage[hmargin=3cm,vmargin=6.0cm]{geometry}
+%\topmargin=0cm
+\topmargin=-2cm
+\addtolength{\textheight}{6.5cm}
+\addtolength{\textwidth}{2.0cm}
+%\setlength{\leftmargin}{-5cm}
+\setlength{\oddsidemargin}{0.0cm}
+\setlength{\evensidemargin}{0.0cm}
+
+%misc libraries goes here
+
+
+\begin{document}
+
+\section*{Student Information } 
+%Write your full name and id number between the colon and newline
+%Put one empty space character after colon and before newline
+Full Name :  Onur Can TIRTIR\\
+Id Number :  2099380
+% Write your answers below the section tags
+
+\section*{Answer 1}
+
+\textit{$P(i)$ is to be the truth value of the equation given in the question, when $n=i$:}
+
+\begin{enumerate}
+
+\item Basis Step
+	
+When $n=1$,
+\begin{align*} \sum_{j=1}^{1} j.(j+1)(j+2)\dots (j+k-1)=1.2.3\dots k=k\, !=\dfrac{1.2.3\dots k.(k-1)}{(k-1)}.\end{align*}
+
+Then $P(1)$ is true.
+
+\item Inductive Step
+
+Say $f(j)=j.(j+1)(j+2)\dots (j+k-1)$.
+
+I will try to prove $P(t+1)$ is true, assuming that $P(t)$ is true.
+
+$P(t)$ is true then
+
+\begin{align*} \sum_{j=1}^{t} f(j)=\dfrac{t.(t+1).(t+2)\dots (t+k)}{(k+1)}.\end{align*}
+Hence
+\begin{equation*}
+\begin{split}
+	\sum_{j=1}^{t+1} f(j) & = \sum_{j=1}^{t}f(j)+(t+1)(t+2)\dots(t+k)\\
+						  & \stackrel{\mathmakebox[\widthof{=}]{\mathrm{IH}}}{=} \dfrac{t.(t+1)(t+2)\dots (t+k)}{(k+1)} + (t+1)(t+2)\dots (t+k)\\
+						  & = (t+1)(t+2)\dots (t+k)(\dfrac{t}{k+1}+1)\\
+						  & = \dfrac{(t+1)(t+2)\dots (t+k)(t+k+1)}{(k+1)}
+\end{split}
+\end{equation*}
+
+Also if we substitute $t+1$ in our assumption, we get again same result as below.\\
+\begin{align} \sum_{j=1}^{t+1} f(j)=\dfrac{(t+1)(t+2)\dots (t+k)(t+k+1)}{(k+1)}.\end{align}
+
+These two equations show that $P(t+1)$ is true under the assumption that $P(t)$ is true.\\Inductive step is done.
+
+\end{enumerate}
+
+So by mathematical induction, we know that $P(t)$ is true for all positive integers $t$.\\Proof is done.
+
+\section*{Answer 2}
+
+\textit{Let $P(n)$ be the proposition that $H_n\leq 7^n$:}
+
+\begin{enumerate}
+
+\item Basis Step
+
+P(0) is true: n=0, $H_0=1\leq 7^0$.\\ 
+P(1) is true: n=1, $H_1=3\leq 7^1$.\\
+P(2) is true: n=2, $H_2=5\leq 7^2$.\\
+Basis step is done.
+
+\item Inductive Step
+
+Assume that for any $j$ such that $0\leq j\leq k$, $P(j)$ is true, which means $H^j\leq 7^j$.\\
+Now prove that $H^{k+1}\leq 7^{k+1}$.\\
+$P(k)$, $P(k-1)$ and $P(k-2)$ are true under our  assumption since $k$, $k-1$ and $k-2$ are in the interval $\left[0,n\right]$.
+\begin{equation*}
+\begin{split}
+	H_{k+1} & = 7H_k+5H_{k-1}+63H_{k-2}\\
+			& \leq 7^k + 5.7^{k-1} + 63.7^{k-2}\\
+			& \leq 7^k + 5.7^{k-1} + 9.7^{k-1}\\
+			& \leq 7^k +14.7^{k-1}\\
+			& \leq 7^k + 2.7^k\\
+			& = 3.7^k\\
+			& \leq 7^{k+1}
+\end{split}
+\end{equation*}
+
+So we have proven $P(k+1)$ is also true under our assumption by showing that $H_{k+1}\leq 7^{k+1}$.\\
+This completes inductive step.
+
+\end{enumerate}
+
+Because we have completed basis and inductive steps, we know P(n) is true for any n such that $n\geq 0$.
+Proof is done.
+
+\section*{Answer 3}
+\textbf{a)}\\ \\
+We have sets
+\begin{align*} 
+	E: & \{\text{Options to choose 4 books from alll 12 books}\}.\\
+	A: & \{\text{Options to choose 4 books from 7 Signals And Systems books}\}.
+\end{align*}
+We need to find the cardinality of the set $E\setminus A$.
+Answer is $\left\vert{E}\right\vert - \left\vert{A}\right\vert = C(12,4)-C(7,4) = 460$.\\
+\textbf{b)}
+\begin{align*} 
+	E: & \{\text{Options to choose 4 books from alll 12 books}\}.\\
+	A: & \{\text{Options to choose 4 books from 7 Signals And Systems books}\}.\\
+	B: & \{\text{Options to choose 4 books from 5 Discrete Mathematics books}\}.
+\end{align*}
+\textit{Note: A and B are disjoint sets.}\\
+We need to find the cardinality of the set $E\setminus (A\cup B)$.
+Answer is $\left\vert{E}\right\vert - (\left\vert{A}\right\vert + \left\vert{B}\right\vert)=C(12,4)-C(7,4) - C(5,4) = 455$.\\
+
+\section*{Answer 4}
+
+$a_n$ is to be the number of strings having even number of 3's with the length \textit{n}.\\
+We can generate \textit{n-strings} by appending either a 3 or 2 to the \textit{valid n-1-strings}.
+\begin{enumerate}
+\item
+	We can generate an \textit{n-string} having even number of 3's by appending 2 to an \textit{n-1-string} having even number of 3's.\\
+Then we can say $a_n=a_{n-1}$.
+\item
+	We can generate an \textit{n-string} having even number of 3's by appending 3 to an \textit{n-1-string} \textbf{not} having even number of 3's.\\
+We can find \textit{n-1-strings} \textbf{not} having even number of 3's by excluding valid strings form all possible strings with the length \textit{n-1}.
+Then we can say $a_n=2^{n-1}-a_{n-1}$.
+\end{enumerate}
+
+Because all valid strings can be generated in one of these two ways, it follows that our recurrence relation is:\\
+$a_n=a_{n-1}+2^{n-1}-a_{n-1}=2^{n-1}$.
+\section*{Answer 5}
+
+In the equation given in the question, take the terms with $a_{n-1}$, $a_{n-2}$ and $a_{n-3}$ to the left side and get $a_{n}-4a_{n-1}-a_{n-2}+4a_{n-3}=0$. Then we have the characteristic equation $r^3-4r^2-r+4=0$ if and only if $(r-4)(r+1)(r-1)=0$. Then we get $r_1=4$, $r_2=-1$ and $r_3=1$.\\Now we have $a_n=\alpha_1 r_1+ \alpha_2 r_2+ \alpha_3 r_3$.\\Substituting $r_1$, $r_2$ and $r_3$ to this equation we get $a_n=\alpha_1 4^n+ \alpha_2 (-1)^n+ \alpha_3 (1)^n$.\\ \\
+Substituting $n=0$, $n=1$ and $n=2$ in that equation, we have 3 equations with 3 unknowns such that
+\begin{equation*}
+\begin{split}
+	\alpha_1   +  \alpha_2 + \alpha_3 & = 4\\
+	4\alpha_1  -  \alpha_2 + \alpha_3 & = 8\\
+	16\alpha_1 +  \alpha_2 + \alpha_3 & = 34
+\end{split}
+\end{equation*}
+
+Subtracting first equation from third equation we get $15\alpha_1=30$ and hence $\alpha_1=2$.
+Adding first two equations we get $5\alpha_1+2\alpha_3=12$  and hence $\alpha_3=1$. Putting $\alpha_1$ and $\alpha_3$ in the first equation we get $\alpha_2=1$. Then $a_n=2.4^n+(-1)^n+1$.\\ 
+
+\section*{Answer 6}
+By the extended binomial theorem,
+\begin{align*} 
+	\sum_{n=0}^{\infty} C(10, n)x^n & = C(10, 0)x^0 + C(10, 1)x^1 + C(10, 2)x^2 +\dots C(10, 10)x^{10}+\dots\\
+								& = (1+x)^{10}
+\end{align*}
+Then,
+\begin{equation*} 
+	<C(10,0), C(10,1), C(10,2)\dots> \longleftrightarrow (1+x)^{10} 
+\end{equation*}
+Shift the sequence above left,\\
+\begin{align*} 
+	\frac{(1+x)^{10}-C(10,0)x^0}{x} & = \frac{C(10, 0)x^0 + C(10, 1)x^1 + C(10, 2)x^2 + C(10, 3)x^{3}\dots - C(10, 0)x^0}{x}\\
+									& = \frac{C(10, 1)x^1 + C(10, 2)x^2 + C(10, 3)x^3 + C(10, 4)x^{4}\dots}{x}\\
+									& = C(10, 1)x^0 + C(10, 2)x^1 +C(10, 3)x^2 + C(10, 4)x^4 \dots\\
+									& = \sum_{n=0}^{\infty} C(10, n+1)x^n\\
+									& = \sum_{n=0}^{\infty} a_{n}x^{n}
+\end{align*}
+Then,
+\begin{align*}
+	\{a_n\} & = \frac{(1+x)^{10}-C(10,0)x^0}{x}\\
+		    & = \frac{(1+x)^{10}-1}{x}
+\end{align*}
+
+\end{document}
+
+​
+

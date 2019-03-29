@@ -1,0 +1,1233 @@
+<html>
+<head>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<title> Traffic Simulation </title> 
+</head>
+<body>
+{% if not username %}
+<form action="index.html" method="post">
+{% csrf_token %}
+  Username:<br>
+  <input type="text" name="username" value=""><br>
+  <input type="submit" value="Login">
+</form>
+{% endif %}
+{% if username %}
+	{# {% if sim_state %} #}
+	<h2 id="restartText" style="text-align:center; display:none"> Simulation and the connection is over, restart </h2>
+	{# {% endif %} #}
+	<div id="message_box"></div>
+	<div id="fixed_div" style="float:left; width:65%;  border-right: 1px solid lightgray; position:fixed;">
+	
+		<h1 id="tickNo" style="text-align:center; font-style: italic;">---------------- TICK {{ tc }} ----------------</h1> 
+		
+		
+		Logged as {{ username }}
+		<form id=logOutForm action="index.html" method="get">
+			<input type="hidden" name="log_out" value="true">
+			<input type="submit" value="Log Out">
+		</form>
+	
+		<canvas id="map_canvas" width="1200" height="700" style="border: 1px solid black;">
+		</canvas>
+	
+		<form action="index.html" method="post">
+			{% csrf_token %}
+			Send Command To Server:<br>
+			<input type="text" name="command" value="" style="width:50%;height:7%"><br>
+			<input type="submit" value="Send via client">
+		</form>
+		<form id="tick_form" action="index.html" method="POST">
+			{% csrf_token %}
+			<input type="hidden" name="tick" value="true">
+			<input type="submit" value="Tick Manually" />
+		</form>
+	</div>
+	<div style="float:right;width:33%; opacity: 1.0; background-color:white;">
+		{# {% if observe_mode %} #}
+		<div id="observe_mode" style="{% if editing_mode %}display:none;{% endif %} margin-top:30px;">
+		
+			<form id="observe_mode_form" action="" method="POST">
+				{% csrf_token %}
+				<input type="hidden" name="e_mode" value="1">
+				<input type="submit" value="Toggle to editing mode"></input>
+			</form>
+			
+			Generators : 
+			<table id="generators" style="border:1px solid black; padding : 20px"></table></br>
+			<span class="divider"></span></br>
+			</br>Car Statistics :
+			<table id="CarStats" style="border:1px solid black; padding : 20px"></table></br>
+			<span class="divider"></span></br>
+			</br>Car Enter Exit :
+			<table id="CarEnterExit" style="border:1px solid black; padding : 20px"></table></br>
+			<span class="divider"></span></br>
+			</br>Car Start Finish :
+			<table id="CarStartFinish" style="border:1px solid black; padding : 20px"></table></br>
+			<span class="divider"></span></br>
+			</br>Edge Statistics :
+			<table id="EdgeStats" style="border:1px solid black; padding : 20px"></table></br>
+			<span class="divider"></span></br>
+			</br>Simulation Statistics :
+			<table id="SimStats" style="border:1px solid black; padding : 20px"></table></br>
+			<span class="divider"></span></br>
+			</br>Simulation Report - Car Statistics :
+			<table id="SimReportCar" style="border:1px solid black; padding : 20px"></table></br>
+			<span class="divider"></span></br>
+			</br>Simulation Report - Edge Statistics :
+			<table id="SimReportEdge" style="border:1px solid black; padding : 20px"></table></br>
+			<span class="divider"></span></br>
+			</br>Simulation Report - Simulation Statistics :
+			<table id="SimReportSim" style="border:1px solid black; padding : 20px"></table></br>
+			{# {% endif %}	{% if editing_mode %} #}
+		
+		</div>		
+		<div id="edit_mode" style="margin-top:30px; {% if observe_mode %}display:none;{% endif %} ">
+		
+			<form id="edit_mode_form" action="" method="POST">
+				{% csrf_token %}
+				<input type="hidden" name="o_mode" value="1">
+				<input type="submit" value="Toggle to simulation observing mode"></input>
+			</form>
+			
+			<span class="divider"></span></br>
+			Add Nodes, seperate by comma for adding multiple<br/><br/>
+			<div>
+			<form id="addNodeForm" class="" action="index.html" method="post">
+				{% csrf_token %}
+				<input type="hidden" name="add_nodes" value="true">
+				Id
+				<input type="text" name="ids" value="" style="width:24%">
+				X
+				<input type="text" name="xs" value="" style="width:24%">
+				Y
+				<input type="text" name="ys" value="" style="width:24%">
+				<br/><br/>
+				<input type="submit" value="Add Node(s)" />
+			</form>
+			</div>
+		
+			<span class="divider"></span>
+		
+			<br/><br/>
+			Add Edges, seperate by comma for adding multiple<br/><br/>
+			<form id="addEdgeForm" action="index.html" method="post">
+				{% csrf_token %}
+				<input type="hidden" name="add_edges" value="true">
+				From Node
+				<input type="text" name="fromN" value="" style="width:27%">
+				To Node
+				<input type="text" name="toN" value="" style="width:27%">
+				<br/>No. of Lines
+				<input type="text" name="lanes" value="" style="width:27%">
+				Bidir?(True,False)
+				<input type="text" name="bidir" value="" style="width:27%">
+				<br/><br/>
+				<input type="submit" value="Add Edge(s)" />
+			</form>	
+		
+			<span class="divider"></span>
+		
+			<br/><br/>
+			Add Generator<br/><br/>
+			<form id="add_generator_form" action="index.html" method="post">
+				{% csrf_token %}
+				<input type="hidden" name="add_generators" value="true">
+				From Nodes sepetared by comma
+				<input type="text" name="fromL" value="" style="width:66%">
+				</br>
+				Dest Nodes sepetared by comma
+				<input type="text" name="toL" value="" style="width:66%">
+				<br/>Generation Interval
+				<input type="text" name="interval" value="" style="width:24%">
+				No. of Cars to Generate
+				<input type="text" name="tbPushed" value="" style="width:24%">
+				<br/><br/>
+				<input type="submit" value="Add Generator" />
+			</form>	
+		
+			<span class="divider"></span>
+		
+			<form id="start_simulation" action="index.html" method="post">
+				{% csrf_token %}
+				<input type="hidden" name="start_sim" value="true">
+				Debug Level</br>
+				<input type="checkbox" name="d1" value="1" checked> CarStat </br>
+	  			<input type="checkbox" name="d2" value="1" checked> CarEnterExit </br>
+	  			<input type="checkbox" name="d3" value="1" checked> CarStartFinish</br>
+	  			<input type="checkbox" name="d4" value="1" checked> EdgeStat</br>
+	  			<input type="checkbox" name="d5" value="1" checked> SimStat</br>
+				</br>
+				Tick Interval as ms, 0 for manual tick
+				<input type="text" name="tInterval" value="" style="">
+				<input type="submit" value="Start Simulation(s)" />
+			</form>		
+		
+			<span class="divider"></span>
+		
+			</br>Save Map</br></br>
+			<form id="save_map_form" action="index.html" method="post">
+				{% csrf_token %}
+				<input type="hidden" name="save_map" value="true">
+				Map Name</br>
+				<input type="text" name="map_name" value="">
+				<input type="submit" value="Save Map" />
+			</form>
+		
+			<span class="divider"></span>
+		
+			</br>Load Map</br></br>
+			<form id=loadMapForm action="index.html" method="post">
+				{% csrf_token %}
+				<input type="hidden" name="load_map" value="true">
+				Map Name</br>
+				<select id="db_maps_load" name="db_maps_load"></select>
+				<input type="submit" value="Load Map" />
+			</form>
+		
+			<span class="divider"></span>
+		
+			</br>Delete Map</br></br>
+			<form id="delete_map_form" action="index.html" method="post">
+				{% csrf_token %}
+				<input type="hidden" name="delete_map" value="true">
+				Map Name</br>
+				<select id="db_maps_delete" name="db_maps_delete"></select>
+				<input type="submit" value="Delete Map" />
+			</form>
+		
+			<span class="divider"></span>
+		
+			</br>Restart Connection</br></br>
+			<form id="restartForm" action="index.html" method="post">
+				{% csrf_token %}
+				<input type="hidden" name="restart_conn" value="true">
+				Create a new client instance
+				<input type="submit" value="Restart" />
+			</form>
+		</div>
+		{# {% endif %} #}
+	</div>
+	
+{% endif %}
+
+</body>
+{% if username %}
+<style>
+.divider{
+	border-top:1px solid lightgray;
+	padding-left:95%;
+}
+table td, table th {
+    border: 1px solid black;
+    padding: 5px;
+}
+tr:nth-child(even){
+	background-color: #f2f2f2;
+}
+input[type=text]{
+	margin: 4px;
+	box-sizing: border-box;
+	border-radius: 4px;
+	background-color: #f1f1f1;
+}
+select{
+	margin: 4px;
+	padding:2px;
+	box-sizing: border-box;
+	border-radius: 4px;
+	background-color: #e9efef;
+	font-size:14px;
+}
+input[type=submit]{
+	margin: 3px;
+	border-radius: 4px;
+	background-color: #f1f1f1;
+}
+button{
+	margin: 3px;
+	border-radius: 4px;
+	background-color: #f1f1f1;
+}
+#message_box{
+	position:fixed; 
+	top:2%; 
+	right:2%;
+	border-radius: 6px;
+	background-color: #ef6e6e;
+	padding:20px;
+	text-align:center;
+	font-size:20px;
+	color:#3d3737;
+	font-style: italic;
+	display:none;
+}
+
+</style>
+<script>
+	function canvas_arrow(context, fromx, fromy, tox, toy){
+		var headlen = 20;   // length of head in pixels
+		var angle = Math.atan2(toy-fromy,tox-fromx);
+		if ( tox > fromx )
+		{
+			tox += Math.sin(angle) * 4;
+			fromx += Math.sin(angle) * 4;
+			toy += Math.cos(angle) * 4;
+			fromy += Math.cos(angle) * 4;
+		}
+		context.moveTo(fromx, fromy);
+		context.lineTo(tox, toy);
+		context.moveTo(tox-15*Math.cos(angle), toy-15*Math.sin(angle));
+		context.lineTo(tox-headlen*Math.cos(angle-Math.PI/10),toy-headlen*Math.sin(angle-Math.PI/10));
+		context.moveTo(tox-15*Math.cos(angle), toy-15*Math.sin(angle));
+		context.lineTo(tox-headlen*Math.cos(angle+Math.PI/10),toy-headlen*Math.sin(angle+Math.PI/10));
+		context.stroke();
+	}
+
+    points = {{points}};
+    edges = {{edges}};
+    cars = {{vehicles}};
+	geners = {{geners}};
+	map_list = {{map_list | safe }};
+	
+	var inf = Infinity;
+	var None = NaN;
+	reports = {{ reports }};
+
+	c = document.getElementById("map_canvas");
+	var ctx = c.getContext("2d");
+	var xs = 3.7, ys = 2.1;
+	
+	ctx.font = "10px sanserif";
+	
+	function refreshCanvas(){
+		ctx.clearRect ( 0 , 0 , c.width , c.height );
+	}
+	
+    function drawPoints(pointsArr) {
+        
+        /*if (sessionStorage.getItem("points") != null) {
+            points = JSON.parse(sessionStorage.getItem("points"));
+        }*/
+
+        for (pid in points) {
+                ctx.beginPath();
+                ctx.fillStyle="#FF8080";
+                ctx.arc(points[pid][0]*xs,points[pid][1]*ys, 3.0, 0,2*Math.PI);
+                ctx.fill(); 
+                ctx.fillStyle="#000000";
+                ctx.fillText(pid,points[pid][0]*xs+6, points[pid][1]*ys+10); 
+        }
+    }
+
+    function drawCars() {
+        
+        /*if (sessionStorage.getItem("cars") != null) {
+            cars = JSON.parse(sessionStorage.getItem("cars"));
+        }*/
+
+        for (cid in cars) {
+                ctx.beginPath();
+                ctx.fillStyle="#006b33";
+                ctx.arc(cars[cid][1]*xs,cars[cid][2]*ys, 7.0, 0,2*Math.PI);
+                ctx.fill(); 
+                ctx.fillStyle="#0e603a";
+                ctx.fillText(cars[cid][0],cars[cid][1]*xs+8,cars[cid][2]*ys+8); 
+        }
+
+    }
+
+    function drawEdges(edgesArr) {
+        
+        /*if (sessionStorage.getItem("edges") != null) {
+            edges = JSON.parse(sessionStorage.getItem("edges"));
+        }*/
+
+        for (eid in edges) {
+		    var p1x=points[edges[eid][0]][0]*xs;
+		    var p1y=points[edges[eid][0]][1]*ys;
+		    var p2x=points[edges[eid][1]][0]*xs;
+		    var p2y=points[edges[eid][1]][1]*ys;
+		    ctx.beginPath();
+		    // 102, 179, 255
+		    var r = Math.floor(edges[eid][2]*120+125);
+		    var g = Math.floor(-edges[eid][2]*150+179)
+		    var b = Math.floor(255-edges[eid][2]*230);
+		    ctx.strokeStyle='rgb('+ r +','+ g +','+ b +')';
+		    //ctx.moveTo(p1x, p1y); ctx.lineTo(p2x, p2y);
+		    ctx.lineWidth = 1;
+		    if ( edges[eid][2] == 1 )
+		    	ctx.setLineDash([5, 3]);
+		    else
+		    	ctx.setLineDash([]);
+		    canvas_arrow(ctx, p1x, p1y, p2x, p2y);
+		    //ctx.stroke();
+        }
+    }
+    
+    function redraw() {
+    	refreshCanvas();
+    	
+    	drawPoints(points);
+		drawEdges(edges);
+		drawCars();
+    
+    }
+    redraw();
+    
+    // -------------------------------------------------------------------
+    
+    	$(document).ready(function() {
+    
+        $("#addNodeForm").submit(function(e) {
+            var values = {};
+            $.each($("#addNodeForm").serializeArray(), function (i, field) {
+                values[field.name] = field.value;
+            });
+            
+            var xsarr  = values["xs"].split(",");
+            var ysarr  = values["ys"].split(",");
+            var idsarr = values["ids"].split(",");
+
+            /*if (sessionStorage.getItem("points") != null) {
+                points = JSON.parse(sessionStorage.getItem("points"));
+            }*/
+
+            var pointsToDraw = {};
+            for (var i in xsarr) {
+                var key = idsarr[i];
+                var kval = [];
+
+                kval.push(parseInt(xsarr[i]));
+                kval.push(parseInt(ysarr[i]));
+                
+                points[key] = kval;
+                pointsToDraw[key] = kval;
+            }
+
+            //sessionStorage.setItem("points", JSON.stringify(points));
+
+            drawPoints(pointsToDraw);
+            
+            $.ajax({
+                type: 'POST',
+                url:'trafficserver/',
+                data : values,
+            });
+            
+            e.preventDefault();
+            document.getElementById('addNodeForm').reset();
+	    });
+	});
+	    
+    $(document).ready(function() {
+	    
+	    $("#addEdgeForm").submit(function(e) {
+            var values = {};
+            $.each($("#addEdgeForm").serializeArray(), function (i, field) {
+                values[field.name] = field.value;
+            });
+            values["ajax"] = "1";
+            
+            $.ajax({
+                type: 'POST',
+                url:'index.html',
+                data : values,
+                dataType: "json",
+                complete: function(response) {
+                	//alert("Load map success, " + response.responseText.replace(/Infinity/g, "2147483647") );
+                    var result = JSON.parse( response.responseText.replace(/Infinity/g, "2147483647").replace(/NaN/g, "0") )
+                    
+                    edges = result.edges;
+                    redraw();
+                    //alert("Load map ends");
+                }
+            });
+            
+            e.preventDefault();
+            document.getElementById('addEdgeForm').reset();
+	    });
+    });
+    
+    $(document).ready(function() {
+    
+        $("#add_generator_form").submit(function(e) {
+            var values = {};
+            $.each($("#add_generator_form").serializeArray(), function (i, field) {
+                values[field.name] = field.value;
+            });
+            values["ajax"] = "1";
+            
+            $.ajax({
+                type: 'POST',
+                url:'index.html',
+                data : values,
+                dataType: "json",
+                complete: function(response) {
+                    var result = JSON.parse( response.responseText.replace(/Infinity/g, "2147483647").replace(/NaN/g, "0") )
+                    
+                    geners = result.geners;
+                    
+                    updateGenerators();
+                }
+            });
+            
+            e.preventDefault();
+            document.getElementById('add_generator_form').reset();
+	    });
+	});
+	
+	$(document).ready(function() {
+    
+        $("#save_map_form").submit(function(e) {
+            var values = {};
+            $.each($("#save_map_form").serializeArray(), function (i, field) {
+                values[field.name] = field.value;
+            });
+            values["ajax"] = "1";
+            
+            $.ajax({
+                type: 'POST',
+                url:'index.html',
+                data : values,
+                dataType: "json",
+                complete: function(response) {
+                	var result = JSON.parse( response.responseText.replace(/Infinity/g, "2147483647").replace(/NaN/g, "0") )
+                    
+                    map_list = result.map_list;
+                	updateMapLists();
+                	
+                	$('#message_box').text( "Map saved successfully !");
+                	$('#message_box').show();
+                	$('#message_box').fadeOut(3500);
+                }
+            });
+            
+            e.preventDefault();
+            document.getElementById('save_map_form').reset();
+	    });
+	});
+
+
+	$(document).ready(function() {
+    
+        $("#delete_map_form").submit(function(e) {
+            var values = {};
+            $.each($("#delete_map_form").serializeArray(), function (i, field) {
+                values[field.name] = field.value;
+            });
+            values["ajax"] = "1";
+            
+            $.ajax({
+                type: 'POST',
+                url:'index.html',
+                data : values,
+                dataType: "json",
+                complete: function(response) {
+                	var result = JSON.parse( response.responseText.replace(/Infinity/g, "2147483647").replace(/NaN/g, "0") )
+                    
+                    map_list = result.map_list;
+                	updateMapLists();
+                	
+                	$('#message_box').text( "Map deleted successfully !");
+                	$('#message_box').show();
+                	$('#message_box').fadeOut(3500);
+                }
+            });
+            
+            e.preventDefault();
+            document.getElementById('delete_map_form').reset();
+	    });
+	});
+
+    $(document).ready(function() {
+	    
+	    $("#loadMapForm").submit(function(e) {
+            var values = {};
+            $.each($("#loadMapForm").serializeArray(), function (i, field) {
+                values[field.name] = field.value;
+            });
+            values["ajax"] = "1";
+
+            $.ajax({
+                type: 'POST',
+                url:'index.html',
+                data : values,
+                dataType: "json",
+                complete: function(response) {
+                	//alert("Load map success, " + response.responseText.replace(/Infinity/g, "2147483647") );
+                    var result = JSON.parse( response.responseText.replace(/Infinity/g, "2147483647").replace(/NaN/g, "0") )
+                    
+                    edges = result.edges;
+                    points = result['points'];
+                    redraw();
+                    //alert("Load map ends");
+                }
+            });
+
+            e.preventDefault();
+            document.getElementById('load_map_form').reset();
+	    });
+    });
+    
+    $(document).ready(function() {
+	    
+	    $("#start_simulation").submit(function(e) {
+            var values = {};
+            $.each($("#start_simulation").serializeArray(), function (i, field) {
+                values[field.name] = field.value;
+            });
+            values["ajax"] = "1";
+
+            $.ajax({
+                type: 'POST',
+                url:'index.html',
+                data : values,
+                dataType: "json",
+                complete: function(response) {
+			  		$('#observe_mode').show();
+			  		$('#edit_mode').hide();
+			  		$('#fixed_div').css('z-index',-1);
+			  		$.ajax({
+					    type: 'GET',
+					    url:'trafficserver/',
+					    data : "observe_mode=1",
+					});
+				  	
+				  	if( values['tInterval'] != "0" )
+				  	{
+		            	var simulation = setInterval(function(){
+		            		
+		            		delete values["start_sim"];
+		            		
+		            		$.ajax({
+								type: 'POST',
+								url:'trafficserver/',
+								data : values,
+								dataType : "json",
+								complete: function(response) {
+									var result = JSON.parse( response.responseText.replace(/Infinity/g, "2147483647").replace(/NaN/g, "0") )
+									//alert("Restart map success");
+								    edges = result.edges;
+									cars = result.vehicles;
+									geners = result.geners;
+									tc = result.tc;
+									reports = result.reports;
+									
+									//alert( JSON.stringify( reports ) )
+								
+									sim_state = result.sim_state;
+								
+									if( sim_state == 1 || ( typeof reports[5] !== 'undefined' && reports[5].length > 0 ) )
+									{
+										clearInterval(simulation);
+										$('#restartText').show();
+									}
+						
+								   	redraw();
+								   	updateGenerators();
+								   	updateReports();
+									$("#tickNo").text("---------------- TICK " + tc + " ----------------");
+									//alert("Restart map Ends");
+								}
+							});
+		            	
+		            	
+		            	}, parseInt( values["tInterval"] )/2 );
+		            	
+                	}
+                }
+            });
+
+            e.preventDefault();
+            document.getElementById('start_simulation').reset();
+	    });
+    });
+
+
+	$(document).ready(function() {
+	    
+	    $("#tick_form").submit(function(e) {
+            var values = {};
+            $.each($("#tick_form").serializeArray(), function (i, field) {
+                values[field.name] = field.value;
+            });
+            values["ajax"] = "1";
+
+            $.ajax({
+                type: 'POST',
+                url:'index.html',
+                data : values,
+                dataType: "json",
+                complete: function(response) {
+                	if( $('#observe_mode').css('display') == 'none')
+                	{
+				  		$('#observe_mode').show();
+				  		$('#edit_mode').hide();
+				  		$.ajax({
+							type: 'GET',
+							url:'trafficserver/',
+							data : "observe_mode=1",
+						});
+					}
+					
+					var result = JSON.parse( response.responseText.replace(/Infinity/g, "2147483647").replace(/NaN/g, "0") )
+			    	//alert("Manual tick success");
+			    	//alert( JSON.stringify( response.responseText.replace(/Infinity/g, "2147483647") ) );
+			        edges = result.edges;
+					cars = result.vehicles;
+					geners = result.geners;
+					tc = result.tc;
+					reports = result.reports;
+					
+					sim_state = result.sim_state;
+					
+					if( sim_state == 1 || ( typeof reports[5] !== 'undefined' && reports[5].length > 0 ) )
+					{
+						$('#restartText').show();
+					}
+			
+				   	redraw();
+				   	updateGenerators();
+				   	updateReports();
+					$("#tickNo").text("---------------- TICK " + tc + " ----------------");
+                }
+            });
+
+            e.preventDefault();
+	    });
+    });
+
+
+    $(document).ready(function() {
+	    
+	    $("#restartForm").submit(function(e) {
+            var values = {};
+            $.each($("#restartForm").serializeArray(), function (i, field) {
+                values[field.name] = field.value;
+            });
+            values["ajax"] = "1";
+
+            $.ajax({
+                type: 'POST',
+                url:'trafficserver/',
+                data : values,
+                dataType : "json",
+                complete: function(response) {
+                
+                	//alert("Restart map success");
+                    edges = [];
+				    points = [];
+				    cars = [];
+				    
+				    //sessionStorage.clear();
+				    
+				    $('#restartText').hide();
+				    $('#fixed_div').css('z-index','');
+				    
+				   	redraw();
+				    $("#tickNo").text("---------------- TICK 0 ----------------");
+				    //alert("Restart map Ends");
+				    
+				    delete values.restart_conn;
+				    
+				    $.ajax({
+				        type: 'POST',
+				        url:'trafficserver/',
+				        data : values
+				    });
+                }
+            });
+            
+            e.preventDefault();
+	    });
+    });
+    
+    
+    
+    //----------------------------------------------------------------------
+    
+    
+    
+
+	{# {% if editing_mode %} #}
+	function updateMapLists()
+	{
+		var x = document.getElementById("db_maps_load");
+		var y = document.getElementById("db_maps_delete");
+		$("#db_maps_delete").empty();
+		$("#db_maps_load").empty();
+		for( eid in map_list ){
+			var option1 = document.createElement("option");
+			option1.text = "" + map_list[eid].toString()
+			option1.value = "" + map_list[eid].toString()
+			var option2 = document.createElement("option");
+			option2.text = "" + map_list[eid].toString()
+			option2.value = "" + map_list[eid].toString()
+			x.add(option1);
+			y.add(option2);
+		}
+	}
+	
+	updateMapLists();
+	{# {%endif%} #}
+	
+	function writeMessage(canvas, message) {
+        var context = canvas.getContext('2d');
+        context.clearRect(1050, 0, canvas.width, 25);
+        context.font = '9pt Calibri';
+        context.fillStyle = 'black';
+        context.fillText(message, 1050, 25);
+      }
+      function getMousePos(canvas, evt) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: evt.clientX - rect.left,
+          y: evt.clientY - rect.top
+        };
+      }
+
+      c.addEventListener('mousemove', function(evt) {
+        var mousePos = getMousePos(c, evt);
+        var message = 'Mouse position:  ' + Math.floor( mousePos.x/xs ) + '  ,  ' + Math.floor( mousePos.y/ys );
+        writeMessage(c, message);
+      }, false);
+	
+	{# {% if observe_mode %} #}
+	
+	function updateGenerators(){
+		var table = document.getElementById("generators");
+		$('#generators').empty();
+		for( gid in geners ){
+				var row = table.insertRow(0);
+				var cell1 = row.insertCell(0);
+				var cell2 = row.insertCell(1);
+				var cell3 = row.insertCell(2);
+				var cell4 = row.insertCell(3);
+				var g = geners[gid];
+				cell1.innerHTML = ""+g[0].toString();
+				cell2.innerHTML = ""+g[1].toString();
+				cell3.innerHTML = ""+g[2].toString();
+				cell4.innerHTML = ""+g[3].toString();
+		}
+		var row = table.insertRow(0);
+		var cell1 = row.insertCell(0);
+		var cell2 = row.insertCell(1);
+		var cell3 = row.insertCell(2);
+		var cell4 = row.insertCell(3);
+		cell1.innerHTML = "Starting List";
+		cell2.innerHTML = "Destination List";
+		cell3.innerHTML = "Per Tick";
+		cell4.innerHTML = "To be Pushed";
+	}
+	
+	updateGenerators();
+	
+	// --------------------------------------------- Start of report[0]
+	
+	function updateReports(){
+	
+		var table = document.getElementById("CarStats");
+		$('#CarStats').empty();
+		for( cid in reports[0] ){
+				var row = table.insertRow(0);
+				var cell1 = row.insertCell(0);
+				var cell2 = row.insertCell(1);
+				var cell3 = row.insertCell(2);
+				var cell4 = row.insertCell(3);
+				var cell5 = row.insertCell(4);
+				var cell6 = row.insertCell(5);
+				var cell7 = row.insertCell(6);
+				var cell8 = row.insertCell(7);
+				var cell9 = row.insertCell(8);
+				var cell10 = row.insertCell(9);
+			
+				var g = reports[0][cid];
+				cell1.innerHTML = ""+g[0].toString();
+				cell2.innerHTML = ""+g[1].toString();
+				cell3.innerHTML = ""+g[2].toString();
+				cell4.innerHTML = ""+g[3].toString();
+				cell5.innerHTML = ""+g[4].toString();
+				cell6.innerHTML = ""+g[5].toString();
+				cell7.innerHTML = ""+g[6].toString();
+				cell8.innerHTML = ""+g[7].toString();
+				cell9.innerHTML = ""+g[8].toString();
+				cell10.innerHTML = ""+g[9].toString();
+		}
+	
+		var row = table.insertRow(0);
+		var cell1 = row.insertCell(0);
+		var cell2 = row.insertCell(1);
+		var cell3 = row.insertCell(2);
+		var cell4 = row.insertCell(3);
+		var cell5 = row.insertCell(4);
+		var cell6 = row.insertCell(5);
+		var cell7 = row.insertCell(6);
+		var cell8 = row.insertCell(7);
+		var cell9 = row.insertCell(8);
+		var cell10 = row.insertCell(9);
+	
+		cell1.innerHTML = "Id";
+		cell2.innerHTML = "Source";
+		cell3.innerHTML = "Dest";
+		cell4.innerHTML = "Curr Rsegment";
+		cell5.innerHTML = "Total Km";
+		cell6.innerHTML = "Rem. Km";
+		cell7.innerHTML = "Total Time";
+		cell8.innerHTML = "Avg Speed";
+		cell9.innerHTML = "Curr. Speed";
+		cell10.innerHTML = "Coords in Map";
+	
+		// --------------------------------------------- Start of report[1]
+	
+		var table = document.getElementById("CarEnterExit");
+		$('#CarEnterExit').empty();
+		for( cid in reports[1] ){
+				var row = table.insertRow(0);
+				var cell1 = row.insertCell(0);
+				var cell2 = row.insertCell(1);
+				var cell3 = row.insertCell(2);
+				var cell4 = row.insertCell(3);
+				var cell5 = row.insertCell(4);
+				var cell6 = row.insertCell(5);
+				var cell7 = row.insertCell(6);
+				var cell8 = row.insertCell(7);
+				var cell9 = row.insertCell(8);
+				var cell10 = row.insertCell(9);
+			
+				var g = reports[1][cid];
+				cell1.innerHTML = ""+g[0].toString();
+				cell2.innerHTML = ""+g[1].toString();
+				cell3.innerHTML = ""+g[2].toString();
+				cell4.innerHTML = ""+g[3].toString();
+				cell5.innerHTML = ""+g[4].toString();
+				cell6.innerHTML = ""+g[5].toString();
+				cell7.innerHTML = ""+g[6].toString();
+				cell8.innerHTML = ""+g[7].toString();
+				cell9.innerHTML = ""+g[8].toString();
+				cell10.innerHTML = ""+g[9].toString();
+		}
+	
+		var row = table.insertRow(0);
+		var cell1 = row.insertCell(0);
+		var cell2 = row.insertCell(1);
+		var cell3 = row.insertCell(2);
+		var cell4 = row.insertCell(3);
+		var cell5 = row.insertCell(4);
+		var cell6 = row.insertCell(5);
+		var cell7 = row.insertCell(6);
+		var cell8 = row.insertCell(7);
+		var cell9 = row.insertCell(8);
+		var cell10 = row.insertCell(9);
+	
+		cell1.innerHTML = "Id";
+		cell2.innerHTML = "Source";
+		cell3.innerHTML = "Dest";
+		cell4.innerHTML = "Curr Rsegment";
+		cell5.innerHTML = "Total Km";
+		cell6.innerHTML = "Rem. Km";
+		cell7.innerHTML = "Total Time";
+		cell8.innerHTML = "Avg Speed";
+		cell9.innerHTML = "Curr. Speed";
+		cell10.innerHTML = "Coords in Map";
+
+		// --------------------------------------------- Start of report[2]
+	
+		var table = document.getElementById("CarStartFinish");
+		$('#CarStartFinish').empty();
+		for( cid in reports[2] ){
+				var row = table.insertRow(0);
+				var cell1 = row.insertCell(0);
+				var cell2 = row.insertCell(1);
+				var cell3 = row.insertCell(2);
+				var cell4 = row.insertCell(3);
+				var cell5 = row.insertCell(4);
+				var cell6 = row.insertCell(5);
+				var cell7 = row.insertCell(6);
+				var cell8 = row.insertCell(7);
+				var cell9 = row.insertCell(8);
+				var cell10 = row.insertCell(9);
+			
+				var g = reports[2][cid];
+				cell1.innerHTML = ""+g[0].toString();
+				cell2.innerHTML = ""+g[1].toString();
+				cell3.innerHTML = ""+g[2].toString();
+				cell4.innerHTML = ""+g[3].toString();
+				cell5.innerHTML = ""+g[4].toString();
+				cell6.innerHTML = ""+g[5].toString();
+				cell7.innerHTML = ""+g[6].toString();
+				cell8.innerHTML = ""+g[7].toString();
+				cell9.innerHTML = ""+g[8].toString();
+				cell10.innerHTML = ""+g[9].toString();
+		}
+	
+		var row = table.insertRow(0);
+		var cell1 = row.insertCell(0);
+		var cell2 = row.insertCell(1);
+		var cell3 = row.insertCell(2);
+		var cell4 = row.insertCell(3);
+		var cell5 = row.insertCell(4);
+		var cell6 = row.insertCell(5);
+		var cell7 = row.insertCell(6);
+		var cell8 = row.insertCell(7);
+		var cell9 = row.insertCell(8);
+		var cell10 = row.insertCell(9);
+	
+		cell1.innerHTML = "Id";
+		cell2.innerHTML = "Source";
+		cell3.innerHTML = "Dest";
+		cell4.innerHTML = "Curr Rsegment";
+		cell5.innerHTML = "Total Km";
+		cell6.innerHTML = "Rem. Km";
+		cell7.innerHTML = "Total Time";
+		cell8.innerHTML = "Avg Speed";
+		cell9.innerHTML = "Curr. Speed";
+		cell10.innerHTML = "Coords in Map";
+
+
+		// --------------------------------------------- Start of report[3]
+	
+		var table = document.getElementById("EdgeStats");
+		$('#EdgeStats').empty();
+		for( cid in reports[3] ){
+				var row = table.insertRow(0);
+				var cell1 = row.insertCell(0);
+				var cell2 = row.insertCell(1);
+				var cell3 = row.insertCell(2);
+				var cell4 = row.insertCell(3);
+				var cell5 = row.insertCell(4);
+				var cell6 = row.insertCell(5);
+			
+				var g = reports[3][cid];
+				cell1.innerHTML = ""+g[0].toString();
+				cell2.innerHTML = ""+g[1].toString();
+				cell3.innerHTML = ""+g[2].toString();
+				cell4.innerHTML = ""+g[3].toString();
+				cell5.innerHTML = ""+g[4].toString();
+				cell6.innerHTML = ""+g[5].toString();
+		}
+	
+		var row = table.insertRow(0);
+		var cell1 = row.insertCell(0);
+		var cell2 = row.insertCell(1);
+		var cell3 = row.insertCell(2);
+		var cell4 = row.insertCell(3);
+		var cell5 = row.insertCell(4);
+		var cell6 = row.insertCell(5);
+	
+		cell1.innerHTML = "Source";
+		cell2.innerHTML = "Dest";
+		cell3.innerHTML = "No. of Cars";
+		cell4.innerHTML = "Capacity";
+		cell5.innerHTML = "Worst Curr Speed";
+		cell6.innerHTML = "Avg Speed";
+	
+	
+		// --------------------------------------------- Start of report[4]
+	
+		var table = document.getElementById("SimStats");
+		$('#SimStats').empty();
+		if( typeof( reports[4] ) !== 'undefined' && reports[4].length > 0 ) {
+				var row = table.insertRow(0);
+				var cell1 = row.insertCell(0);
+				var cell2 = row.insertCell(1);
+				var cell3 = row.insertCell(2);
+				var cell4 = row.insertCell(3);
+				var cell5 = row.insertCell(4);
+	
+				var g = reports[4];
+				cell1.innerHTML = ""+g[0].toString();
+				cell2.innerHTML = ""+g[1].toString();
+				cell3.innerHTML = ""+g[2].toString();
+				cell4.innerHTML = ""+g[3].toString();
+				cell5.innerHTML = ""+g[4].toString();
+		}
+		var row = table.insertRow(0);
+		var cell1 = row.insertCell(0);
+		var cell2 = row.insertCell(1);
+		var cell3 = row.insertCell(2);
+		var cell4 = row.insertCell(3);
+		var cell5 = row.insertCell(4);
+	
+		cell1.innerHTML = "No. of Active Cars";
+		cell2.innerHTML = "Finished Cars";
+		cell3.innerHTML = "Cars tb Generated";
+		cell4.innerHTML = "Avg Speed of Active";
+		cell5.innerHTML = "Avg Speed of Finished";
+	
+	
+		// --------------------------------------------- Start of report[5]
+	
+		// ---------------------------------------- Car Stats
+		var table = document.getElementById("SimReportCar");
+		$('#SimReportCar').empty();
+		//alert("Rep1");
+		for( cid in reports[5][0] ){
+				//alert( JSON.stringify( reports[5][0] ) + "\n\n" + cid + " - " );
+				//alert( reports[5][0][0] );
+				var row = table.insertRow(0);
+				var cell1 = row.insertCell(0);
+				var cell2 = row.insertCell(1);
+				var cell3 = row.insertCell(2);
+				var cell4 = row.insertCell(3);
+				var cell5 = row.insertCell(4);
+				var cell6 = row.insertCell(5);
+				var cell7 = row.insertCell(6);
+				var cell8 = row.insertCell(7);
+				var cell9 = row.insertCell(8);
+				var cell10 = row.insertCell(9);
+				
+				var g = reports[5][0][cid];
+				cell1.innerHTML = ""+g[0].toString();
+				cell2.innerHTML = ""+g[1].toString();
+				cell3.innerHTML = ""+g[2].toString();
+				cell4.innerHTML = ""+g[3].toString();
+				cell5.innerHTML = ""+g[4].toString();
+				cell6.innerHTML = ""+g[5].toString();
+				cell7.innerHTML = ""+g[6].toString();
+				cell8.innerHTML = ""+g[7].toString();
+				cell9.innerHTML = "0";//+g[8].toString();
+				cell10.innerHTML = ""+g[9].toString();
+		}
+	
+		var row = table.insertRow(0);
+		var cell1 = row.insertCell(0);
+		var cell2 = row.insertCell(1);
+		var cell3 = row.insertCell(2);
+		var cell4 = row.insertCell(3);
+		var cell5 = row.insertCell(4);
+		var cell6 = row.insertCell(5);
+		var cell7 = row.insertCell(6);
+		var cell8 = row.insertCell(7);
+		var cell9 = row.insertCell(8);
+		var cell10 = row.insertCell(9);
+	
+		cell1.innerHTML = "Id";
+		cell2.innerHTML = "Source";
+		cell3.innerHTML = "Dest";
+		cell4.innerHTML = "Curr Rsegment";
+		cell5.innerHTML = "Total Km";
+		cell6.innerHTML = "Rem. Km";
+		cell7.innerHTML = "Total Time";
+		cell8.innerHTML = "Avg Speed";
+		cell9.innerHTML = "Curr. Speed";
+		cell10.innerHTML = "Coords in Map";
+	
+		// ----------------------------------- Edge Stats
+	
+	
+		var table = document.getElementById("SimReportEdge");
+		$('#SimReportEdge').empty();
+		for( cid in reports[5][1] ){
+				var row = table.insertRow(0);
+				var cell1 = row.insertCell(0);
+				var cell2 = row.insertCell(1);
+				var cell3 = row.insertCell(2);
+				var cell4 = row.insertCell(3);
+				var cell5 = row.insertCell(4);
+				var cell6 = row.insertCell(5);
+			
+				var g = reports[5][1][cid];
+				cell1.innerHTML = ""+g[0].toString();
+				cell2.innerHTML = ""+g[1].toString();
+				cell3.innerHTML = ""+g[2].toString();
+				cell4.innerHTML = ""+g[3].toString();
+				cell5.innerHTML = ""+g[4].toString();
+				cell6.innerHTML = ""+g[5].toString();
+		}
+	
+		var row = table.insertRow(0);
+		var cell1 = row.insertCell(0);
+		var cell2 = row.insertCell(1);
+		var cell3 = row.insertCell(2);
+		var cell4 = row.insertCell(3);
+		var cell5 = row.insertCell(4);
+		var cell6 = row.insertCell(5);
+	
+		cell1.innerHTML = "Source";
+		cell2.innerHTML = "Dest";
+		cell3.innerHTML = "No. of Cars";
+		cell4.innerHTML = "Capacity";
+		cell5.innerHTML = "Worst Curr Speed";
+		cell6.innerHTML = "Avg Speed";
+
+		// ----------------------------------------Start of Sim Stat
+	
+		var table = document.getElementById("SimReportSim");
+		$('#SimReportSim').empty();
+		if( typeof reports[5][2] !== 'undefined' && reports[5][2].length > 0 ) {
+			var row = table.insertRow(0);
+			var cell1 = row.insertCell(0);
+			var cell2 = row.insertCell(1);
+			var cell3 = row.insertCell(2);
+			var cell4 = row.insertCell(3);
+			var cell5 = row.insertCell(4);
+	
+			var g = reports[5][2];
+			cell1.innerHTML = ""+g[0].toString();
+			cell2.innerHTML = ""+g[1].toString();
+			cell3.innerHTML = ""+g[2].toString();
+			cell4.innerHTML = ""+g[3].toString();
+			cell5.innerHTML = ""+g[4].toString();
+		}
+		var row = table.insertRow(0);
+		var cell1 = row.insertCell(0);
+		var cell2 = row.insertCell(1);
+		var cell3 = row.insertCell(2);
+		var cell4 = row.insertCell(3);
+		var cell5 = row.insertCell(4);
+	
+		cell1.innerHTML = "No. of Active Cars";
+		cell2.innerHTML = "Finished Cars";
+		cell3.innerHTML = "Cars tb Generated";
+		cell4.innerHTML = "Avg Speed of Active";
+		cell5.innerHTML = "Avg Speed of Finished";
+
+	}
+	
+	$(document).ready(function() {
+			$('#observe_mode_form').submit(function(e) {
+				var values = {};
+		        $.each($("#observe_mode_form").serializeArray(), function (i, field) {
+		            values[field.name] = field.value;
+		        });
+		        values["ajax"] = "1";
+		        
+		  		$('#observe_mode').hide();
+		  		$('#edit_mode').show();
+		  		$.ajax({
+			        type: 'POST',
+			        url:'trafficserver/',
+			        data : values,
+			    });
+			  	e.preventDefault();
+			});
+			
+			$('#edit_mode_form').submit(function(e){
+				var values = {};
+		        $.each($("#edit_mode_form").serializeArray(), function (i, field) {
+		            values[field.name] = field.value;
+		        });
+		        values["ajax"] = "1";
+				
+				
+		  		$('#observe_mode').show();
+		  		$('#edit_mode').hide();
+		  		$.ajax({
+			        type: 'POST',
+			        url:'trafficserver/',
+			        data : values,
+			    });
+				e.preventDefault();
+			});
+		});
+	
+	
+	updateReports();
+	
+
+	{# {% endif %} #}
+
+</script>
+{% endif %}
+</html>
