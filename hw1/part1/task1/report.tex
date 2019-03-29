@@ -1,0 +1,50 @@
+\documentclass[12pt]{article}
+ \usepackage[margin=1in]{geometry} 
+\usepackage{amsmath,amsthm,amssymb,amsfonts}
+\usepackage{lipsum}
+ 
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+ 
+\newenvironment{problem}[2][Problem]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+%If you want to title your bold things something different just make another thing exactly like this but replace "problem" with the name of the thing you want, like theorem or lemma or whatever
+ 
+\begin{document}
+
+%\renewcommand{\qedsymbol}{\filledbox}
+%Good resources for looking up how to do stuff:
+%Binary operators: http://www.access2science.com/latex/Binary.html
+%General help: http://en.wikibooks.org/wiki/LaTeX/Mathematics
+%Or just google stuff
+ 
+\title{489 - Assignment 1}
+\author{Onur Tirtir\\2099380}
+\maketitle
+
+\section{CBC Mode}
+\par
+In CBC mode, each block of plain-text is first $xor$'ed by previous cipher-text block 
+retrieved by encryption of previous plain-text block and then encrypted by \textit{key}.
+This brings us the \textit{diffusion} property.
+\par
+Even if we have a trivial plain-image like "original.bmp", we cannot deduce any
+useful information in first glance to the cipher-image as it seems much like noise.
+Noisiness comes directly from "cipher block chaining".
+
+\section{ECB Mode}
+\par
+In ECB mode, each block is encrypted independently from the other blocks.
+ECB mode does not utilize any feed-backs from previous blocks unlike some other
+modes (like CBC Mode). Regardless of its position, a plain-text block 
+is always encrypted to same cipher-text block. Hence ECB Mode cannot
+satisfy \textit{diffusion} property.
+\par
+Near pixels have same RGB values if the input image is not that complex
+due to the reasons explained above.
+Hence we may deduce some or most parts of underlying plain-image, its rough shape and 
+even the objects in image depending on the 
+color-wise complexity of given plain-image.
+
+\end{document}
+

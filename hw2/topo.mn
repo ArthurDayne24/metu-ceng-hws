@@ -1,0 +1,107 @@
+{
+    "application": {
+        "dpctl": "",
+        "ipBase": "10.0.0.0/8",
+        "netflow": {
+            "nflowAddId": "0",
+            "nflowTarget": "",
+            "nflowTimeout": "600"
+        },
+        "openFlowVersions": {
+            "ovsOf10": "1",
+            "ovsOf11": "0",
+            "ovsOf12": "0",
+            "ovsOf13": "0"
+        },
+        "sflow": {
+            "sflowHeader": "128",
+            "sflowPolling": "30",
+            "sflowSampling": "400",
+            "sflowTarget": ""
+        },
+        "startCLI": "0",
+        "switchType": "ovs",
+        "terminalType": "xterm"
+    },
+    "controllers": [
+        {
+            "opts": {
+                "controllerProtocol": "tcp",
+                "controllerType": "ref",
+                "hostname": "c0",
+                "remoteIP": "127.0.0.1",
+                "remotePort": 6633
+            },
+            "x": "399.0",
+            "y": "91.0"
+        }
+    ],
+    "hosts": [
+        {
+            "number": "1",
+            "opts": {
+                "hostname": "Scofield_c",
+                "ip": "10.0.0.1",
+                "nodeNum": 1,
+                "sched": "host"
+            },
+            "x": "190.0",
+            "y": "287.0"
+        },
+        {
+            "number": "3",
+            "opts": {
+                "hostname": "Lincoln_s",
+                "ip": "10.0.0.2",
+                "nodeNum": 3,
+                "sched": "host"
+            },
+            "x": "632.0",
+            "y": "288.0"
+        },
+        {
+            "number": "2",
+            "opts": {
+                "hostname": "T-bag_a",
+                "ip": "10.0.0.3",
+                "nodeNum": 2,
+                "sched": "host"
+            },
+            "x": "397.0",
+            "y": "407.0"
+        }
+    ],
+    "links": [
+        {
+            "dest": "s1",
+            "opts": {},
+            "src": "Lincoln_s"
+        },
+        {
+            "dest": "s1",
+            "opts": {},
+            "src": "T-bag_a"
+        },
+        {
+            "dest": "s1",
+            "opts": {},
+            "src": "Scofield_c"
+        }
+    ],
+    "switches": [
+        {
+            "number": "1",
+            "opts": {
+                "controllers": [
+                    "c0"
+                ],
+                "hostname": "s1",
+                "nodeNum": 1,
+                "switchType": "default"
+            },
+            "x": "394.0",
+            "y": "245.0"
+        }
+    ],
+    "version": "2"
+}

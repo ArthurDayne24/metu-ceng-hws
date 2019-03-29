@@ -1,0 +1,32 @@
+Onur Can TIRTIR
+2099380
+
+###############################################################################
+# PartA
+Under HW3A, you can find the script firewall.sh
+
+To disable/reset firewall,
+    sudo ./firewall -d
+To enable firewall, blocking telnet with <HOST_IP> and acces to <WEBSITE_IP>,
+    sudo ./firewall -e <OWN_IP> <OTHER_HOST_IP> <WEBSITE_IP>
+
+###############################################################################
+# PartC
+You should first install pcap library,
+    sudo apt-get install libpcap-dev
+Under HW3C, you should first build the project,
+    mkdir build
+    cd build
+    cmake ..
+    make all
+The executable named as "hw3c" is now avaliable under build/.
+
+We will run the tasks over a specified ethernet interface <ETH>
+For task1,
+    sudo ./hw3c task1 <ETH>
+For task2,
+    sudo ./hw3c task2 <ETH> <IP_1> <IP_2>, where <IP_*> describes host ips
+For task3,
+    sudo ./hw3c task3 <ETH>
+
+###############################################################################
