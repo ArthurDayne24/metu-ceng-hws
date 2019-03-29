@@ -1,0 +1,28 @@
+2099380 Onur Can Tirtir
+2171965 Hakan Sonmez
+
+0) Run ./putToServers.sh to put necessary scripts to related nodes. This file is configured up to our geni ssh user/port pairs.
+
+1) Run ./setntp.sh                      at source and destination to make time synchronized.
+
+2) Run sudo ./configAtBroker.sh         at broker to set routing logic
+   Run sudo ./configAtDest.sh    at destination to set routing logic
+
+3) Run ./experimental_<NODE_NAME>.sh <EXPERIMENT> at each corresponding node to set netem/tc settings for experiments as following:
+   For example:
+     at broker node, run "sudo ./experimental_broker 1.1" for experiment 1.1
+     at router1 node, run "sudo ./experimental_router1 1.1" for experiment 1.1
+     at router2 node, run "sudo ./experimental_router2 1.1" for experiment 1.1
+     at destination node, run "sudo ./experimental_destination 1.1" for experiment 1.1
+
+   <EXPERIMENT> files are under data_part_2 and can be one of the [1.1, 1.2, 1.3,.. 3.3]
+   <EXPERIMENT> can be set to "clear" without quotes to reset netem/tc settings
+
+4) Run BrokerNode.py at broker node.
+   Run DestinationNode.py at destination node.
+   Run SourceNode.py at source node.
+
+5) After file transfer is done, at source node and destination node, timestamps are printed.
+   Difference between these timestamps is the measurement of how much time passed for file transmission in seconds
+
+6) Close scripts by Ctrl+C at source, broker and destination nodes.
